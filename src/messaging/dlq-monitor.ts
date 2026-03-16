@@ -15,6 +15,11 @@ export class DLQMonitor {
     logger.info('DLQ monitoring started', { dlqName });
   }
 
+  async startMonitoringExchange(exchange: string, routingKey: string = ''): Promise<void> {
+    await this.harness.startListening(exchange, routingKey, { exchangeType: false });
+    logger.info('Error exchange monitoring started', { exchange, routingKey });
+  }
+
   async waitForDLQMessage(timeoutMs: number = 10_000): Promise<CollectedMessage> {
     return this.harness.waitForMessage(timeoutMs);
   }

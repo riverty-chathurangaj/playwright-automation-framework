@@ -1,10 +1,9 @@
-import { Given, Then } from '../../fixtures';
-import { DataTable } from 'playwright-bdd';
+import { Given, When, Then } from '../../fixtures';
 import { expect } from 'chai';
+import { resolveExchange } from '../../messaging/exchanges';
 import type { CollectedMessage } from '../../messaging/consumer-harness';
 import type { RabbitClient } from '../../messaging/rabbit-client';
 import type { ConsumerHarness } from '../../messaging/consumer-harness';
-import type { MessagePublisher } from '../../messaging/publisher';
 import type { DLQMonitor } from '../../messaging/dlq-monitor';
 import type { MessageValidator } from '../../messaging/message-validator';
 import type { CurrentResponse } from '../../fixtures';
@@ -12,7 +11,6 @@ import type { CurrentResponse } from '../../fixtures';
 type MessagingFixtures = {
   rabbitClient: RabbitClient;
   consumerHarness: ConsumerHarness;
-  messagePublisher: MessagePublisher;
   dlqMonitor: DLQMonitor;
   messageValidator: MessageValidator;
   store: (key: string, value: unknown) => void;
@@ -20,51 +18,72 @@ type MessagingFixtures = {
   currentResponse: CurrentResponse;
 };
 
-// ─── Setup ────────────────────────────────────────────────────────
+// ─── Label-based setup & publishing (resolves exchange from friendly name) ───
 
-Given('I am listening on exchange {string} with routing key {string}', async function (
+Given('I am listening on {string}', async function (
   { consumerHarness }: Pick<MessagingFixtures, 'consumerHarness'>,
-  exchange: string,
-  routingKey: string,
+  exchangeLabel: string,
 ) {
-  await consumerHarness.startListening(exchange, routingKey);
-});
-
-Given('I am listening on existing exchange {string} with routing key {string}', async function (
-  { consumerHarness }: Pick<MessagingFixtures, 'consumerHarness'>,
-  exchange: string,
-  routingKey: string,
-) {
+  const { exchange, routingKey } = resolveExchange(exchangeLabel);
   await consumerHarness.startListening(exchange, routingKey, { exchangeType: false });
 });
 
-Given('I am listening on the dead-letter queue {string}', async function (
+Given('I am listening on the {string} exchange', async function (
   { dlqMonitor }: Pick<MessagingFixtures, 'dlqMonitor'>,
-  dlqName: string,
+  exchangeLabel: string,
 ) {
-  await dlqMonitor.startMonitoring(dlqName);
+  const { exchange, routingKey } = resolveExchange(exchangeLabel);
+  await dlqMonitor.startMonitoringExchange(exchange, routingKey);
 });
 
-// ─── Message publishing (for injection scenarios) ─────────────────
+When('I publish the message to {string}', async function (
+  { rabbitClient, retrieve, store }: Pick<MessagingFixtures, 'rabbitClient' | 'retrieve' | 'store'>,
+  exchangeLabel: string,
+) {
+  const message = retrieve<Record<string, unknown>>('currentMessage');
+  if (!message) {
+    throw new Error('No message defined. Use a "I define a valid message …" step first.');
+  }
+  const { exchange, routingKey } = resolveExchange(exchangeLabel);
+  await rabbitClient.publish(exchange, routingKey, message);
+  store('lastPublishedMessage', message);
+});
 
-Given('I publish a message to exchange {string} with routing key {string}:', async function (
+When('I publish the message to {string} with routing key {string}', async function (
+  { rabbitClient, retrieve, store }: Pick<MessagingFixtures, 'rabbitClient' | 'retrieve' | 'store'>,
+  exchangeLabel: string,
+  routingKeyOverride: string,
+) {
+  const message = retrieve<Record<string, unknown>>('currentMessage');
+  if (!message) {
+    throw new Error('No message defined. Use a "I define a valid message …" step first.');
+  }
+  const { exchange } = resolveExchange(exchangeLabel);
+  await rabbitClient.publish(exchange, routingKeyOverride, message);
+  store('lastPublishedMessage', message);
+});
+
+When('I publish the same message again to {string}', async function (
+  { rabbitClient, retrieve }: Pick<MessagingFixtures, 'rabbitClient' | 'retrieve'>,
+  exchangeLabel: string,
+) {
+  const message = retrieve<Record<string, unknown>>('lastPublishedMessage');
+  if (!message) {
+    throw new Error('No previously published message found. Publish a message first.');
+  }
+  const { exchange, routingKey } = resolveExchange(exchangeLabel);
+  await rabbitClient.publish(exchange, routingKey, message);
+});
+
+When('I publish a message to {string}:', async function (
   { rabbitClient, store }: Pick<MessagingFixtures, 'rabbitClient' | 'store'>,
-  exchange: string,
-  routingKey: string,
+  exchangeLabel: string,
   docString: string,
 ) {
   const content = JSON.parse(docString);
+  const { exchange, routingKey } = resolveExchange(exchangeLabel);
   await rabbitClient.publish(exchange, routingKey, content);
   store('lastPublishedMessage', content);
-});
-
-Given('I publish a malformed message to exchange {string}:', async function (
-  { messagePublisher }: Pick<MessagingFixtures, 'messagePublisher'>,
-  exchange: string,
-  dataTable: DataTable,
-) {
-  const row = dataTable.hashes()[0];
-  await messagePublisher.publishMalformedMessage(exchange, row.routingKey || 'test.key');
 });
 
 // ─── Assertions ───────────────────────────────────────────────────
@@ -86,6 +105,35 @@ Then('no messages should be received within {int} seconds', async function (
 ) {
   await consumerHarness.assertNoMessages(seconds * 1000);
 });
+
+Then('I should not receive any additional messages within the next {int} seconds', async function (
+  { consumerHarness, store }: Pick<MessagingFixtures, 'consumerHarness' | 'store'>,
+  seconds: number,
+) {
+  const countBefore = consumerHarness.getMessageCount();
+  await new Promise(r => setTimeout(r, seconds * 1000));
+  const countAfter = consumerHarness.getMessageCount();
+  const additional = countAfter - countBefore;
+  store('additionalMessageCount', additional);
+  expect(additional, `Expected no additional messages but received ${additional} more`).to.equal(0);
+});
+
+Then('there should be an error on the {string} exchange', async function (
+  { dlqMonitor, store }: Pick<MessagingFixtures, 'dlqMonitor' | 'store'>,
+  exchangeLabel: string,
+) {
+  const message = await dlqMonitor.assertMessageInDLQ(30_000);
+  store('errorMessage', message);
+});
+
+Then('there should be no errors on the {string} exchange', async function (
+  { dlqMonitor }: Pick<MessagingFixtures, 'dlqMonitor'>,
+  exchangeLabel: string,
+) {
+  await dlqMonitor.assertNoDLQMessages(5_000);
+});
+
+// ─── Message content assertions ──────────────────────────────────
 
 Then('the message should match schema {string}', function (
   { retrieve, messageValidator }: Pick<MessagingFixtures, 'retrieve' | 'messageValidator'>,
