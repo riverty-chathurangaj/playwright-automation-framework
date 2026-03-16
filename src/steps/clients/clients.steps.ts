@@ -3,6 +3,7 @@ import { DataTable } from 'playwright-bdd';
 import { expect } from 'chai';
 import { config } from '../../core/config';
 import { ClientResponse } from '../../models/responses/client.response';
+import { ClientDepartmentResponse } from '../../models/responses/client-department.response';
 import type { ApiClient } from '../../core/api-client';
 import type { SchemaValidator } from '../../schemas/schema-validator';
 import type { CurrentRequest, CurrentResponse } from '../../fixtures';
@@ -12,6 +13,7 @@ const apiBase = `/${config.servicePath}`;
 
 const REQUEST_TEMPLATES: Record<string, string> = {
   'clients request': '/{instanceId}/clients',
+  'client departments request': '/{instanceId}/clients/departments',
 };
 
 type ClientFixtures = {
@@ -135,4 +137,31 @@ Then('the stored count {string} should be less than {string}', function (
     a,
     `Expected ${keyA} (${a}) to be less than ${keyB} (${b})`,
   ).to.be.lessThan(b);
+});
+
+Then('I send the client departments request to the API', async function (
+  { apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: ClientFixtures,
+) {
+  const { method, endpoint } = currentRequest;
+
+  if (!method || !endpoint) {
+    throw new Error('No request defined. Use a "When I define a GET/POST..." step first.');
+  }
+
+  const effectiveId = retrieve<number>('instanceIdOverride') ?? instanceId;
+  const resolvedEndpoint = `${apiBase}${endpoint.replace('{instanceId}', String(effectiveId))}`;
+
+  Object.assign(
+    currentResponse,
+    await apiClient.get(resolvedEndpoint, { queryParams: currentRequest.queryParams }, activeRole.value),
+  );
+});
+
+Then('the response should be an array of client departments', function (
+  { currentResponse }: Pick<ClientFixtures, 'currentResponse'>,
+) {
+  const body = currentResponse.body as unknown as ClientDepartmentResponse[];
+
+  expect(Array.isArray(body), 'Response body should be an array').to.be.true;
+  expect(body.length, 'Expected at least 1 client department in the response but got 0').to.be.at.least(1);
 });

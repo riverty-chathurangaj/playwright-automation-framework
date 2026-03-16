@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "client-department",
+  "title": "GLClientDepartment",
+  "type": "object",
+  "properties": {
+    "recno":       { "type": "integer" },
+    "name":        { "type": "string" },
+    "description": { "type": ["string", "null"] }
+  },
+  "additionalProperties": false
+}
