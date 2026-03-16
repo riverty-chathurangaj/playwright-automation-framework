@@ -1,0 +1,2263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GL Service API - Test Automation Framework Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --primary: #0f172a;
+    --primary-light: #1e293b;
+    --accent: #3b82f6;
+    --accent-dark: #2563eb;
+    --accent-light: #dbeafe;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --text: #1e293b;
+    --text-light: #64748b;
+    --bg: #ffffff;
+    --bg-subtle: #f8fafc;
+    --border: #e2e8f0;
+    --code-bg: #1e293b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.7;
+    font-size: 14px;
+  }
+
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+    color: white;
+    text-align: center;
+    padding: 60px 40px;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(59,130,246,0.15) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(16,185,129,0.1) 0%, transparent 50%);
+  }
+
+  .cover-content { position: relative; z-index: 1; max-width: 700px; }
+
+  .cover-badge {
+    display: inline-block;
+    background: rgba(59,130,246,0.2);
+    border: 1px solid rgba(59,130,246,0.4);
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    color: #93c5fd;
+  }
+
+  .cover h1 {
+    font-size: 44px;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #ffffff 0%, #93c5fd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .cover-subtitle {
+    font-size: 20px;
+    font-weight: 300;
+    color: #94a3b8;
+    margin-bottom: 40px;
+  }
+
+  .cover-meta {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 30px;
+  }
+
+  .cover-meta-item { text-align: center; }
+
+  .cover-meta-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+
+  .cover-meta-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #cbd5e1;
+  }
+
+  .cover-version {
+    margin-top: 50px;
+    padding-top: 30px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 50px;
+  }
+
+  .toc {
+    page-break-after: always;
+    padding: 50px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .toc h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 30px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid var(--accent);
+    display: inline-block;
+  }
+
+  .toc-list { list-style: none; }
+
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 10px 0;
+    border-bottom: 1px dotted var(--border);
+    font-size: 15px;
+  }
+
+  .toc-item.section {
+    font-weight: 600;
+    color: var(--primary);
+    margin-top: 8px;
+  }
+
+  .toc-item.sub {
+    padding-left: 24px;
+    font-weight: 400;
+    color: var(--text-light);
+    font-size: 13px;
+  }
+
+  .toc-number {
+    color: var(--accent);
+    font-weight: 600;
+    margin-right: 12px;
+    min-width: 32px;
+  }
+
+  .section { margin-bottom: 50px; }
+
+  .section-header {
+    page-break-before: always;
+    margin-bottom: 30px;
+  }
+
+  .section-number {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.3;
+  }
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--primary);
+    margin: 30px 0 14px 0;
+  }
+
+  h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary-light);
+    margin: 20px 0 10px 0;
+  }
+
+  p { margin-bottom: 14px; color: var(--text); }
+
+  .callout {
+    padding: 20px 24px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-left: 4px solid;
+  }
+
+  .callout-info { background: #eff6ff; border-color: var(--accent); }
+  .callout-success { background: #f0fdf4; border-color: var(--success); }
+  .callout-warning { background: #fffbeb; border-color: var(--warning); }
+  .callout-danger { background: #fef2f2; border-color: var(--danger); }
+
+  .callout-title {
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .callout-info .callout-title { color: var(--accent-dark); }
+  .callout-success .callout-title { color: #059669; }
+  .callout-warning .callout-title { color: #d97706; }
+  .callout-danger .callout-title { color: #dc2626; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 13px;
+  }
+
+  thead th {
+    background: var(--primary);
+    color: white;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  thead th:first-child { border-radius: 6px 0 0 0; }
+  thead th:last-child { border-radius: 0 6px 0 0; }
+
+  tbody td {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  tbody tr:hover { background: var(--bg-subtle); }
+
+  pre {
+    background: var(--code-bg);
+    color: #e2e8f0;
+    padding: 20px 24px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 16px 0;
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 12.5px;
+  }
+
+  p code, li code, td code {
+    background: #f1f5f9;
+    color: #be185d;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  .code-label {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: -4px;
+    position: relative;
+    top: 4px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .diagram {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 30px;
+    margin: 20px 0;
+    text-align: center;
+    overflow-x: auto;
+  }
+
+  .diagram pre {
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+    display: inline-block;
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .tag-blue { background: #dbeafe; color: #1d4ed8; }
+  .tag-green { background: #dcfce7; color: #15803d; }
+  .tag-purple { background: #f3e8ff; color: #7c3aed; }
+  .tag-orange { background: #ffedd5; color: #c2410c; }
+  .tag-red { background: #fee2e2; color: #dc2626; }
+
+  .flow-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+    justify-content: center;
+  }
+
+  .flow-box {
+    background: var(--accent-light);
+    border: 1px solid #93c5fd;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-dark);
+    text-align: center;
+    min-width: 100px;
+  }
+
+  .flow-arrow {
+    color: var(--accent);
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  .feature-card {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .feature-card-icon { font-size: 24px; margin-bottom: 8px; }
+  .feature-card h4 { margin: 0 0 6px 0; font-size: 14px; }
+  .feature-card p { font-size: 12.5px; color: var(--text-light); margin: 0; }
+
+  ul, ol { margin: 10px 0 14px 24px; }
+  li { margin-bottom: 6px; line-height: 1.6; }
+
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 30px 0;
+  }
+
+  .doc-footer {
+    text-align: center;
+    padding: 40px 50px;
+    color: var(--text-light);
+    font-size: 12px;
+    border-top: 1px solid var(--border);
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  @media print {
+    body { font-size: 11px; }
+    .cover { min-height: auto; padding: 80px 40px; }
+    .content { padding: 30px; }
+    .section-header { page-break-before: always; }
+    pre { font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================== COVER PAGE ============================== -->
+<div class="cover">
+  <div class="cover-content">
+    <div class="cover-badge">Architecture Document</div>
+    <h1>GL Service API<br>Test Automation Framework</h1>
+    <p class="cover-subtitle">An intelligent, AI-powered BDD test automation framework<br>for financial API quality assurance</p>
+
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Project</div>
+        <div class="cover-meta-value">GL Service API</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Framework</div>
+        <div class="cover-meta-value">Testonaut GL</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Stack</div>
+        <div class="cover-meta-value">TypeScript · Playwright · Cucumber · AMQP · SQL</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">Classification</div>
+        <div class="cover-meta-value">Internal</div>
+      </div>
+    </div>
+
+    <div class="cover-version">
+      <strong>Version 1.0</strong> &nbsp;·&nbsp; March 2026 &nbsp;·&nbsp; Riverty Group GmbH &nbsp;·&nbsp; Quality Engineering
+    </div>
+  </div>
+</div>
+
+<!-- ============================== TABLE OF CONTENTS ============================== -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ul class="toc-list">
+    <li class="toc-item section"><span><span class="toc-number">1</span>Executive Summary</span></li>
+    <li class="toc-item section"><span><span class="toc-number">2</span>Design Principles &amp; Constraints</span></li>
+    <li class="toc-item sub"><span>2.1 &nbsp; Why Not .NET</span></li>
+    <li class="toc-item sub"><span>2.2 &nbsp; Black-Box Testing Philosophy</span></li>
+    <li class="toc-item sub"><span>2.3 &nbsp; Core Design Principles</span></li>
+    <li class="toc-item section"><span><span class="toc-number">3</span>Technology Stack</span></li>
+    <li class="toc-item sub"><span>3.1 &nbsp; Stack Selection Matrix</span></li>
+    <li class="toc-item sub"><span>3.2 &nbsp; Technology Justification</span></li>
+    <li class="toc-item section"><span><span class="toc-number">4</span>Framework Architecture</span></li>
+    <li class="toc-item sub"><span>4.1 &nbsp; High-Level Architecture Diagram</span></li>
+    <li class="toc-item sub"><span>4.2 &nbsp; Project Structure</span></li>
+    <li class="toc-item sub"><span>4.3 &nbsp; Core Components</span></li>
+    <li class="toc-item sub"><span>4.4 &nbsp; Data Flow</span></li>
+    <li class="toc-item section"><span><span class="toc-number">5</span>BDD Implementation (Gherkin / Cucumber)</span></li>
+    <li class="toc-item sub"><span>5.1 &nbsp; Feature File Organization</span></li>
+    <li class="toc-item sub"><span>5.2 &nbsp; Step Definition Strategy</span></li>
+    <li class="toc-item sub"><span>5.3 &nbsp; Negative Testing Patterns</span></li>
+    <li class="toc-item section"><span><span class="toc-number">6</span>Schema Validation &amp; Contract Testing</span></li>
+    <li class="toc-item sub"><span>6.1 &nbsp; JSON Schema Validation</span></li>
+    <li class="toc-item sub"><span>6.2 &nbsp; Consumer-Driven Contract Tests</span></li>
+    <li class="toc-item sub"><span>6.3 &nbsp; Schema Drift Detection</span></li>
+    <li class="toc-item section"><span><span class="toc-number">7</span>RabbitMQ Message Testing</span></li>
+    <li class="toc-item sub"><span>7.1 &nbsp; Message Testing Architecture</span></li>
+    <li class="toc-item sub"><span>7.2 &nbsp; Queue Client &amp; Consumer Harness</span></li>
+    <li class="toc-item sub"><span>7.3 &nbsp; Message Schema Validation</span></li>
+    <li class="toc-item sub"><span>7.4 &nbsp; Event-Driven Flow Testing</span></li>
+    <li class="toc-item sub"><span>7.5 &nbsp; Dead-Letter &amp; Retry Verification</span></li>
+    <li class="toc-item section"><span><span class="toc-number">8</span>Database Validation Testing</span></li>
+    <li class="toc-item sub"><span>8.1 &nbsp; Database Testing Philosophy</span></li>
+    <li class="toc-item sub"><span>8.2 &nbsp; Database Client &amp; Query Engine</span></li>
+    <li class="toc-item sub"><span>8.3 &nbsp; GL-Specific Data Assertions</span></li>
+    <li class="toc-item sub"><span>8.4 &nbsp; Test Data Lifecycle Management</span></li>
+    <li class="toc-item sub"><span>8.5 &nbsp; End-to-End Flow: API → Message → Database</span></li>
+    <li class="toc-item section"><span><span class="toc-number">9</span>AI Integration Layer</span></li>
+    <li class="toc-item sub"><span>9.1 &nbsp; AI-Powered Scenario Generation</span></li>
+    <li class="toc-item sub"><span>9.2 &nbsp; Intelligent Test Data Synthesis</span></li>
+    <li class="toc-item sub"><span>9.3 &nbsp; Failure Root Cause Analysis</span></li>
+    <li class="toc-item sub"><span>9.4 &nbsp; Self-Healing Capabilities</span></li>
+    <li class="toc-item sub"><span>9.5 &nbsp; AI Architecture Diagram</span></li>
+    <li class="toc-item section"><span><span class="toc-number">10</span>Xray Test Management Integration</span></li>
+    <li class="toc-item sub"><span>10.1 &nbsp; Integration Architecture</span></li>
+    <li class="toc-item sub"><span>10.2 &nbsp; Test Execution Mapping</span></li>
+    <li class="toc-item sub"><span>10.3 &nbsp; Reporting Pipeline</span></li>
+    <li class="toc-item section"><span><span class="toc-number">11</span>Reporting Strategy</span></li>
+    <li class="toc-item section"><span><span class="toc-number">12</span>CI/CD Pipeline Integration</span></li>
+    <li class="toc-item section"><span><span class="toc-number">13</span>Implementation Roadmap</span></li>
+    <li class="toc-item section"><span><span class="toc-number">14</span>Risk Assessment &amp; Mitigations</span></li>
+  </ul>
+</div>
+
+<!-- ============================== SECTION 1 ============================== -->
+<div class="content">
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">SECTION 1</span>
+      <h2>Executive Summary</h2>
+    </div>
+
+    <p>This document presents the architecture for <strong>Testonaut GL</strong> — an intelligent, AI-augmented test automation framework designed to ensure the quality, reliability, and contract compliance of the GL (General Ledger) Service API.</p>
+
+    <p>The GL Service API is a financial-domain .NET application that requires rigorous testing across functional, schema, contract, and security dimensions. The test framework is intentionally decoupled from the development project, operating as an independent black-box test suite that communicates exclusively through the API's HTTP interface.</p>
+
+    <div class="callout callout-info">
+      <div class="callout-title">Key Decision</div>
+      <p style="margin:0">The framework is built in <strong>TypeScript</strong> rather than .NET. This decoupling enables unrestricted negative testing (sending malformed payloads that .NET's type system would reject at compile time), provides access to the richest AI/ML ecosystem, and ensures the test suite remains an independent quality gate.</p>
+    </div>
+
+    <h3>Framework Objectives</h3>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-card-icon">🧪</div>
+        <h4>Comprehensive API Testing</h4>
+        <p>Full coverage of GL endpoints including positive flows, negative scenarios, boundary conditions, and security edge cases — all in Gherkin syntax.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-icon">📐</div>
+        <h4>Schema &amp; Contract Validation</h4>
+        <p>Automated JSON Schema validation and consumer-driven contract testing with drift detection to catch breaking changes before deployment.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-icon">📨</div>
+        <h4>RabbitMQ Message Testing</h4>
+        <p>Full message lifecycle validation — publish, consume, assert on message content, headers, routing keys. Dead-letter queue verification, message ordering, and event-driven flow testing.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-icon">🗄️</div>
+        <h4>Database Validation Testing</h4>
+        <p>Direct database assertions to verify data persistence, referential integrity, transaction correctness, audit trails, and GL-specific balancing rules at the data layer.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-icon">🤖</div>
+        <h4>AI-Powered Intelligence</h4>
+        <p>AI-driven scenario generation from Jira tickets, intelligent test data synthesis, automated failure analysis, and self-healing test maintenance.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-icon">📊</div>
+        <h4>Xray &amp; Jira Integration</h4>
+        <p>Seamless bi-directional integration with Xray Test Management — automated result publishing, traceability, and AI-enriched execution reports.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== SECTION 2 ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">SECTION 2</span>
+      <h2>Design Principles &amp; Constraints</h2>
+    </div>
+
+    <h3>2.1 Why Not .NET</h3>
+    <p>The decision to avoid .NET for the test framework is driven by a fundamental testing requirement: <strong>the ability to send invalid, malformed, and type-violating payloads to the API</strong>. This is essential for financial software where input validation must be bulletproof.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Constraint</th>
+          <th>.NET Limitation</th>
+          <th>TypeScript Advantage</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Type Safety Override</strong></td>
+          <td>C# will not compile if you assign a string to a decimal field. Requires <code>dynamic</code> types or raw JSON everywhere.</td>
+          <td>TypeScript's structural typing and <code>any</code> type allow sending <code>"abc"</code> where a number is expected — essential for negative testing.</td>
+        </tr>
+        <tr>
+          <td><strong>Model Independence</strong></td>
+          <td>Without referencing the dev project's models, you'd rebuild them — creating coupling risk.</td>
+          <td>Request/response shapes are defined loosely. No compile-time coupling to the SUT.</td>
+        </tr>
+        <tr>
+          <td><strong>Payload Mutation</strong></td>
+          <td>Corrupting payloads requires awkward workarounds with <code>JObject</code> or raw strings.</td>
+          <td>Native object spread, optional chaining, and dynamic properties make mutation trivial.</td>
+        </tr>
+        <tr>
+          <td><strong>AI Ecosystem</strong></td>
+          <td>Limited LLM SDK support. Semantic Kernel exists but smaller ecosystem.</td>
+          <td>LangChain.js, Anthropic SDK, OpenAI SDK, HuggingFace — all TypeScript-first.</td>
+        </tr>
+        <tr>
+          <td><strong>BDD Tooling</strong></td>
+          <td>SpecFlow is mature but has a smaller plugin ecosystem.</td>
+          <td>Cucumber.js has the largest BDD ecosystem with rich formatters and integrations.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>2.2 Black-Box Testing Philosophy</h3>
+    <p>The framework treats the GL Service API as an opaque system. All interactions occur through the public HTTP interface, exactly as a real consumer would use it.</p>
+    <ul>
+      <li><strong>No internal dependency leakage</strong> — Tests remain valid even if internal implementation changes (ORM, database, domain models).</li>
+      <li><strong>True consumer perspective</strong> — Tests validate what the API actually does, not what the code intends.</li>
+      <li><strong>Unrestricted negative testing</strong> — Any payload shape can be sent without compile-time restrictions.</li>
+      <li><strong>Independent deployment</strong> — The test suite can be versioned and executed independently of the application release cycle.</li>
+    </ul>
+
+    <h3>2.3 Core Design Principles</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Principle</th>
+          <th>Description</th>
+          <th>Implementation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Separation of Concerns</strong></td>
+          <td>Each layer has a single responsibility</td>
+          <td>Feature files → Step definitions → API client → Validators</td>
+        </tr>
+        <tr>
+          <td><strong>Configuration-Driven</strong></td>
+          <td>Environment-specific values externalized</td>
+          <td>dotenv + environment profiles (dev, staging, UAT, prod)</td>
+        </tr>
+        <tr>
+          <td><strong>AI-First Design</strong></td>
+          <td>AI is a core component, not an afterthought</td>
+          <td>Dedicated AI layer with prompt templates, LLM abstraction, hooks</td>
+        </tr>
+        <tr>
+          <td><strong>Contract-Aware</strong></td>
+          <td>API contracts are first-class citizens</td>
+          <td>Schema files, contract definitions, drift baselines in version control</td>
+        </tr>
+        <tr>
+          <td><strong>Traceable</strong></td>
+          <td>Every test maps to a requirement</td>
+          <td>Xray test keys in Cucumber tags, bi-directional Jira traceability</td>
+        </tr>
+        <tr>
+          <td><strong>Self-Documenting</strong></td>
+          <td>Gherkin features serve as living documentation</td>
+          <td>Feature files readable by non-technical stakeholders</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============================== SECTION 3 ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">SECTION 3</span>
+      <h2>Technology Stack</h2>
+    </div>
+
+    <h3>3.1 Stack Selection Matrix</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>Technology</th>
+          <th>Version</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Language</strong></td><td>TypeScript</td><td>5.x</td><td>Core language — type safety with escape hatches for negative testing</td></tr>
+        <tr><td><strong>Runtime</strong></td><td>Node.js</td><td>20 LTS</td><td>Execution runtime</td></tr>
+        <tr><td><strong>HTTP Client</strong></td><td>Playwright APIRequestContext</td><td>Latest</td><td>API calls with built-in retries, tracing, and auth management</td></tr>
+        <tr><td><strong>BDD Framework</strong></td><td>Cucumber.js</td><td>10.x</td><td>Gherkin parser, step definitions, hooks, formatters</td></tr>
+        <tr><td><strong>Schema Validation</strong></td><td>Ajv + ajv-formats</td><td>8.x</td><td>JSON Schema Draft-07 validation with format extensions</td></tr>
+        <tr><td><strong>Contract Testing</strong></td><td>Custom engine (Ajv-based)</td><td>—</td><td>Consumer-driven contract validation tailored to GL domain</td></tr>
+        <tr><td><strong>Test Data</strong></td><td>Fishery.js + Faker.js</td><td>Latest</td><td>Factory pattern + domain-specific fake data generation</td></tr>
+        <tr><td><strong>Assertions</strong></td><td>Chai + chai-json-schema</td><td>5.x</td><td>Fluent assertions with JSON schema support</td></tr>
+        <tr><td><strong>Message Broker Client</strong></td><td>amqplib</td><td>0.10.x</td><td>RabbitMQ AMQP 0-9-1 client — publish, consume, queue management</td></tr>
+        <tr><td><strong>Database Client</strong></td><td>Knex.js</td><td>3.x</td><td>SQL query builder — supports SQL Server, PostgreSQL, MySQL</td></tr>
+        <tr><td><strong>DB Drivers</strong></td><td>tedious / pg / mysql2</td><td>Latest</td><td>Native database drivers (selected per target database)</td></tr>
+        <tr><td><strong>Reporting</strong></td><td>Cucumber HTML + Allure</td><td>Latest</td><td>Multi-format reports with visual dashboards</td></tr>
+        <tr><td><strong>Test Management</strong></td><td>Xray (Jira Cloud)</td><td>Cloud</td><td>Test case management, execution tracking, traceability</td></tr>
+        <tr><td><strong>AI Integration</strong></td><td>Anthropic SDK / LangChain.js</td><td>Latest</td><td>Scenario generation, failure analysis, self-healing</td></tr>
+        <tr><td><strong>Logging</strong></td><td>Winston</td><td>3.x</td><td>Structured JSON logging</td></tr>
+        <tr><td><strong>CI/CD</strong></td><td>GitHub Actions / Azure DevOps</td><td>—</td><td>Pipeline orchestration</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.2 Technology Justification</h3>
+
+    <h4>Why Playwright over Axios/Supertest</h4>
+    <p>Playwright's <code>APIRequestContext</code> provides built-in request/response tracing that captures every HTTP interaction with full headers and bodies — invaluable for debugging financial API issues. It handles cookie and authentication state management automatically, supports parallel execution with isolated contexts, and its retry mechanism is production-grade. If the framework ever needs UI testing (e.g., GL dashboard), Playwright is already in place.</p>
+
+    <h4>Why Custom Contract Engine over Pact</h4>
+    <p>While Pact is the industry standard for consumer-driven contracts, the GL domain has specific requirements benefiting from a tailored solution. Financial APIs need precision validation (e.g., ensuring <code>balance</code> fields have exactly 2 decimal places, not just "is a number"). The custom Ajv-based engine allows domain-specific validators: debit-credit balance checks, currency code validation (ISO 4217), and fiscal period boundary validation that Pact's generic matchers cannot express natively.</p>
+  </div>
+
+  <!-- ============================== SECTION 4 ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">SECTION 4</span>
+      <h2>Framework Architecture</h2>
+    </div>
+
+    <h3>4.1 High-Level Architecture Diagram</h3>
+    <div class="diagram">
+<pre>
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│                              TESTONAUT GL FRAMEWORK                                   │
+│                                                                                      │
+│  ┌──────────────────────────────────────────────────────────────────────────────┐     │
+│  │                         FEATURE LAYER (Gherkin)                              │     │
+│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌───────────┐  │     │
+│  │  │ GL Accounts│ │  Journal   │ │   Trial    │ │  Message   │ │ Database  │  │     │
+│  │  │  .feature  │ │  Entries   │ │  Balance   │ │  Events    │ │ Validation│  │     │
+│  │  │            │ │  .feature  │ │  .feature  │ │  .feature  │ │ .feature  │  │     │
+│  │  └────────────┘ └────────────┘ └────────────┘ └────────────┘ └───────────┘  │     │
+│  └───────────────────────────────────┬──────────────────────────────────────────┘     │
+│                                      │                                                │
+│  ┌───────────────────────────────────▼──────────────────────────────────────────┐     │
+│  │                       STEP DEFINITIONS LAYER                                 │     │
+│  │  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌──────────┐ ┌─────────────┐  │     │
+│  │  │ Common │ │  API   │ │ Schema │ │Contract│ │ Message  │ │  Database   │  │     │
+│  │  │ Steps  │ │ Steps  │ │ Steps  │ │ Steps  │ │  Steps   │ │   Steps     │  │     │
+│  │  └────────┘ └────────┘ └────────┘ └────────┘ └──────────┘ └─────────────┘  │     │
+│  └───────────────────────────────────┬──────────────────────────────────────────┘     │
+│                                      │                                                │
+│  ┌────────────────┬──────────────────▼──────────┬──────────────────┬──────────────┐   │
+│  │  CORE LAYER    │    VALIDATION LAYER         │  MESSAGE LAYER   │  DB LAYER    │   │
+│  │                │                             │                  │              │   │
+│  │ ┌────────────┐ │ ┌────────────────────┐      │ ┌──────────────┐ │ ┌──────────┐ │   │
+│  │ │ API Client │ │ │ Schema Validator   │      │ │ AMQP Client  │ │ │ DB Client│ │   │
+│  │ │(Playwright)│ │ │ (Ajv Engine)       │      │ │ (amqplib)    │ │ │ (Knex)   │ │   │
+│  │ ├────────────┤ │ ├────────────────────┤      │ ├──────────────┤ │ ├──────────┤ │   │
+│  │ │ Auth Mgr   │ │ │ Contract Validator │      │ │ Consumer     │ │ │ Query    │ │   │
+│  │ ├────────────┤ │ ├────────────────────┤      │ │ Harness      │ │ │ Builder  │ │   │
+│  │ │ Config     │ │ │ Message Schema     │      │ ├──────────────┤ │ ├──────────┤ │   │
+│  │ ├────────────┤ │ │ Validator          │      │ │ DLQ Monitor  │ │ │ Snapshot │ │   │
+│  │ │ Logger     │ │ ├────────────────────┤      │ └──────────────┘ │ │ Compartr │ │   │
+│  │ ├────────────┤ │ │ Drift Detector     │      │                  │ ├──────────┤ │   │
+│  │ │ Retry Hdlr │ │ └────────────────────┘      │                  │ │ Cleanup  │ │   │
+│  │ └────────────┘ │                             │                  │ │ Manager  │ │   │
+│  └────────────────┴─────────────────────────────┴──────────────────┴──────────────┘   │
+│                                      │                                                │
+│  ┌──────────────────┐  ┌─────────────┴───────────┐  ┌─────────────────────────────┐   │
+│  │    AI LAYER       │  │   INTEGRATION LAYER     │  │     REPORTING LAYER         │   │
+│  │ ┌──────────────┐  │  │ ┌───────────────────┐   │  │ ┌────────┐ ┌─────────────┐ │   │
+│  │ │ Scenario Gen │  │  │ │  Xray Reporter    │   │  │ │Cucumber│ │   Allure    │ │   │
+│  │ │ Data Synth   │  │  │ │  CI/CD Hooks      │   │  │ │  HTML  │ │  Dashboard  │ │   │
+│  │ │ Failure Anlz │  │  │ └───────────────────┘   │  │ └────────┘ └─────────────┘ │   │
+│  │ │ Self-Healer  │  │  │                         │  │                             │   │
+│  │ └──────────────┘  │  │                         │  │                             │   │
+│  └──────────────────┘  └─────────────────────────┘  └─────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+              │                        │                         │
+   ┌──────────▼──────────┐  ┌──────────▼──────────┐  ┌──────────▼──────────┐
+   │  GL SERVICE API     │  │     RabbitMQ        │  │   SQL Database      │
+   │  (.NET - HTTP)      │  │  (AMQP Broker)      │  │  (SQL Server/PG)   │
+   │  System Under Test  │  │  Message Broker      │  │  Data Store        │
+   └─────────────────────┘  └─────────────────────┘  └─────────────────────┘
+</pre>
+    </div>
+
+    <h3>4.2 Project Structure</h3>
+    <div class="code-label">PROJECT TREE</div>
+<pre><code>testonaut-gl/
+├── .ai/
+│   ├── prompts/                        # AI prompt templates
+│   │   ├── scenario-generator.md       # BDD scenario generation from Jira
+│   │   ├── test-data-generator.md      # Domain-aware test data synthesis
+│   │   ├── schema-analyzer.md          # Schema drift analysis
+│   │   └── failure-analyzer.md         # Root cause analysis
+│   └── config.ts                       # AI provider configuration
+│
+├── src/
+│   ├── core/
+│   │   ├── api-client.ts               # Playwright APIRequestContext wrapper
+│   │   ├── auth-manager.ts             # Token lifecycle management
+│   │   ├── config.ts                   # Environment configuration loader
+│   │   ├── logger.ts                   # Winston structured logging
+│   │   └── retry-handler.ts            # Exponential backoff with jitter
+│   │
+│   ├── messaging/
+│   │   ├── rabbit-client.ts            # RabbitMQ connection &amp; channel manager
+│   │   ├── consumer-harness.ts         # Test consumer — subscribe, collect, assert
+│   │   ├── publisher.ts                # Test publisher — inject messages for testing
+│   │   ├── message-schemas/            # Expected message JSON schemas
+│   │   │   ├── journal-posted.schema.json
+│   │   │   ├── account-created.schema.json
+│   │   │   ├── balance-updated.schema.json
+│   │   │   └── dlq-error.schema.json
+│   │   ├── message-validator.ts        # Message content &amp; header validation
+│   │   └── dlq-monitor.ts             # Dead-letter queue inspection
+│   │
+│   ├── database/
+│   │   ├── db-client.ts                # Knex.js database client (multi-dialect)
+│   │   ├── query-builder.ts            # Domain-specific query helpers
+│   │   ├── snapshot-manager.ts         # Pre/post state snapshots for comparison
+│   │   ├── cleanup-manager.ts          # Test data teardown &amp; isolation
+│   │   ├── migration-checker.ts        # Schema version verification
+│   │   └── queries/                    # Reusable SQL query templates
+│   │       ├── gl-accounts.queries.ts
+│   │       ├── journal-entries.queries.ts
+│   │       ├── audit-trail.queries.ts
+│   │       └── balances.queries.ts
+│   │
+│   ├── schemas/
+│   │   ├── contracts/                  # Consumer-driven contract definitions
+│   │   │   ├── gl-accounts.contract.json
+│   │   │   ├── journal-entries.contract.json
+│   │   │   └── trial-balance.contract.json
+│   │   ├── json-schemas/              # JSON Schema Draft-07 files
+│   │   │   ├── gl-account.schema.json
+│   │   │   ├── journal-entry.schema.json
+│   │   │   ├── trial-balance.schema.json
+│   │   │   └── error-response.schema.json
+│   │   └── schema-validator.ts         # Ajv validation engine
+│   │
+│   ├── models/
+│   │   ├── requests/                   # Request payload builders
+│   │   ├── responses/                  # Response type definitions
+│   │   └── test-data/
+│   │       ├── factories/              # Fishery.js test data factories
+│   │       └── fixtures/               # Static test fixtures
+│   │
+│   ├── steps/
+│   │   ├── common/                     # Reusable step definitions
+│   │   │   ├── api.steps.ts            # HTTP method steps
+│   │   │   ├── auth.steps.ts           # Authentication steps
+│   │   │   ├── schema.steps.ts         # Schema validation steps
+│   │   │   ├── contract.steps.ts       # Contract validation steps
+│   │   │   ├── message.steps.ts        # RabbitMQ message assertion steps
+│   │   │   └── database.steps.ts       # Database assertion steps
+│   │   ├── gl-accounts.steps.ts        # GL Account domain steps
+│   │   ├── journal-entries.steps.ts    # Journal Entry domain steps
+│   │   └── trial-balance.steps.ts      # Trial Balance domain steps
+│   │
+│   ├── support/
+│   │   ├── world.ts                    # Cucumber World (shared state)
+│   │   ├── hooks.ts                    # Before/After lifecycle hooks
+│   │   ├── xray-reporter.ts            # Xray Cloud REST API integration
+│   │   └── ai-enricher.ts             # AI-powered test hooks
+│   │
+│   └── utils/
+│       ├── payload-mutator.ts          # Negative test payload corruption
+│       ├── data-generator.ts           # Dynamic test data generation
+│       └── comparator.ts              # Deep response comparison
+│
+├── features/
+│   ├── gl-accounts/                    # GL Account feature files
+│   ├── journal-entries/                # Journal Entry feature files
+│   ├── trial-balance/                  # Trial Balance feature files
+│   ├── messaging/                      # RabbitMQ message event features
+│   │   ├── journal-posted-event.feature
+│   │   ├── account-created-event.feature
+│   │   ├── balance-updated-event.feature
+│   │   ├── dead-letter-queue.feature
+│   │   └── message-ordering.feature
+│   ├── database/                       # Database validation features
+│   │   ├── journal-persistence.feature
+│   │   ├── balance-integrity.feature
+│   │   ├── audit-trail.feature
+│   │   ├── referential-integrity.feature
+│   │   └── concurrent-transactions.feature
+│   ├── end-to-end/                    # Cross-layer flow features
+│   │   ├── api-to-message-to-db.feature
+│   │   └── event-driven-reconciliation.feature
+│   ├── contracts/                      # Contract test feature files
+│   └── cross-cutting/                 # Auth, rate limiting, error handling
+│
+├── reports/                           # Generated reports (gitignored)
+├── cucumber.js                         # Cucumber configuration
+├── playwright.config.ts               # Playwright configuration
+├── knexfile.ts                         # Database connection configuration
+├── tsconfig.json                       # TypeScript configuration
+└── package.json                        # Dependencies and scripts</code></pre>
+
+    <h3>4.3 Core Components</h3>
+
+    <h4>API Client (api-client.ts)</h4>
+    <p>The centralized HTTP client wraps Playwright's <code>APIRequestContext</code> providing a unified interface for all API interactions. It handles authentication header injection, request/response logging, response time measurement, and automatic retry for transient failures.</p>
+    <div class="code-label">TypeScript</div>
+<pre><code>export class ApiClient {
+  private context: APIRequestContext;
+  private authManager: AuthManager;
+  private logger: Logger;
+
+  async request(method: string, endpoint: string, options?: RequestOptions) {
+    const startTime = Date.now();
+    const headers = await this.authManager.getAuthHeaders();
+
+    const response = await this.context[method](endpoint, {
+      headers: { ...headers, ...options?.headers },
+      data: options?.body,
+      params: options?.queryParams,
+    });
+
+    const duration = Date.now() - startTime;
+    this.logger.info('API Request', {
+      method, endpoint, status: response.status(), duration,
+      requestBody: options?.body,
+      responseBody: await response.json().catch(() => null)
+    });
+
+    return {
+      status: response.status(),
+      body: await response.json(),
+      headers: response.headers(),
+      duration
+    };
+  }
+}</code></pre>
+
+    <h4>Payload Mutator (payload-mutator.ts)</h4>
+    <p>The most critical component for negative testing. Takes a valid payload and applies configurable corruptions to specific fields, enabling comprehensive validation testing without .NET model constraints.</p>
+    <div class="code-label">TypeScript</div>
+<pre><code>export type CorruptionType =
+  | 'string-in-numeric' | 'overflow' | 'negative-amount'
+  | 'null' | 'missing' | 'empty-string' | 'exceed-max-length'
+  | 'sql-injection' | 'special-chars' | 'wrong-type-array'
+  | 'wrong-type-object' | 'unicode';
+
+export class PayloadMutator {
+  static corruptField(
+    payload: Record&lt;string, any&gt;,
+    field: string,
+    corruption: CorruptionType
+  ): Record&lt;string, any&gt; {
+    const mutated = structuredClone(payload);
+    switch (corruption) {
+      case 'string-in-numeric':  mutated[field] = 'not-a-number'; break;
+      case 'overflow':           mutated[field] = Number.MAX_SAFE_INTEGER + 1; break;
+      case 'negative-amount':    mutated[field] = -99999.99; break;
+      case 'null':               mutated[field] = null; break;
+      case 'missing':            delete mutated[field]; break;
+      case 'empty-string':       mutated[field] = ''; break;
+      case 'exceed-max-length':  mutated[field] = 'x'.repeat(10000); break;
+      case 'sql-injection':      mutated[field] = "'; DROP TABLE--"; break;
+      case 'special-chars':      mutated[field] = '&lt;&gt;&amp;"\'\\'; break;
+      case 'wrong-type-array':   mutated[field] = [1, 2, 3]; break;
+      case 'wrong-type-object':  mutated[field] = { invalid: true }; break;
+      case 'unicode':            mutated[field] = '日本語テスト'; break;
+    }
+    return mutated;
+  }
+
+  // AI-powered: generate edge case corruptions contextually
+  static async generateSmartCorruptions(
+    fieldName: string,
+    fieldType: string,
+    businessContext: string
+  ): Promise&lt;Record&lt;string, any&gt;[]&gt; {
+    // Uses AI to generate domain-specific negative test data
+    // e.g., for GL "accountNumber": duplicate codes,
+    // invalid chart-of-accounts formats, etc.
+  }
+}</code></pre>
+
+    <h4>Cucumber World (world.ts)</h4>
+    <p>The World object maintains shared state across step definitions within a single scenario — holding the API client, request/response context, authentication state, and validation results.</p>
+    <div class="code-label">TypeScript</div>
+<pre><code>export class GLTestWorld extends World {
+  apiClient: ApiClient;
+  rabbitClient: RabbitClient;
+  consumerHarness: ConsumerHarness;
+  dbClient: DatabaseClient;
+  snapshotManager: SnapshotManager;
+  cleanupManager: CleanupManager;
+  currentRequest: { method?: string; endpoint?: string; body?: any };
+  currentResponse: { status?: number; body?: any; headers?: any; duration?: number };
+  authToken: string;
+  schemaValidator: SchemaValidator;
+  testData: Record&lt;string, any&gt;;
+
+  constructor(options: IWorldOptions) {
+    super(options);
+    this.apiClient = new ApiClient(config.baseUrl);
+    this.rabbitClient = new RabbitClient(config.rabbitmq);
+    this.consumerHarness = new ConsumerHarness(this.rabbitClient);
+    this.dbClient = new DatabaseClient(config.database);
+    this.snapshotManager = new SnapshotManager();
+    this.cleanupManager = new CleanupManager();
+    this.schemaValidator = new SchemaValidator();
+    this.currentRequest = {};
+    this.currentResponse = {};
+    this.testData = {};
+  }
+}</code></pre>
+
+    <h3>4.4 Data Flow</h3>
+    <p><strong>API Test Flow:</strong></p>
+    <div class="flow-container">
+      <div class="flow-box">Feature File<br><small>.feature</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">Step Definitions<br><small>.steps.ts</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">API Client<br><small>Playwright</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">GL Service API<br><small>.NET SUT</small></div>
+    </div>
+    <p><strong>Message Test Flow:</strong></p>
+    <div class="flow-container">
+      <div class="flow-box">API Trigger<br><small>POST request</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">GL Service API<br><small>Publishes event</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">RabbitMQ<br><small>Exchange → Queue</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">Consumer Harness<br><small>Collect &amp; Assert</small></div>
+    </div>
+    <p><strong>Database Test Flow:</strong></p>
+    <div class="flow-container">
+      <div class="flow-box">Snapshot Before<br><small>Capture state</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">API Operation<br><small>Trigger mutation</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">DB Assertions<br><small>Knex queries</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">Snapshot Compare<br><small>Verify delta</small></div>
+    </div>
+    <p><strong>Combined Reporting:</strong></p>
+    <div class="flow-container">
+      <div class="flow-box">All Assertions<br><small>API + Msg + DB</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">Schema / Contract<br><small>Validation</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">Assertions<br><small>Chai</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">Reports<br><small>Xray + Allure</small></div>
+    </div>
+  </div>
+
+  <!-- ============================== SECTION 5 ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">SECTION 5</span>
+      <h2>BDD Implementation (Gherkin / Cucumber)</h2>
+    </div>
+
+    <h3>5.1 Feature File Organization</h3>
+    <p>Feature files are organized by API domain and test type. Each domain folder contains positive scenarios, negative scenarios, schema validation, and boundary tests.</p>
+
+    <table>
+      <thead>
+        <tr><th>Folder</th><th>Contents</th><th>Tag</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>features/gl-accounts/</code></td><td>CRUD operations, account hierarchy, validation</td><td><code>@gl-accounts</code></td></tr>
+        <tr><td><code>features/journal-entries/</code></td><td>Posting, reversals, batch operations, balancing</td><td><code>@journal-entries</code></td></tr>
+        <tr><td><code>features/trial-balance/</code></td><td>Period queries, consolidation, currency conversion</td><td><code>@trial-balance</code></td></tr>
+        <tr><td><code>features/contracts/</code></td><td>Consumer-driven contract tests</td><td><code>@contract</code></td></tr>
+        <tr><td><code>features/cross-cutting/</code></td><td>Auth, rate limits, error formats, headers</td><td><code>@cross-cutting</code></td></tr>
+      </tbody>
+    </table>
+
+    <h4>Tag Strategy</h4>
+    <table>
+      <thead>
+        <tr><th>Tag</th><th>Purpose</th><th>Execution Context</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>@smoke</code></td><td>Critical path — quick verification</td><td>CI pipeline on every PR</td></tr>
+        <tr><td><code>@regression</code></td><td>Full regression suite</td><td>Nightly scheduled run</td></tr>
+        <tr><td><code>@negative</code></td><td>Negative / invalid input scenarios</td><td>Pre-release validation</td></tr>
+        <tr><td><code>@schema</code></td><td>JSON Schema validation tests</td><td>Contract change detection</td></tr>
+        <tr><td><code>@contract</code></td><td>Consumer-driven contract tests</td><td>API version gate</td></tr>
+        <tr><td><code>@messaging</code></td><td>RabbitMQ message event tests</td><td>Event-driven flow validation</td></tr>
+        <tr><td><code>@database</code></td><td>Database persistence and integrity tests</td><td>Data layer validation</td></tr>
+        <tr><td><code>@e2e</code></td><td>Cross-layer end-to-end flows (API→Msg→DB)</td><td>Pre-release integration validation</td></tr>
+        <tr><td><code>@dlq</code></td><td>Dead-letter queue and retry tests</td><td>Error handling verification</td></tr>
+        <tr><td><code>@critical</code></td><td>Business-critical financial operations</td><td>Production smoke</td></tr>
+        <tr><td><code>@XRAY-{KEY}</code></td><td>Links to Xray test case in Jira</td><td>Traceability reporting</td></tr>
+      </tbody>
+    </table>
+
+    <h3>5.2 Step Definition Strategy</h3>
+    <p>Common, reusable steps handle generic HTTP operations and validation. Domain-specific steps handle GL business logic. This prevents duplication and ensures consistency.</p>
+    <div class="code-label">GHERKIN — Positive Scenario</div>
+<pre><code>@XRAY-GL-201 @smoke @gl-accounts
+Scenario: Successfully create a new GL account
+  Given I am authenticated as "gl-admin"
+  And I have a valid GL account payload:
+    | accountCode | accountName      | accountType | currency |
+    | 1001        | Cash at Bank     | Asset       | EUR      |
+  When I send a POST request to "/api/v1/gl-accounts"
+  Then the response status should be 201
+  And the response should match schema "gl-account"
+  And the response field "accountCode" should equal "1001"
+  And the response field "accountName" should equal "Cash at Bank"</code></pre>
+
+    <h3>5.3 Negative Testing Patterns</h3>
+    <p>The <code>PayloadMutator</code> combined with Gherkin's Scenario Outline enables exhaustive negative coverage with minimal code.</p>
+    <div class="code-label">GHERKIN — Negative Scenario Outline</div>
+<pre><code>@XRAY-GL-301 @negative @journal-entries
+Scenario Outline: Reject journal entries with invalid data types
+  Given I am authenticated as "gl-accountant"
+  And I have a valid journal entry payload
+  When I set field "&lt;field&gt;" to "&lt;invalid_value&gt;" in the payload
+  And I send a POST request to "/api/v1/journal-entries"
+  Then the response status should be 400
+  And the response should match schema "error-response"
+  And the error message should reference field "&lt;field&gt;"
+
+  Examples:
+    | field         | invalid_value        | description                    |
+    | debitAmount   | not-a-number         | String in decimal field        |
+    | creditAmount  | abc                  | Alphabetic in amount           |
+    | accountCode   | 99999999999999999    | Overflow account code          |
+    | postingDate   | 31-13-2025           | Invalid month in date          |
+    | postingDate   | not-a-date           | String in date field           |
+    | currency      | INVALID              | Non-ISO-4217 currency code     |
+    | description   |                      | Empty required string field    |
+
+@XRAY-GL-302 @negative @journal-entries
+Scenario: Reject unbalanced journal entry
+  Given I am authenticated as "gl-accountant"
+  And I have a journal entry with debit 1000.00 and credit 999.99
+  When I send a POST request to "/api/v1/journal-entries"
+  Then the response status should be 422
+  And the error should indicate "debit and credit amounts must balance"</code></pre>
+
+    <div class="callout callout-success">
+      <div class="callout-title">Advantage: TypeScript Flexibility</div>
+      <p style="margin:0">In a .NET test project, setting <code>debitAmount = "not-a-number"</code> would fail at compile time because the property is typed as <code>decimal</code>. In TypeScript, the payload is a plain object — any value can be assigned to any key, enabling these negative scenarios naturally.</p>
+    </div>
+  </div>
+
+  <!-- ============================== SECTION 6 ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">SECTION 6</span>
+      <h2>Schema Validation &amp; Contract Testing</h2>
+    </div>
+
+    <h3>6.1 JSON Schema Validation</h3>
+    <p>Every API endpoint has a corresponding JSON Schema definition. The <code>SchemaValidator</code> uses Ajv to validate actual API responses against these schemas, catching structural regressions immediately.</p>
+    <div class="code-label">JSON SCHEMA — gl-account.schema.json</div>
+<pre><code>{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "gl-account",
+  "type": "object",
+  "required": ["accountId", "accountCode", "accountName",
+               "accountType", "balance", "currency", "createdAt"],
+  "properties": {
+    "accountId":   { "type": "string", "format": "uuid" },
+    "accountCode": { "type": "string", "pattern": "^[0-9]{4,10}$" },
+    "accountName": { "type": "string", "minLength": 1, "maxLength": 255 },
+    "accountType": { "type": "string",
+                     "enum": ["Asset","Liability","Equity","Revenue","Expense"] },
+    "balance":     { "type": "number", "multipleOf": 0.01 },
+    "currency":    { "type": "string", "pattern": "^[A-Z]{3}$" },
+    "isActive":    { "type": "boolean" },
+    "createdAt":   { "type": "string", "format": "date-time" },
+    "updatedAt":   { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}</code></pre>
+
+    <div class="code-label">TypeScript — Schema Validator</div>
+<pre><code>import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
+
+export class SchemaValidator {
+  private ajv: Ajv;
+
+  constructor() {
+    this.ajv = new Ajv({ allErrors: true, strict: false });
+    addFormats(this.ajv);
+    this.loadSchemas(); // Auto-loads all .schema.json files
+  }
+
+  validate(schemaName: string, data: unknown): ValidationResult {
+    const validate = this.ajv.getSchema(schemaName);
+    const valid = validate(data);
+    return {
+      valid,
+      errors: validate.errors?.map(e => ({
+        path: e.instancePath,
+        message: e.message,
+        keyword: e.keyword,
+        params: e.params
+      }))
+    };
+  }
+
+  // Contract validation: consumer expectations
+  validateContract(contractName: string, response: any): ContractResult {
+    const contract = this.loadContract(contractName);
+    return {
+      schemaValid: this.validate(contract.schema, response).valid,
+      requiredFieldsPresent: this.checkRequiredFields(contract, response),
+      fieldTypesMatch: this.checkFieldTypes(contract, response),
+      enumValuesValid: this.checkEnumConstraints(contract, response),
+      businessRulesValid: this.checkBusinessRules(contract, response)
+    };
+  }
+}</code></pre>
+
+    <h3>6.2 Consumer-Driven Contract Tests</h3>
+    <p>Contracts define <em>what consumers depend on</em>. A contract specifies required fields, expected types, value constraints, and business rules.</p>
+    <div class="code-label">CONTRACT — gl-accounts.contract.json</div>
+<pre><code>{
+  "contractName": "gl-accounts-consumer-v1",
+  "provider": "gl-service-api",
+  "consumer": "reporting-service",
+  "endpoints": {
+    "GET /api/v1/gl-accounts/{id}": {
+      "schema": "gl-account",
+      "requiredFields": ["accountId", "accountCode", "accountName",
+                         "accountType", "balance", "currency"],
+      "fieldConstraints": {
+        "balance":     { "type": "number", "precision": 2 },
+        "currency":    { "enum": ["EUR", "USD", "GBP", "CHF"] },
+        "accountType": { "enum": ["Asset","Liability","Equity",
+                                  "Revenue","Expense"] }
+      },
+      "businessRules": [
+        "balance must be a finite number (not NaN or Infinity)",
+        "accountCode must be unique within the chart of accounts",
+        "currency must be a valid ISO 4217 code"
+      ]
+    }
+  }
+}</code></pre>
+
+    <div class="code-label">GHERKIN — Contract Feature</div>
+<pre><code>@contract @critical
+Feature: GL Account API Contract
+
+  Scenario: GET GL Account satisfies consumer contract
+    Given I am authenticated as "api-consumer"
+    When I send a GET request to "/api/v1/gl-accounts/{validAccountId}"
+    Then the response status should be 200
+    And the response should satisfy contract "gl-accounts"
+    And the response should contain required fields:
+      | accountId | accountCode | accountName |
+      | accountType | balance | currency    |
+    And the field "balance" should be of type "number"
+    And the field "accountType" should be one of "Asset,Liability,Equity,Revenue,Expense"</code></pre>
+
+    <h3>6.3 Schema Drift Detection</h3>
+    <p>The framework maintains baseline snapshots of API responses and automatically detects when new fields appear, existing fields disappear, or field types change.</p>
+
+    <div class="code-label">GHERKIN — Drift Detection</div>
+<pre><code>@contract @critical
+Scenario: GL Account response schema has not drifted
+  Given I have the baseline schema snapshot for "gl-account"
+  When I send a GET request to "/api/v1/gl-accounts/{validAccountId}"
+  Then no new undocumented fields should be present in the response
+  And no previously documented fields should be missing
+  And no field types should have changed from the baseline</code></pre>
+
+    <div class="callout callout-warning">
+      <div class="callout-title">Financial Domain Consideration</div>
+      <p style="margin:0">In financial APIs, even subtle changes like a <code>balance</code> field changing from 2 decimal places to 4 can break downstream consumers. The drift detector flags precision changes, enum value additions/removals, and nullable field changes as potential breaking changes requiring review.</p>
+    </div>
+  </div>
+
+  <!-- ============================== SECTION 7: RABBITMQ ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">SECTION 7</span>
+      <h2>RabbitMQ Message Testing</h2>
+    </div>
+
+    <p>The GL Service API publishes domain events to RabbitMQ when financial transactions occur — journal entries posted, accounts created, balances updated, and reconciliation events triggered. Testing these messages is critical because downstream consumers (reporting services, audit systems, notification engines) depend on their structure, content, and delivery guarantees.</p>
+
+    <h3>7.1 Message Testing Architecture</h3>
+    <p>The framework connects directly to RabbitMQ as a test consumer, subscribing to relevant exchanges and queues. It collects messages emitted during test scenarios and validates their content, headers, routing, and delivery semantics.</p>
+
+    <div class="flow-container">
+      <div class="flow-box">API Request<br><small>POST /journal-entries</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">GL Service API<br><small>Processes &amp; Publishes</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">RabbitMQ<br><small>Exchange → Queue</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">Test Consumer<br><small>Collects &amp; Asserts</small></div>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-title">Design Principle</div>
+      <p style="margin:0">The test consumer connects to a <strong>dedicated test queue</strong> bound to the same exchange as production consumers. This ensures tests observe real messages without interfering with application queues. The test queue is created dynamically per test run and cleaned up afterward.</p>
+    </div>
+
+    <h3>7.2 Queue Client &amp; Consumer Harness</h3>
+    <p>The <code>RabbitClient</code> manages AMQP connections and channels, while the <code>ConsumerHarness</code> provides a high-level interface for subscribing to queues, collecting messages with configurable timeouts, and asserting on received messages.</p>
+
+    <div class="code-label">TypeScript — rabbit-client.ts</div>
+<pre><code>import amqplib, { Connection, Channel, ConsumeMessage } from 'amqplib';
+
+export class RabbitClient {
+  private connection: Connection;
+  private channel: Channel;
+
+  async connect(): Promise&lt;void&gt; {
+    this.connection = await amqplib.connect(config.rabbitmq.url);
+    this.channel = await this.connection.createChannel();
+  }
+
+  async createTestQueue(exchange: string, routingKey: string): Promise&lt;string&gt; {
+    const queueName = `test-${exchange}-${Date.now()}`;
+    await this.channel.assertQueue(queueName, {
+      exclusive: true,      // Auto-delete when test disconnects
+      durable: false,
+      arguments: { 'x-expires': 300000 } // 5-min TTL safety net
+    });
+    await this.channel.bindQueue(queueName, exchange, routingKey);
+    return queueName;
+  }
+
+  async disconnect(): Promise&lt;void&gt; {
+    await this.channel?.close();
+    await this.connection?.close();
+  }
+}</code></pre>
+
+    <div class="code-label">TypeScript — consumer-harness.ts</div>
+<pre><code>export class ConsumerHarness {
+  private collectedMessages: CollectedMessage[] = [];
+  private rabbitClient: RabbitClient;
+
+  async startListening(exchange: string, routingKey: string): Promise&lt;void&gt; {
+    const queueName = await this.rabbitClient.createTestQueue(exchange, routingKey);
+    await this.rabbitClient.channel.consume(queueName, (msg) =&gt; {
+      if (msg) {
+        this.collectedMessages.push({
+          content: JSON.parse(msg.content.toString()),
+          headers: msg.properties.headers,
+          routingKey: msg.fields.routingKey,
+          exchange: msg.fields.exchange,
+          timestamp: new Date(),
+          messageId: msg.properties.messageId,
+          correlationId: msg.properties.correlationId,
+          contentType: msg.properties.contentType
+        });
+        this.rabbitClient.channel.ack(msg);
+      }
+    });
+  }
+
+  // Wait for expected messages with timeout
+  async waitForMessages(
+    count: number,
+    timeoutMs: number = 10000
+  ): Promise&lt;CollectedMessage[]&gt; {
+    const start = Date.now();
+    while (this.collectedMessages.length &lt; count) {
+      if (Date.now() - start &gt; timeoutMs) {
+        throw new Error(
+          `Timeout: expected ${count} messages, received ${this.collectedMessages.length}`
+        );
+      }
+      await new Promise(r =&gt; setTimeout(r, 100));
+    }
+    return this.collectedMessages;
+  }
+
+  // Assert no unexpected messages arrived
+  async assertNoMessages(waitMs: number = 3000): Promise&lt;void&gt; {
+    await new Promise(r =&gt; setTimeout(r, waitMs));
+    if (this.collectedMessages.length &gt; 0) {
+      throw new Error(
+        `Expected no messages but received ${this.collectedMessages.length}`
+      );
+    }
+  }
+
+  reset(): void { this.collectedMessages = []; }
+}</code></pre>
+
+    <h3>7.3 Message Schema Validation</h3>
+    <p>Just like API response schemas, message payloads have their own JSON Schema definitions. Each event type has a corresponding schema ensuring the message structure satisfies consumer contracts.</p>
+
+    <div class="code-label">JSON SCHEMA — journal-posted.schema.json</div>
+<pre><code>{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "journal-posted-event",
+  "type": "object",
+  "required": ["eventId", "eventType", "timestamp", "correlationId", "data"],
+  "properties": {
+    "eventId":       { "type": "string", "format": "uuid" },
+    "eventType":     { "const": "JournalEntryPosted" },
+    "timestamp":     { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "format": "uuid" },
+    "version":       { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$" },
+    "data": {
+      "type": "object",
+      "required": ["journalId", "accountCode", "debitAmount",
+                   "creditAmount", "currency", "postingDate"],
+      "properties": {
+        "journalId":    { "type": "string", "format": "uuid" },
+        "accountCode":  { "type": "string" },
+        "debitAmount":  { "type": "number", "multipleOf": 0.01 },
+        "creditAmount": { "type": "number", "multipleOf": 0.01 },
+        "currency":     { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "postingDate":  { "type": "string", "format": "date" }
+      }
+    }
+  }
+}</code></pre>
+
+    <h3>7.4 Event-Driven Flow Testing (Gherkin)</h3>
+    <div class="code-label">GHERKIN — Journal Posted Event</div>
+<pre><code>@XRAY-MSG-101 @messaging @journal-entries
+Feature: Journal Entry Posted Event
+
+  Background:
+    Given I am authenticated as "gl-accountant"
+    And I am listening on exchange "gl.events" with routing key "journal.posted"
+
+  @smoke
+  Scenario: Journal posting emits correctly structured event
+    When I send a valid POST request to "/api/v1/journal-entries" with:
+      | accountCode | debitAmount | creditAmount | currency | postingDate |
+      | 1001        | 5000.00     | 5000.00      | EUR      | 2026-03-01  |
+    Then the response status should be 201
+    And I should receive 1 message within 10 seconds
+    And the message should match schema "journal-posted-event"
+    And the message field "data.accountCode" should equal "1001"
+    And the message field "data.debitAmount" should equal 5000.00
+    And the message header "content-type" should equal "application/json"
+    And the message property "correlationId" should not be empty
+
+  @negative
+  Scenario: Failed journal posting does NOT emit event
+    When I send an invalid POST request to "/api/v1/journal-entries" with:
+      | accountCode | debitAmount | creditAmount | currency |
+      | 1001        | 5000.00     | 4999.00      | EUR      |
+    Then the response status should be 422
+    And no messages should be received within 3 seconds
+
+  Scenario: Batch journal posting emits events in correct order
+    When I post 5 journal entries sequentially
+    Then I should receive 5 messages within 30 seconds
+    And the messages should be in chronological order
+    And each message should have a unique "eventId"
+    And each message "correlationId" should match its API response correlation</code></pre>
+
+    <h3>7.5 Dead-Letter &amp; Retry Verification</h3>
+    <p>The framework also validates the system's error handling for messages by inspecting dead-letter queues (DLQ) and verifying retry behavior.</p>
+
+    <div class="code-label">GHERKIN — Dead Letter Queue Testing</div>
+<pre><code>@XRAY-MSG-201 @messaging @dlq
+Feature: Dead Letter Queue Handling
+
+  Background:
+    Given I am listening on the dead-letter queue "gl.events.dlq"
+
+  Scenario: Malformed messages are routed to DLQ
+    Given I publish a malformed message to exchange "gl.events":
+      | content                    | contentType      |
+      | {invalid-json-here         | application/json |
+    Then the message should appear in the DLQ within 5 seconds
+    And the DLQ message header "x-death" should contain routing information
+    And the DLQ message header "x-first-death-reason" should be "rejected"
+
+  Scenario: Messages exceeding retry limit land in DLQ
+    Given I publish a message that causes consumer processing failure
+    Then the message should be retried 3 times
+    And after retries are exhausted the message should appear in the DLQ
+    And the DLQ message header "x-death[0].count" should be 3</code></pre>
+
+    <div class="callout callout-warning">
+      <div class="callout-title">Test Isolation</div>
+      <p style="margin:0">Each test scenario creates its own temporary queue bound to the exchange. Queues are set to <code>exclusive: true</code> so they auto-delete when the test consumer disconnects. An additional <code>x-expires</code> TTL provides a safety net in case of test crashes. This ensures zero cross-scenario contamination.</p>
+    </div>
+  </div>
+
+  <!-- ============================== SECTION 8: DATABASE ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">SECTION 8</span>
+      <h2>Database Validation Testing</h2>
+    </div>
+
+    <p>While API response testing validates <em>what the system returns</em>, database testing validates <em>what the system persists</em>. For a financial GL service, data integrity at the storage layer is paramount — incorrect database state can propagate errors across the entire accounting system.</p>
+
+    <h3>8.1 Database Testing Philosophy</h3>
+
+    <div class="callout callout-danger">
+      <div class="callout-title">Critical Rule</div>
+      <p style="margin:0">The test framework connects to the database as a <strong>read-only validator</strong> in most scenarios. Tests assert on data state but do not mutate it directly. Data mutations happen through the API under test. The exception is test data setup/teardown, which uses dedicated service accounts with scoped permissions.</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Approach</th><th>When Used</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Post-API Assertion</strong></td>
+          <td>Verify API calls persisted data correctly</td>
+          <td>After POST /journal-entries, assert the row exists with correct values</td>
+        </tr>
+        <tr>
+          <td><strong>Snapshot Comparison</strong></td>
+          <td>Verify state transitions</td>
+          <td>Capture account balance before and after posting; compare delta</td>
+        </tr>
+        <tr>
+          <td><strong>Referential Integrity</strong></td>
+          <td>Verify foreign key relationships are maintained</td>
+          <td>Journal entry references a valid account in the accounts table</td>
+        </tr>
+        <tr>
+          <td><strong>Audit Trail Verification</strong></td>
+          <td>Verify compliance logging</td>
+          <td>Every financial mutation has a corresponding audit_log entry with user, timestamp, and before/after values</td>
+        </tr>
+        <tr>
+          <td><strong>Business Rule Validation</strong></td>
+          <td>Verify GL-specific constraints at data level</td>
+          <td>Sum of debits equals sum of credits for all posted journal entries</td>
+        </tr>
+        <tr>
+          <td><strong>Test Data Setup</strong></td>
+          <td>Pre-populate prerequisite data</td>
+          <td>Insert reference accounts before testing journal entry posting</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>8.2 Database Client &amp; Query Engine</h3>
+    <p>The framework uses <strong>Knex.js</strong> as the database client — a SQL query builder that supports SQL Server, PostgreSQL, MySQL, and SQLite. This gives flexibility regardless of which database the GL service uses.</p>
+
+    <div class="code-label">TypeScript — db-client.ts</div>
+<pre><code>import knex, { Knex } from 'knex';
+
+export class DatabaseClient {
+  private db: Knex;
+
+  constructor() {
+    this.db = knex({
+      client: config.database.client,  // 'mssql', 'pg', 'mysql2'
+      connection: {
+        host: config.database.host,
+        port: config.database.port,
+        user: config.database.user,
+        password: config.database.password,
+        database: config.database.name,
+      },
+      pool: { min: 1, max: 5 }
+    });
+  }
+
+  // Generic query execution
+  async query&lt;T&gt;(sql: string, params?: any[]): Promise&lt;T[]&gt; {
+    const result = await this.db.raw(sql, params);
+    return result.rows || result; // Normalize across dialects
+  }
+
+  // Domain-specific helper: Get account by code
+  async getAccountByCode(accountCode: string) {
+    return this.db('gl_accounts').where({ account_code: accountCode }).first();
+  }
+
+  // Domain-specific helper: Get journal entries for account
+  async getJournalEntriesForAccount(accountCode: string, limit = 50) {
+    return this.db('journal_entries')
+      .where({ account_code: accountCode })
+      .orderBy('posting_date', 'desc')
+      .limit(limit);
+  }
+
+  // Domain-specific: Sum of debits vs credits (must balance)
+  async getTrialBalanceTotals() {
+    return this.db('journal_entries')
+      .where({ status: 'posted' })
+      .select(
+        this.db.raw('SUM(debit_amount) as total_debits'),
+        this.db.raw('SUM(credit_amount) as total_credits')
+      )
+      .first();
+  }
+
+  // Audit trail query
+  async getAuditTrail(entityType: string, entityId: string) {
+    return this.db('audit_log')
+      .where({ entity_type: entityType, entity_id: entityId })
+      .orderBy('created_at', 'asc');
+  }
+
+  async disconnect(): Promise&lt;void&gt; {
+    await this.db.destroy();
+  }
+}</code></pre>
+
+    <h3>8.3 GL-Specific Data Assertions</h3>
+    <div class="code-label">TypeScript — Snapshot Manager</div>
+<pre><code>export class SnapshotManager {
+  private snapshots: Map&lt;string, any&gt; = new Map();
+
+  // Capture state before an operation
+  async captureSnapshot(label: string, query: () =&gt; Promise&lt;any&gt;) {
+    this.snapshots.set(label, await query());
+  }
+
+  // Compare with current state after an operation
+  async compareSnapshot(label: string, query: () =&gt; Promise&lt;any&gt;) {
+    const before = this.snapshots.get(label);
+    const after = await query();
+    return {
+      before,
+      after,
+      changes: this.deepDiff(before, after),
+      balanceDelta: after?.balance != null
+        ? (after.balance - before.balance) : undefined
+    };
+  }
+}</code></pre>
+
+    <div class="code-label">GHERKIN — Database Validation Features</div>
+<pre><code>@XRAY-DB-101 @database @journal-entries
+Feature: Journal Entry Database Persistence
+
+  Background:
+    Given I am authenticated as "gl-accountant"
+    And account "1001" exists in the database with balance 10000.00
+
+  @smoke
+  Scenario: Journal entry is correctly persisted in the database
+    Given I capture a database snapshot of account "1001"
+    When I send a valid POST request to "/api/v1/journal-entries" with:
+      | accountCode | debitAmount | creditAmount | currency | postingDate |
+      | 1001        | 2500.00     | 2500.00      | EUR      | 2026-03-01  |
+    Then the response status should be 201
+    And a journal entry row should exist in the database with:
+      | column        | expected_value |
+      | account_code  | 1001           |
+      | debit_amount  | 2500.00        |
+      | credit_amount | 2500.00        |
+      | currency      | EUR            |
+      | status        | posted         |
+    And the account "1001" balance should have changed by 2500.00
+    And the journal entry should have a "created_at" timestamp within 30 seconds of now
+
+  Scenario: Audit trail is recorded for every journal posting
+    When I post a journal entry for account "1001" with amount 1500.00
+    Then an audit trail entry should exist with:
+      | field         | expected                    |
+      | entity_type   | JournalEntry                |
+      | action        | CREATE                      |
+      | performed_by  | gl-accountant               |
+      | details       | contains "debit_amount=1500"|
+    And the audit "before_state" should be null
+    And the audit "after_state" should contain the persisted journal data
+
+@XRAY-DB-201 @database @integrity
+Feature: GL Data Integrity
+
+  @critical
+  Scenario: Trial balance always balances (debits = credits)
+    When I query the database for trial balance totals
+    Then the sum of all debit amounts should equal the sum of all credit amounts
+    And the difference should be exactly 0.00
+
+  Scenario: No orphaned journal entries exist
+    When I query for journal entries with non-existent account codes
+    Then the result set should be empty
+
+  Scenario: All posted entries have audit trail records
+    When I query for posted journal entries without audit trail
+    Then the result set should be empty
+
+@XRAY-DB-301 @database @concurrent
+Feature: Concurrent Transaction Handling
+
+  Scenario: Concurrent journal postings maintain balance integrity
+    Given I capture account "1001" balance
+    When I send 10 concurrent POST requests to "/api/v1/journal-entries" for account "1001"
+    Then all 10 responses should have status 201
+    And the final account "1001" balance should equal the initial balance plus the sum of all posted amounts
+    And no duplicate journal entry IDs should exist in the database</code></pre>
+
+    <h3>8.4 Test Data Lifecycle Management</h3>
+    <p>Database test data must be carefully managed to ensure test isolation without corrupting shared environments. The <code>CleanupManager</code> tracks all data created during tests and removes it in reverse order after each scenario.</p>
+
+    <div class="code-label">TypeScript — cleanup-manager.ts</div>
+<pre><code>export class CleanupManager {
+  private createdRecords: { table: string; id: string; }[] = [];
+
+  // Track records created during test setup
+  trackRecord(table: string, id: string): void {
+    this.createdRecords.push({ table, id });
+  }
+
+  // Teardown: remove all test data in reverse order (respects FK constraints)
+  async cleanup(db: DatabaseClient): Promise&lt;void&gt; {
+    for (const record of this.createdRecords.reverse()) {
+      try {
+        await db.query(`DELETE FROM ${record.table} WHERE id = ?`, [record.id]);
+      } catch (error) {
+        // Log but don't fail — cleanup is best-effort
+        logger.warn('Cleanup failed', { table: record.table, id: record.id, error });
+      }
+    }
+    this.createdRecords = [];
+  }
+}
+
+// In hooks.ts:
+Before(async function () {
+  this.cleanupManager = new CleanupManager();
+  await this.dbClient.connect();
+});
+
+After(async function () {
+  await this.cleanupManager.cleanup(this.dbClient);
+  await this.dbClient.disconnect();
+});</code></pre>
+
+    <div class="callout callout-info">
+      <div class="callout-title">Environment Strategy</div>
+      <p style="margin:0"><strong>Test Prefix Convention:</strong> All test-created data uses a recognizable prefix (e.g., account codes starting with <code>TEST-</code>) to distinguish from real data. A nightly cleanup job purges any orphaned test data matching these prefixes as a safety net.</p>
+    </div>
+
+    <h3>8.5 End-to-End Flow: API → Message → Database</h3>
+    <p>The most powerful capability of combining all three layers is <strong>cross-layer assertion</strong> — verifying that a single business operation produces correct results at the API, messaging, and database levels simultaneously.</p>
+
+    <div class="flow-container">
+      <div class="flow-box">1. API Call<br><small>POST /journal-entries</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">2. Assert API<br><small>Status 201 + Schema</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">3. Assert Message<br><small>Event published</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">4. Assert Database<br><small>Row persisted + Balance</small></div>
+    </div>
+
+    <div class="code-label">GHERKIN — Full End-to-End Flow</div>
+<pre><code>@XRAY-E2E-101 @e2e @critical
+Feature: Journal Entry End-to-End Flow
+
+  Scenario: Complete journal posting validates API, message, and database
+    Given I am authenticated as "gl-accountant"
+    And I am listening on exchange "gl.events" with routing key "journal.posted"
+    And I capture a database snapshot of account "1001"
+    
+    When I send a valid POST request to "/api/v1/journal-entries" with:
+      | accountCode | debitAmount | creditAmount | currency | postingDate |
+      | 1001        | 3000.00     | 3000.00      | EUR      | 2026-03-01  |
+    
+    # --- API Layer Assertions ---
+    Then the response status should be 201
+    And the response should match schema "journal-entry"
+    And the response field "status" should equal "posted"
+    
+    # --- Message Layer Assertions ---
+    And I should receive 1 message within 10 seconds
+    And the message should match schema "journal-posted-event"
+    And the message field "data.journalId" should match the API response "journalId"
+    And the message field "data.debitAmount" should equal 3000.00
+    
+    # --- Database Layer Assertions ---
+    And a journal entry row should exist in the database matching the API response
+    And the account "1001" balance should have changed by 3000.00
+    And an audit trail entry should exist for the journal posting
+    And the trial balance totals should still be balanced</code></pre>
+  </div>
+
+  <!-- ============================== SECTION 9: AI ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">SECTION 9</span>
+      <h2>AI Integration Layer</h2>
+    </div>
+
+    <p>The AI layer transforms the framework from a traditional test runner into an <strong>intelligent testing agent</strong>. AI capabilities are integrated at every stage of the test lifecycle.</p>
+
+    <h3>7.1 AI-Powered Scenario Generation</h3>
+    <p>BDD scenarios are generated automatically from Jira ticket descriptions. The AI analyzes acceptance criteria, API specifications, and existing test patterns to produce comprehensive Gherkin scenarios.</p>
+
+    <div class="flow-container">
+      <div class="flow-box">Jira Ticket<br><small>Story / AC</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">AI Prompt<br><small>+ Context</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">LLM<br><small>Claude / GPT</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">.feature File<br><small>Generated</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">QA Review<br><small>Approve/Edit</small></div>
+    </div>
+
+    <div class="code-label">TypeScript — Scenario Generator</div>
+<pre><code>export class AIScenarioGenerator {
+  async generateFromTicket(jiraKey: string): Promise&lt;GeneratedFeature&gt; {
+    const ticket = await this.jiraClient.getIssue(jiraKey);
+    const existingSchemas = await this.getRelevantSchemas(ticket);
+    const existingPatterns = await this.getExistingFeaturePatterns();
+
+    const prompt = this.buildPrompt({
+      ticketSummary: ticket.fields.summary,
+      ticketDescription: ticket.fields.description,
+      acceptanceCriteria: ticket.fields.customfield_AC,
+      apiEndpoint: ticket.fields.customfield_endpoint,
+      schemas: existingSchemas,
+      patterns: existingPatterns,
+      domainContext: 'General Ledger financial accounting API'
+    });
+
+    const response = await this.llm.generate(prompt);
+    return {
+      featureContent: response.gherkinScenarios,
+      suggestedTags: response.tags,
+      xrayTestKey: response.xrayMapping,
+      coverageAnalysis: response.coverageGaps
+    };
+  }
+}</code></pre>
+
+    <h3>7.2 Intelligent Test Data Synthesis</h3>
+    <p>The AI test data generator understands GL domain concepts and produces contextually appropriate test data that exercises business-relevant edge cases.</p>
+
+    <table>
+      <thead>
+        <tr><th>Traditional Data Generation</th><th>AI-Powered Data Generation</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Random string for <code>accountCode</code></td>
+          <td>Valid CoA codes, duplicate codes, codes at hierarchy boundaries</td>
+        </tr>
+        <tr>
+          <td>Random number for <code>balance</code></td>
+          <td>Amounts at precision limits, rounding edge cases, zero, near-overflow</td>
+        </tr>
+        <tr>
+          <td>Random date for <code>postingDate</code></td>
+          <td>Fiscal year boundaries, closed period dates, leap year, future dates</td>
+        </tr>
+        <tr>
+          <td>Random string for <code>currency</code></td>
+          <td>Valid ISO codes, deprecated codes (DEM), codes with different decimal rules (JPY=0, BHD=3)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>7.3 Failure Root Cause Analysis</h3>
+    <p>When tests fail, the AI analyzes the complete failure context — scenario, step, request/response payloads, error messages, and historical patterns — to provide probable root cause analysis.</p>
+
+    <div class="code-label">TypeScript — Failure Analyzer Hook</div>
+<pre><code>// Integrated as a Cucumber After hook
+After(async function(scenario) {
+  if (scenario.result?.status === Status.FAILED) {
+    const analysis = await aiEnricher.analyzeFailure({
+      scenarioName: scenario.pickle.name,
+      failedStep: getFailedStep(scenario),
+      error: scenario.result.message,
+      request: this.currentRequest,
+      response: this.currentResponse,
+      recentChanges: await getRecentApiChanges(),
+      historicalFailures: await getSimilarFailures(scenario)
+    });
+
+    // Attach AI analysis to the test report
+    this.attach(JSON.stringify(analysis), 'application/json');
+    // Include in Xray execution notes
+    this.xrayNotes = analysis.summary;
+  }
+});</code></pre>
+
+    <div class="callout callout-info">
+      <div class="callout-title">AI Analysis Output Example</div>
+      <p style="margin:0"><strong>Root Cause:</strong> The <code>balance</code> field returned <code>1000.1</code> instead of <code>1000.10</code>. This suggests a serialization change — likely a <code>JsonSerializerOptions</code> update that now trims trailing zeros.<br><strong>Impact:</strong> Breaks contract for consumers expecting 2 decimal places.<br><strong>Suggested Fix:</strong> Update the API's decimal serializer to always output 2 decimal places, or update the contract to accept variable precision.</p>
+    </div>
+
+    <h3>7.4 Self-Healing Capabilities</h3>
+    <p>When API changes cause test failures, the self-healing module compares the previous API specification with the current one and suggests updates to step definitions and feature files.</p>
+
+    <table>
+      <thead>
+        <tr><th>API Change Detected</th><th>AI Suggested Action</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Field renamed: <code>accountName</code> → <code>name</code></td><td>Update all step definitions referencing <code>accountName</code>. Update JSON schema.</td></tr>
+        <tr><td>New required field: <code>fiscalYear</code> added</td><td>Add to all test data factories. Update contract definitions. Generate new scenarios.</td></tr>
+        <tr><td>Endpoint path: <code>/v1/</code> → <code>/v2/</code></td><td>Update base path in config. Run full regression. Generate migration report.</td></tr>
+        <tr><td>Status changed: 200 → 201 for POST</td><td>Update expected status codes. Flag for review — may be intentional.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>7.5 AI Architecture Diagram</h3>
+    <div class="diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────┐
+│                     AI INTEGRATION LAYER                     │
+│                                                             │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │                  PROMPT ENGINE                        │   │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  │   │
+│  │  │  Scenario    │  │  Test Data  │  │  Failure     │  │   │
+│  │  │  Generator   │  │  Synthesizer│  │  Analyzer    │  │   │
+│  │  │  Prompts     │  │  Prompts    │  │  Prompts     │  │   │
+│  │  └──────┬───────┘  └──────┬──────┘  └──────┬───────┘  │   │
+│  └─────────┼─────────────────┼─────────────────┼─────────┘   │
+│            │                 │                 │              │
+│  ┌─────────▼─────────────────▼─────────────────▼─────────┐   │
+│  │              LLM ABSTRACTION LAYER                     │   │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │   │
+│  │  │  Anthropic   │  │   OpenAI    │  │  Local LLM  │   │   │
+│  │  │  Claude API  │  │   GPT API   │  │  (Ollama)   │   │   │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘   │   │
+│  └───────────────────────────────────────────────────────┘   │
+│                              │                               │
+│  ┌───────────────────────────▼───────────────────────────┐   │
+│  │              CONTEXT PROVIDERS                         │   │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ │   │
+│  │  │   Jira   │ │  Schema  │ │ Feature  │ │ History  │ │   │
+│  │  │  Tickets │ │  Files   │ │ Patterns │ │  Logs    │ │   │
+│  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘ │   │
+│  └───────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+</pre>
+    </div>
+  </div>
+
+  <!-- ============================== SECTION 10 ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">SECTION 10</span>
+      <h2>Xray Test Management Integration</h2>
+    </div>
+
+    <h3>8.1 Integration Architecture</h3>
+    <p>The framework integrates bi-directionally with Xray Cloud via its REST API. Test results are automatically published after each execution, and test cases are linked to Gherkin scenarios via Cucumber tags.</p>
+
+    <div class="flow-container">
+      <div class="flow-box">Cucumber<br><small>Execution</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">JSON Report<br><small>cucumber.json</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">Xray Reporter<br><small>Transform</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">Xray Cloud API<br><small>Import Results</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">Jira Dashboard<br><small>Visibility</small></div>
+    </div>
+
+    <h3>8.2 Test Execution Mapping</h3>
+    <table>
+      <thead>
+        <tr><th>Cucumber Element</th><th>Xray Entity</th><th>Mapping Method</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Feature file</td><td>Test Set</td><td>Feature name → Test Set summary</td></tr>
+        <tr><td>Scenario</td><td>Test (Cucumber type)</td><td><code>@XRAY-{KEY}</code> tag → Test issue key</td></tr>
+        <tr><td>Scenario Outline row</td><td>Test Run (parameterized)</td><td>Each Examples row = separate test run</td></tr>
+        <tr><td>Test suite execution</td><td>Test Execution</td><td>Created per CI pipeline run</td></tr>
+        <tr><td>Step result</td><td>Test Step result</td><td>Pass/Fail/Skip per Gherkin step</td></tr>
+      </tbody>
+    </table>
+
+    <h3>8.3 Reporting Pipeline</h3>
+    <div class="code-label">TypeScript — Xray Reporter</div>
+<pre><code>export class XrayReporter {
+  async publishResults(cucumberReport: CucumberJsonReport): Promise&lt;void&gt; {
+    const token = await this.authenticate();
+
+    const xrayPayload = {
+      testExecutionKey: process.env.XRAY_EXECUTION_KEY,
+      info: {
+        summary: `GL API Tests - ${env} - ${new Date().toISOString()}`,
+        description: `Automated BDD execution | Tags: ${tags}`,
+        startDate: this.executionStartTime,
+        finishDate: new Date().toISOString(),
+        testEnvironments: [process.env.TEST_ENV],
+        revision: process.env.GIT_SHA
+      },
+      tests: cucumberReport.features.flatMap(f =&gt;
+        f.elements.map(scenario =&gt; ({
+          testKey: this.extractXrayKey(scenario.tags),
+          status: this.mapStatus(scenario),
+          comment: scenario.aiAnalysis || '',
+          evidences: this.buildEvidences(scenario),
+          steps: scenario.steps.map(step =&gt; ({
+            status: this.mapStepStatus(step),
+            comment: step.result.error_message || '',
+            actualResult: step.result.duration + 'ms'
+          }))
+        }))
+      )
+    };
+
+    await this.xrayClient.importExecution(xrayPayload);
+  }
+}</code></pre>
+  </div>
+
+  <!-- ============================== SECTION 11 ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">SECTION 11</span>
+      <h2>Reporting Strategy</h2>
+    </div>
+
+    <p>The framework produces reports at multiple levels for different audiences.</p>
+
+    <table>
+      <thead>
+        <tr><th>Report</th><th>Format</th><th>Audience</th><th>Content</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Cucumber HTML</strong></td><td>HTML</td><td>QA Team</td><td>Step-by-step results with request/response logs, timing</td></tr>
+        <tr><td><strong>Allure Dashboard</strong></td><td>HTML</td><td>Engineering Leadership</td><td>Visual dashboards with trends, categories, severity breakdowns</td></tr>
+        <tr><td><strong>Xray Execution</strong></td><td>Jira</td><td>Project Management</td><td>Test execution linked to Jira with requirement traceability</td></tr>
+        <tr><td><strong>AI Analysis Report</strong></td><td>JSON/HTML</td><td>QA + Dev</td><td>AI root cause analysis, pattern detection, recommended actions</td></tr>
+        <tr><td><strong>Schema Drift Report</strong></td><td>JSON</td><td>API Owners</td><td>Detected changes, breaking change assessment, affected consumers</td></tr>
+        <tr><td><strong>Contract Compliance</strong></td><td>JSON/HTML</td><td>Integration Team</td><td>Consumer contract satisfaction status per endpoint</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============================== SECTION 12 ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">SECTION 12</span>
+      <h2>CI/CD Pipeline Integration</h2>
+    </div>
+
+    <p>The framework runs at multiple pipeline stages with different test subsets.</p>
+
+    <table>
+      <thead>
+        <tr><th>Pipeline Stage</th><th>Trigger</th><th>Tags</th><th>Duration Target</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>PR Validation</strong></td><td>Pull request created/updated</td><td><code>@smoke</code></td><td>&lt; 5 minutes</td></tr>
+        <tr><td><strong>Post-Merge</strong></td><td>Merge to main/develop</td><td><code>@smoke and @contract</code></td><td>&lt; 10 minutes</td></tr>
+        <tr><td><strong>Nightly Regression</strong></td><td>Scheduled (daily 2 AM)</td><td><code>@regression</code></td><td>&lt; 30 minutes</td></tr>
+        <tr><td><strong>Release Gate</strong></td><td>Pre-deployment to staging/prod</td><td><code>@critical and @contract</code></td><td>&lt; 15 minutes</td></tr>
+        <tr><td><strong>On-Demand</strong></td><td>Manual dispatch</td><td>Configurable</td><td>Variable</td></tr>
+      </tbody>
+    </table>
+
+    <div class="code-label">YAML — GitHub Actions Pipeline</div>
+<pre><code>name: GL API Test Suite
+on:
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 2 * * *'       # Nightly at 2 AM UTC
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        options: [dev, staging, uat]
+      tags:
+        description: 'Cucumber tags (e.g. @smoke, @regression)'
+        default: '@smoke'
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run API Tests
+        run: |
+          npx cucumber-js \
+            --tags "${{ inputs.tags || '@smoke' }}" \
+            --format json:reports/cucumber-report.json \
+            --format html:reports/cucumber-report.html \
+            --format @cucumber/pretty-formatter
+        env:
+          BASE_URL: ${{ secrets[format('API_URL_{0}', inputs.environment)] }}
+          AUTH_CLIENT_ID: ${{ secrets.AUTH_CLIENT_ID }}
+          AUTH_CLIENT_SECRET: ${{ secrets.AUTH_CLIENT_SECRET }}
+
+      - name: AI Failure Analysis
+        if: failure()
+        run: npx ts-node src/support/ai-enricher.ts analyze-failures
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Publish to Xray
+        if: always()
+        run: npx ts-node src/support/xray-reporter.ts publish
+        env:
+          XRAY_CLIENT_ID: ${{ secrets.XRAY_CLIENT_ID }}
+          XRAY_CLIENT_SECRET: ${{ secrets.XRAY_CLIENT_SECRET }}
+
+      - name: Upload Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: reports/</code></pre>
+  </div>
+
+  <!-- ============================== SECTION 13 ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">SECTION 13</span>
+      <h2>Implementation Roadmap</h2>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Phase</th><th>Duration</th><th>Deliverables</th><th>Milestone</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Phase 1: Foundation</strong></td>
+          <td>2 weeks</td>
+          <td>Project setup, core API client, auth manager, Cucumber config, first smoke tests (3-5 scenarios), basic CI pipeline</td>
+          <td><span class="tag tag-blue">First green pipeline</span></td>
+        </tr>
+        <tr>
+          <td><strong>Phase 2: BDD Expansion</strong></td>
+          <td>3 weeks</td>
+          <td>Full positive scenarios for all GL endpoints, negative test patterns with PayloadMutator, test data factories, Cucumber World</td>
+          <td><span class="tag tag-green">Core coverage</span></td>
+        </tr>
+        <tr>
+          <td><strong>Phase 3: Schema &amp; Contract</strong></td>
+          <td>2 weeks</td>
+          <td>JSON Schema definitions for all endpoints, contract definitions, schema validator, drift detection baseline</td>
+          <td><span class="tag tag-purple">Contract gate active</span></td>
+        </tr>
+        <tr>
+          <td><strong>Phase 4: RabbitMQ Messaging</strong></td>
+          <td>2 weeks</td>
+          <td>AMQP client, consumer harness, message schema definitions, event-driven flow tests, DLQ verification, message ordering tests</td>
+          <td><span class="tag tag-orange">Message testing live</span></td>
+        </tr>
+        <tr>
+          <td><strong>Phase 5: Database Validation</strong></td>
+          <td>2 weeks</td>
+          <td>Knex.js client, domain query helpers, snapshot manager, cleanup manager, persistence tests, audit trail validation, integrity checks</td>
+          <td><span class="tag tag-red">DB assertions active</span></td>
+        </tr>
+        <tr>
+          <td><strong>Phase 6: E2E &amp; Xray Integration</strong></td>
+          <td>2 weeks</td>
+          <td>Cross-layer E2E flows (API→Message→DB), Xray Cloud integration, custom reporter, Allure setup, Jira dashboard</td>
+          <td><span class="tag tag-purple">Full traceability</span></td>
+        </tr>
+        <tr>
+          <td><strong>Phase 7: AI Integration</strong></td>
+          <td>3 weeks</td>
+          <td>LLM abstraction layer, scenario generator from Jira tickets, AI test data synthesis, failure analyzer hook, self-healing prototype</td>
+          <td><span class="tag tag-blue">AI-powered</span></td>
+        </tr>
+        <tr>
+          <td><strong>Phase 8: Optimization</strong></td>
+          <td>2 weeks</td>
+          <td>Parallel execution, performance benchmarks, flaky test detection, documentation, team onboarding</td>
+          <td><span class="tag tag-green">Production-ready</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>Total estimated timeline: 18 weeks</strong> (with parallel workstreams on Phases 4-5, can compress to 14-15 weeks)</p>
+  </div>
+
+  <!-- ============================== SECTION 14 ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">SECTION 14</span>
+      <h2>Risk Assessment &amp; Mitigations</h2>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Risk</th><th>Probability</th><th>Impact</th><th>Mitigation</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>API documentation gaps</strong> — incomplete or outdated OpenAPI specs</td>
+          <td><span class="tag tag-orange">Medium</span></td>
+          <td><span class="tag tag-red">High</span></td>
+          <td>AI-powered schema discovery from actual responses. Build baselines empirically.</td>
+        </tr>
+        <tr>
+          <td><strong>Test environment instability</strong> — shared environments with unreliable data</td>
+          <td><span class="tag tag-red">High</span></td>
+          <td><span class="tag tag-orange">Medium</span></td>
+          <td>Test data setup/teardown in hooks. Unique identifiers per run. Request dedicated env.</td>
+        </tr>
+        <tr>
+          <td><strong>AI cost and latency</strong> — LLM API calls adding cost and time</td>
+          <td><span class="tag tag-orange">Medium</span></td>
+          <td><span class="tag tag-blue">Low</span></td>
+          <td>AI features are opt-in (not critical path). Caching for repeated prompts. Local LLMs (Ollama) option.</td>
+        </tr>
+        <tr>
+          <td><strong>Team TypeScript adoption</strong> — .NET-focused team learning new stack</td>
+          <td><span class="tag tag-orange">Medium</span></td>
+          <td><span class="tag tag-orange">Medium</span></td>
+          <td>Onboarding docs. Gherkin is language-agnostic. Steps are simple HTTP calls. Pair programming.</td>
+        </tr>
+        <tr>
+          <td><strong>Xray API rate limits</strong> — high-volume result publishing</td>
+          <td><span class="tag tag-blue">Low</span></td>
+          <td><span class="tag tag-blue">Low</span></td>
+          <td>Batch uploads. Retry with exponential backoff. Xray bulk import endpoint.</td>
+        </tr>
+        <tr>
+          <td><strong>RabbitMQ test environment access</strong> — restricted broker access or shared queues</td>
+          <td><span class="tag tag-orange">Medium</span></td>
+          <td><span class="tag tag-red">High</span></td>
+          <td>Use exclusive temporary queues. Request dedicated vhost for test. Implement connection retry logic. Document required AMQP permissions.</td>
+        </tr>
+        <tr>
+          <td><strong>Database test data contamination</strong> — test data leaking into shared environments</td>
+          <td><span class="tag tag-orange">Medium</span></td>
+          <td><span class="tag tag-red">High</span></td>
+          <td>Test prefix convention (TEST-*). Cleanup hooks with reverse FK order. Nightly orphan purge. Read-only assertions where possible.</td>
+        </tr>
+        <tr>
+          <td><strong>Message timing / flakiness</strong> — async messages arriving late causing false failures</td>
+          <td><span class="tag tag-red">High</span></td>
+          <td><span class="tag tag-orange">Medium</span></td>
+          <td>Configurable timeouts per scenario. Polling with backoff. Separate async tests from sync tests in tag strategy. Retry on timeout.</td>
+        </tr>
+        <tr>
+          <td><strong>Database schema changes</strong> — column renames or table restructuring breaking queries</td>
+          <td><span class="tag tag-orange">Medium</span></td>
+          <td><span class="tag tag-orange">Medium</span></td>
+          <td>Migration checker validates expected schema version before tests run. AI suggests query updates when schema changes detected.</td>
+        </tr>
+        <tr>
+          <td><strong>Schema/Contract maintenance</strong> — keeping definitions in sync</td>
+          <td><span class="tag tag-red">High</span></td>
+          <td><span class="tag tag-orange">Medium</span></td>
+          <td>Automated drift detection. AI suggests schema updates. Contract review in PR process.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <hr>
+
+    <div class="callout callout-success">
+      <div class="callout-title">Summary</div>
+      <p style="margin:0">Testonaut GL is designed to be more than a test automation framework — it's an <strong>intelligent quality assurance platform</strong> that combines rigorous BDD testing, schema validation, and contract compliance with AI-powered capabilities that evolve alongside the GL Service API. The decoupled TypeScript architecture ensures unrestricted testing flexibility, while Xray integration provides complete traceability from requirements to test execution.</p>
+    </div>
+  </div>
+</div>
+
+<div class="doc-footer">
+  <p><strong>Testonaut GL — Test Automation Framework Architecture</strong></p>
+  <p>Version 1.0 · March 2026 · Riverty Group GmbH · Quality Engineering</p>
+  <p>This document is confidential and intended for internal use only.</p>
+</div>
+
+</body>
+</html>

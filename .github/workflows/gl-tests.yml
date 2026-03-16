@@ -1,0 +1,227 @@
+name: GL API Test Suite — Testonaut GL
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 2 * * *'       # Nightly regression at 2 AM UTC
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options: [dev, staging, uat]
+        default: dev
+      tags:
+        description: 'Cucumber tags (e.g. @smoke, @regression, @contract)'
+        required: false
+        default: '@smoke'
+      publish_xray:
+        description: 'Publish results to Xray'
+        type: boolean
+        default: false
+
+env:
+  NODE_VERSION: '20'
+  REPORT_DIR: reports
+
+jobs:
+  # ─── PR: Smoke Tests ─────────────────────────────────────────────
+  smoke:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Smoke Tests
+        run: npx cucumber-js --profile smoke
+        env:
+          BASE_URL: ${{ secrets.API_URL_DEV }}
+          AUTH_TOKEN_URL: ${{ secrets.AUTH_TOKEN_URL }}
+          AUTH_CLIENT_ID: ${{ secrets.AUTH_CLIENT_ID }}
+          AUTH_CLIENT_SECRET: ${{ secrets.AUTH_CLIENT_SECRET }}
+          GL_ADMIN_CLIENT_ID: ${{ secrets.GL_ADMIN_CLIENT_ID }}
+          GL_ADMIN_CLIENT_SECRET: ${{ secrets.GL_ADMIN_CLIENT_SECRET }}
+          GL_ACCOUNTANT_CLIENT_ID: ${{ secrets.GL_ACCOUNTANT_CLIENT_ID }}
+          GL_ACCOUNTANT_CLIENT_SECRET: ${{ secrets.GL_ACCOUNTANT_CLIENT_SECRET }}
+          TEST_ENV: dev
+          GIT_SHA: ${{ github.sha }}
+          GIT_BRANCH: ${{ github.head_ref }}
+
+      - name: Upload Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-reports-${{ github.sha }}
+          path: ${{ env.REPORT_DIR }}/
+          retention-days: 7
+
+  # ─── Post-Merge: Smoke + Contract ────────────────────────────────
+  post-merge:
+    name: Post-Merge Validation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+
+      - name: Run Smoke and Contract Tests
+        run: npx cucumber-js --tags "@smoke or @contract"
+        env:
+          BASE_URL: ${{ secrets.API_URL_DEV }}
+          AUTH_TOKEN_URL: ${{ secrets.AUTH_TOKEN_URL }}
+          AUTH_CLIENT_ID: ${{ secrets.AUTH_CLIENT_ID }}
+          AUTH_CLIENT_SECRET: ${{ secrets.AUTH_CLIENT_SECRET }}
+          GL_ADMIN_CLIENT_ID: ${{ secrets.GL_ADMIN_CLIENT_ID }}
+          GL_ADMIN_CLIENT_SECRET: ${{ secrets.GL_ADMIN_CLIENT_SECRET }}
+          GL_ACCOUNTANT_CLIENT_ID: ${{ secrets.GL_ACCOUNTANT_CLIENT_ID }}
+          GL_ACCOUNTANT_CLIENT_SECRET: ${{ secrets.GL_ACCOUNTANT_CLIENT_SECRET }}
+          TEST_ENV: dev
+          GIT_SHA: ${{ github.sha }}
+
+      - name: AI Failure Analysis
+        if: failure()
+        run: npx ts-node src/support/ai-enricher.ts analyze-failures
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AI_ENABLED: 'true'
+
+      - name: Upload Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-merge-reports-${{ github.sha }}
+          path: ${{ env.REPORT_DIR }}/
+
+  # ─── Nightly: Full Regression ────────────────────────────────────
+  nightly-regression:
+    name: Nightly Regression
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+
+      - name: Run Full Regression
+        run: npx cucumber-js --profile regression
+        env:
+          BASE_URL: ${{ secrets.API_URL_STAGING }}
+          AUTH_TOKEN_URL: ${{ secrets.AUTH_TOKEN_URL_STAGING }}
+          AUTH_CLIENT_ID: ${{ secrets.AUTH_CLIENT_ID_STAGING }}
+          AUTH_CLIENT_SECRET: ${{ secrets.AUTH_CLIENT_SECRET_STAGING }}
+          GL_ADMIN_CLIENT_ID: ${{ secrets.GL_ADMIN_CLIENT_ID_STAGING }}
+          GL_ADMIN_CLIENT_SECRET: ${{ secrets.GL_ADMIN_CLIENT_SECRET_STAGING }}
+          GL_ACCOUNTANT_CLIENT_ID: ${{ secrets.GL_ACCOUNTANT_CLIENT_ID_STAGING }}
+          GL_ACCOUNTANT_CLIENT_SECRET: ${{ secrets.GL_ACCOUNTANT_CLIENT_SECRET_STAGING }}
+          DB_CLIENT: ${{ secrets.DB_CLIENT_STAGING }}
+          DB_HOST: ${{ secrets.DB_HOST_STAGING }}
+          DB_USER: ${{ secrets.DB_USER_STAGING }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD_STAGING }}
+          DB_NAME: ${{ secrets.DB_NAME_STAGING }}
+          RABBITMQ_URL: ${{ secrets.RABBITMQ_URL_STAGING }}
+          TEST_ENV: staging
+          GIT_SHA: ${{ github.sha }}
+          AI_ENABLED: 'true'
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: AI Failure Analysis
+        if: failure()
+        run: npx ts-node src/support/ai-enricher.ts analyze-failures
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Publish to Xray
+        if: always()
+        run: npx ts-node src/support/xray-reporter.ts publish
+        env:
+          XRAY_CLIENT_ID: ${{ secrets.XRAY_CLIENT_ID }}
+          XRAY_CLIENT_SECRET: ${{ secrets.XRAY_CLIENT_SECRET }}
+          XRAY_PROJECT_KEY: GL
+          TEST_ENV: staging
+
+      - name: Generate Allure Report
+        if: always()
+        run: npx allure generate reports/allure-results --clean -o reports/allure-report
+
+      - name: Upload Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-reports-${{ github.run_number }}
+          path: ${{ env.REPORT_DIR }}/
+          retention-days: 30
+
+  # ─── Manual / On-Demand ──────────────────────────────────────────
+  on-demand:
+    name: On-Demand Test Run
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+
+      - name: Run Tests
+        run: npx cucumber-js --tags "${{ github.event.inputs.tags }}"
+        env:
+          BASE_URL: ${{ secrets[format('API_URL_{0}', upper(github.event.inputs.environment))] }}
+          AUTH_TOKEN_URL: ${{ secrets.AUTH_TOKEN_URL }}
+          AUTH_CLIENT_ID: ${{ secrets.AUTH_CLIENT_ID }}
+          AUTH_CLIENT_SECRET: ${{ secrets.AUTH_CLIENT_SECRET }}
+          GL_ADMIN_CLIENT_ID: ${{ secrets.GL_ADMIN_CLIENT_ID }}
+          GL_ADMIN_CLIENT_SECRET: ${{ secrets.GL_ADMIN_CLIENT_SECRET }}
+          GL_ACCOUNTANT_CLIENT_ID: ${{ secrets.GL_ACCOUNTANT_CLIENT_ID }}
+          GL_ACCOUNTANT_CLIENT_SECRET: ${{ secrets.GL_ACCOUNTANT_CLIENT_SECRET }}
+          TEST_ENV: ${{ github.event.inputs.environment }}
+          GIT_SHA: ${{ github.sha }}
+          CUCUMBER_TAGS: ${{ github.event.inputs.tags }}
+
+      - name: Publish to Xray
+        if: always() && github.event.inputs.publish_xray == 'true'
+        run: npx ts-node src/support/xray-reporter.ts publish
+        env:
+          XRAY_CLIENT_ID: ${{ secrets.XRAY_CLIENT_ID }}
+          XRAY_CLIENT_SECRET: ${{ secrets.XRAY_CLIENT_SECRET }}
+          XRAY_PROJECT_KEY: GL
+          TEST_ENV: ${{ github.event.inputs.environment }}
+
+      - name: Upload Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: on-demand-reports-${{ github.run_number }}
+          path: ${{ env.REPORT_DIR }}/
+          retention-days: 14

@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GLTransaction",
+  "type": "object",
+  "properties": {
+    "voucherNo":           { "type": "integer" },
+    "clientOrgNo":         { "type": ["string", "null"] },
+    "clientName":          { "type": ["string", "null"] },
+    "bundleNo":            { "type": "number" },
+    "registrationDate":    { "type": "string" },
+    "registrationBy":      { "type": ["string", "null"] },
+    "voucherDate":         { "type": "string" },
+    "accountingYearMonth": { "type": "integer" },
+    "postingNo":           { "type": "integer" },
+    "postingName":         { "type": ["string", "null"] },
+    "glAccount":           { "type": ["string", "null"] },
+    "glAccountName":       { "type": ["string", "null"] },
+    "amount":              { "type": "number" },
+    "customerNo":          { "type": ["string", "null"] },
+    "invoiceNo":           { "type": ["string", "null"] },
+    "paymentDate":         { "type": ["string", "null"] },
+    "settlementDate":      { "type": ["string", "null"] },
+    "reference":           { "type": ["string", "null"] },
+    "bankAccount":         { "type": ["string", "null"] },
+    "eventVariantId":      { "type": ["integer", "null"] },
+    "count":               { "type": ["integer", "null"] },
+    "ssoNumber":           { "type": ["string", "null"] }
+  },
+  "required": ["voucherNo", "voucherDate", "accountingYearMonth", "postingNo", "amount"],
+  "additionalProperties": true
+}

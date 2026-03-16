@@ -1,0 +1,51 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@fixtures/*": ["src/fixtures/*"],
+      "@core/*": ["src/core/*"],
+      "@messaging/*": ["src/messaging/*"],
+      "@database/*": ["src/database/*"],
+      "@schemas/*": ["src/schemas/*"],
+      "@models/*": ["src/models/*"],
+      "@steps/*": ["src/steps/*"],
+      "@support/*": ["src/support/*"],
+      "@utils/*": ["src/utils/*"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "features/**/*.ts",
+    ".features-gen/**/*.ts",
+    "playwright.config.ts",
+    "knexfile.ts",
+    ".ai/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "reports"
+  ],
+  "ts-node": {
+    "transpileOnly": true,
+    "files": true,
+    "esm": false
+  }
+}

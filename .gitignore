@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment files (NEVER commit secrets)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Build output
+dist/
+
+# Test reports (generated artefacts)
+reports/
+!reports/.gitkeep
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Playwright
+playwright-report/
+test-results/
+
+# playwright-bdd generated spec files
+.features-gen/
+
+# Allure
+allure-results/
+
+# Coverage
+coverage/
+
+# AI
+.claude
