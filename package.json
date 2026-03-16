@@ -61,6 +61,8 @@
     "allure-commandline": "^2.30.0",
     "allure-playwright": "^3.6.0",
     "eslint": "^9.0.0",
+    "playwright-schema-validator": "^1.0.0",
+    "pw-api-plugin": "^2.1.0",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",

@@ -1,4 +1,5 @@
 import { request, APIRequestContext, APIResponse } from 'playwright';
+import { pwApi } from 'pw-api-plugin';
 import { config } from './config';
 import { AuthManager } from './auth-manager';
 import { logRequest, logResponse } from './logger';
@@ -106,9 +107,9 @@ export class ApiClient {
       };
 
       if (method === 'get' || method === 'delete') {
-        response = await this.context[method](url, requestInit);
+        response = await pwApi[method]({ request: this.context }, url, requestInit);
       } else {
-        response = await this.context[method](url, {
+        response = await pwApi[method]({ request: this.context }, url, {
           ...requestInit,
           data: options?.body,
         });

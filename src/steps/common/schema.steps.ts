@@ -1,10 +1,14 @@
 import { Then } from '../../fixtures';
 import { expect } from 'chai';
+import { validateSchema } from 'playwright-schema-validator';
 import type { SchemaValidator } from '../../schemas/schema-validator';
-import type { CurrentResponse } from '../../fixtures';
+import type { CurrentRequest, CurrentResponse } from '../../fixtures';
+import { config } from '../../core/config';
+import swagger from '../../models/test-data/fixtures/swagger.json';
 
 type SchemaFixtures = {
   schemaValidator: SchemaValidator;
+  currentRequest: CurrentRequest;
   currentResponse: CurrentResponse;
   store: (key: string, value: unknown) => void;
   retrieve: <T = unknown>(key: string) => T;
@@ -95,4 +99,15 @@ Then('I have the baseline schema snapshot for {string}', function (
     available.includes(schemaName),
     `Schema "${schemaName}" not found. Available: ${available.join(', ')}`,
   ).to.be.true;
+});
+
+Then('the response should match swagger schema', async function (
+  { currentRequest, currentResponse }: Pick<SchemaFixtures, 'currentRequest' | 'currentResponse'>,
+) {
+  const endpoint = `/${config.servicePath}${currentRequest.endpoint}`;
+  await validateSchema({}, currentResponse.body, swagger, {
+    endpoint,
+    method: currentRequest.method || 'GET',
+    status: currentResponse.status || 200,
+  });
 });
