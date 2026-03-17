@@ -20,6 +20,7 @@ export interface DatabaseConfig {
   name: string;
   schema: string;
   queryTimeout: number;
+  authType: 'default' | 'azure-active-directory-default';
 }
 
 export interface AuthConfig {
@@ -107,6 +108,7 @@ export const config: FrameworkConfig = {
     name: optional('DB_NAME', 'GL_Database'),
     schema: optional('DB_SCHEMA', 'dbo'),
     queryTimeout: Number(optional('DB_QUERY_TIMEOUT', '10000')),
+    authType: (optional('DB_AUTH_TYPE', 'default') as 'default' | 'azure-active-directory-default'),
   },
 
   ai: {

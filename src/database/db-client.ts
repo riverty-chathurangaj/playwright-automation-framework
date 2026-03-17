@@ -12,8 +12,8 @@ export class DatabaseClient {
     const knexConfig: Knex.Config = {
       client: dbConfig.client,
       connection: this.buildConnectionConfig(dbConfig),
-      pool: { min: 1, max: 5 },
-      acquireConnectionTimeout: dbConfig.queryTimeout,
+      pool: { min: 0, max: 5 },
+      acquireConnectionTimeout: 120_000,
       debug: config.logLevel === 'debug',
     };
 
@@ -22,7 +22,12 @@ export class DatabaseClient {
     try {
       await this.db.raw('SELECT 1');
       this.connected = true;
-      logger.info('Database connected', { client: dbConfig.client, host: dbConfig.host, database: dbConfig.name });
+      logger.info('Database connected', {
+        client: dbConfig.client,
+        host: dbConfig.host,
+        database: dbConfig.name,
+        authType: dbConfig.authType,
+      });
     } catch (error) {
       logger.error('Database connection failed', { error });
       throw error;
@@ -30,6 +35,23 @@ export class DatabaseClient {
   }
 
   private buildConnectionConfig(cfg: typeof config.database): Knex.StaticConnectionConfig {
+    // Azure AD passwordless — knex maps `type` into tedious `authentication.type`
+    if (cfg.client === 'mssql' && cfg.authType === 'azure-active-directory-default') {
+      return {
+        server: cfg.host,
+        database: cfg.name,
+        type: 'azure-active-directory-default',
+        options: {
+          encrypt: true,
+          trustServerCertificate: false,
+          requestTimeout: cfg.queryTimeout,
+          connectTimeout: 120_000,
+          port: cfg.port,
+        },
+      } as unknown as Knex.MsSqlConnectionConfig;
+    }
+
+    // Standard SQL auth
     const base = {
       host: cfg.host,
       user: cfg.user,
@@ -43,8 +65,9 @@ export class DatabaseClient {
         ...base,
         options: {
           encrypt: false,
-          trustServerCertificate: true,
+          trustServerCertificate: false,
           requestTimeout: cfg.queryTimeout,
+          connectTimeout: 120_000,
         },
       } as unknown as Knex.MsSqlConnectionConfig;
     }
@@ -157,6 +180,59 @@ export class DatabaseClient {
       .where('je.status', 'posted')
       .whereNull('al.entity_id')
       .select('je.*');
+  }
+
+  // --- Transaction queries (Data.Transaction table) ---
+
+  async getTransactionsByReference(
+    instanceId: number,
+    reference: string,
+    createdAfter?: Date,
+  ): Promise<Record<string, unknown>[]> {
+    logDb('SELECT', 'Data.Transaction', { instanceId, reference });
+    const qb = this.db('Data.Transaction')
+      .where({ InstanceId: instanceId, Reference: reference });
+
+    if (createdAfter) {
+      qb.where('CreatedDate', '>=', createdAfter);
+    }
+
+    return qb.orderBy('Id', 'asc');
+  }
+
+  async getTransactionsByReferenceWithRetry(
+    instanceId: number,
+    reference: string,
+    timeoutMs: number = 30_000,
+    intervalMs: number = 2_000,
+    createdAfter?: Date,
+  ): Promise<Record<string, unknown>[]> {
+    const start = Date.now();
+    const cutoff = createdAfter ?? new Date(start - 5 * 60_000); // default: last 5 minutes
+
+    while (Date.now() - start < timeoutMs) {
+      const rows = await this.getTransactionsByReference(instanceId, reference, cutoff);
+      if (rows.length > 0) {
+        logger.info('Transactions found in Data.Transaction', {
+          instanceId,
+          reference,
+          count: rows.length,
+          elapsedMs: Date.now() - start,
+        });
+        return rows;
+      }
+      logger.debug('No transactions yet, polling...', {
+        instanceId,
+        reference,
+        elapsedMs: Date.now() - start,
+      });
+      await new Promise(r => setTimeout(r, intervalMs));
+    }
+
+    throw new Error(
+      `Timed out after ${timeoutMs}ms waiting for transactions in Data.Transaction ` +
+      `(InstanceId=${instanceId}, Reference="${reference}")`,
+    );
   }
 
   // --- Test data setup ---

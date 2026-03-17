@@ -1,9 +1,13 @@
-import { When } from '../../fixtures';
+import { When, Then } from '../../fixtures';
 import { randomUUID } from 'crypto';
+import { expect } from 'chai';
+import { logger } from '@core/logger';
+import type { DatabaseClient } from '@database/db-client';
 
 type BookClientDepositFixtures = {
   store: (key: string, value: unknown) => void;
   retrieve: <T = unknown>(key: string) => T;
+  dbClient: DatabaseClient;
 };
 
 // ── Message builder ──────────────────────────────────────────────────────────
@@ -83,3 +87,48 @@ When('I define a message for booking a client deposit with the last published me
   store('currentMessage', message);
   store('generatedMessageId', messageId);
 });
+
+// ── Database verification ────────────────────────────────────────────────────
+
+Then('the transactions from the book client deposit message should exist in the database', async function (
+  { dbClient, retrieve }: Pick<BookClientDepositFixtures, 'dbClient' | 'retrieve'>,
+) {
+  const message = retrieve<Record<string, unknown>>('lastPublishedMessage');
+  if (!message) {
+    throw new Error('No published message found. Publish a message first.');
+  }
+
+  const innerMessage = message.message as Record<string, unknown>;
+  const instanceId = innerMessage.InstanceId as number;
+  const reference = innerMessage.Reference as string;
+
+  // Use a cutoff slightly before the message sentTime to catch transactions
+  const sentTime = message.sentTime as string;
+  const createdAfter = sentTime
+    ? new Date(new Date(sentTime).getTime() - 60_000)   // 1 min before sentTime
+    : new Date(Date.now() - 5 * 60_000);                // fallback: 5 min ago
+
+  // Poll the database — the GL service processes the message asynchronously
+  const transactions = await dbClient.getTransactionsByReferenceWithRetry(
+    instanceId,
+    reference,
+    30_000,   // timeout: 30 seconds
+    2_000,    // poll interval: 2 seconds
+    createdAfter,
+  );
+
+  expect(transactions.length, 'Expected at least 1 transaction row in Data.Transaction').to.be.at.least(1);
+
+  logger.info('Verified transactions in Data.Transaction', {
+    instanceId,
+    reference,
+    transactionCount: transactions.length,
+    transactions: transactions.map(t => ({
+      Id: t.Id,
+      Amount: t.Amount,
+      ClientId: t.ClientId,
+      Account: t.Account,
+    })),
+  });
+});
+

@@ -9,6 +9,7 @@ Feature: Booking a Client Deposit
     And I define a valid message for booking a client deposit
     When I publish the message to "general ledger posting service"
     Then I should receive 1 message within 30 seconds
+    And the transactions from the book client deposit message should exist in the database
 
   # Sending message with duplicate message ID should not result in processing the same message twice
   Scenario: Verify behavior when publishing book client deposit message with duplicate message ID
