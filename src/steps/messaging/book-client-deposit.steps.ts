@@ -38,6 +38,22 @@ When('I define a message for booking a client deposit with the last published me
   store('generatedMessageId', message.messageId);
 });
 
+When('I set the message ID to be the same as the previous message', function (
+  { retrieve, store }: Pick<BookClientDepositFixtures, 'retrieve' | 'store'>,
+) {
+  const currentMessage = retrieve<BookClientDepositMessage>('currentMessage');
+  const lastPublished = retrieve<BookClientDepositMessage>('lastPublishedMessage');
+  if (!currentMessage) {
+    throw new Error('No current message defined. Use a "I define a valid message …" step first.');
+  }
+  if (!lastPublished?.messageId) {
+    throw new Error('No previously published message found. Publish a message first.');
+  }
+
+  currentMessage.messageId = lastPublished.messageId;
+  store('generatedMessageId', lastPublished.messageId);
+});
+
 // ── Database verification ────────────────────────────────────────────────────
 
 Then('the transactions from the book client deposit message should exist in the database', async function (
