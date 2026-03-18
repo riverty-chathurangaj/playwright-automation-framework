@@ -10,6 +10,7 @@ Feature: Booking a Client Deposit
     When I publish the message to "general ledger posting service"
     Then I should receive 1 message within 30 seconds
     And the transactions from the book client deposit message should exist in the database
+    And the transactions should have the posting number "904"
 
   Scenario: Verify behavior when publishing book client deposit message with duplicate message ID with same message content
     Given I am listening on "general ledger posting service"

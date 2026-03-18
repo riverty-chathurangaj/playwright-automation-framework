@@ -57,7 +57,7 @@ When('I set the message ID to be the same as the previous message', function (
 // ── Database verification ────────────────────────────────────────────────────
 
 Then('the transactions from the book client deposit message should exist in the database', async function (
-  { dbClient, retrieve }: Pick<BookClientDepositFixtures, 'dbClient' | 'retrieve'>,
+  { dbClient, retrieve, store }: Pick<BookClientDepositFixtures, 'dbClient' | 'retrieve' | 'store'>,
 ) {
   const message = retrieve<BookClientDepositMessage>('lastPublishedMessage');
   if (!message) {
@@ -136,5 +136,32 @@ Then('the transactions from the book client deposit message should exist in the 
     negativeAmountNotRounded: negativeEntry!.AmountNotRounded,
     bundleNumber: positiveEntry!.BundleNumber,
   });
+
+  store('depositPositiveEntry', positiveEntry);
+  store('depositNegativeEntry', negativeEntry);
+});
+
+Then('the transactions should have the posting number {string}', function (
+  { retrieve }: Pick<BookClientDepositFixtures, 'retrieve'>,
+  expectedPostingNumber: string,
+) {
+  const positiveEntry = retrieve<Record<string, unknown>>('depositPositiveEntry');
+  const negativeEntry = retrieve<Record<string, unknown>>('depositNegativeEntry');
+
+  if (!positiveEntry || !negativeEntry) {
+    throw new Error('No transaction entries found. Run the DB verification step first.');
+  }
+
+  const expected = Number(expectedPostingNumber);
+
+  expect(
+    positiveEntry.PostingNumber,
+    `Positive entry PostingNumber should be ${expected}`,
+  ).to.equal(expected);
+
+  expect(
+    negativeEntry.PostingNumber,
+    `Negative entry PostingNumber should be ${expected}`,
+  ).to.equal(expected);
 });
 
