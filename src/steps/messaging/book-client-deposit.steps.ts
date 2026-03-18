@@ -1,7 +1,10 @@
 import { When, Then } from '../../fixtures';
-import { randomUUID } from 'crypto';
 import { expect } from 'chai';
 import { logger } from '@core/logger';
+import {
+  buildBookClientDepositMessage,
+  type BookClientDepositMessage,
+} from '@models/test-data/factories/book-client-deposit.factory';
 import type { DatabaseClient } from '@database/db-client';
 
 type BookClientDepositFixtures = {
@@ -10,82 +13,29 @@ type BookClientDepositFixtures = {
   dbClient: DatabaseClient;
 };
 
-// ── Message builder ──────────────────────────────────────────────────────────
-
-function buildBookClientDepositMessage(messageId: string): Record<string, unknown> {
-  const conversationId = randomUUID();
-  const sentTime = new Date().toISOString();
-
-  return {
-    messageId,
-    requestId: null,
-    correlationId: null,
-    conversationId,
-    initiatorId: null,
-    sourceAddress:
-      'rabbitmqs://rabbitmq-general-dev.riverty.io/shared/generalledgers_GeneralLedgerP_bus_yryyyybouip3iwkabdxgxhuxd3?temporary=true',
-    destinationAddress:
-      'rabbitmqs://rabbitmq-general-dev.riverty.io/shared/GeneralLedger:BookClientDeposit',
-    responseAddress: null,
-    faultAddress: null,
-    messageType: ['urn:message:GeneralLedger:BookClientDeposit'],
-    message: {
-      InstanceId: 2022,
-      ClientId: 60232,
-      Source: 'settlement-service',
-      Amount: '2.4000',
-      CreatedByUser: 'PhoenixTest\\SR_HorizonAppUser',
-      SettledDate: '2026-02-23T00:00:00',
-      Reference: '12346789012',
-      BundleNoSettled: 12345678907,
-      MerchantId: 'GL_TEST01',
-    },
-    expirationTime: null,
-    sentTime,
-    headers: {
-      context: 'GeneralLedger.PostingService.BubbleContext',
-      source: 'settlement-service',
-      callLogId: 31086350,
-    },
-    host: {
-      machineName:
-        'generalledger-service-postingservice-bubblecontext-79cf47db845n',
-      processName: 'GeneralLedger.PostingService.BubbleContext',
-      processId: 1,
-      assembly: 'GeneralLedger.PostingService.BubbleContext',
-      assemblyVersion: '1.0.0.0',
-      frameworkVersion: '10.0.2',
-      massTransitVersion: '8.5.7.0',
-      operatingSystemVersion: 'Unix 5.15.0.1102',
-    },
-  };
-}
-
 // ── Steps ────────────────────────────────────────────────────────────────────
 
 When('I define a valid message for booking a client deposit', function (
   { store }: Pick<BookClientDepositFixtures, 'store'>,
 ) {
-  const messageId = randomUUID();
-  const message = buildBookClientDepositMessage(messageId);
+  const message = buildBookClientDepositMessage();
 
   store('currentMessage', message);
-  store('generatedMessageId', messageId);
+  store('generatedMessageId', message.messageId);
 });
 
 When('I define a message for booking a client deposit with the last published message id', function (
   { retrieve, store }: Pick<BookClientDepositFixtures, 'retrieve' | 'store'>,
 ) {
-  const lastMessage = retrieve<Record<string, unknown>>('lastPublishedMessage');
+  const lastMessage = retrieve<BookClientDepositMessage>('lastPublishedMessage');
   if (!lastMessage?.messageId) {
     throw new Error('No previously published message found. Publish a message first.');
   }
 
-  const messageId = lastMessage.messageId as string;
-  const message = buildBookClientDepositMessage(messageId);
+  const message = buildBookClientDepositMessage({}, lastMessage.messageId);
 
   store('currentMessage', message);
-  store('generatedMessageId', messageId);
+  store('generatedMessageId', message.messageId);
 });
 
 // ── Database verification ────────────────────────────────────────────────────
@@ -93,42 +43,82 @@ When('I define a message for booking a client deposit with the last published me
 Then('the transactions from the book client deposit message should exist in the database', async function (
   { dbClient, retrieve }: Pick<BookClientDepositFixtures, 'dbClient' | 'retrieve'>,
 ) {
-  const message = retrieve<Record<string, unknown>>('lastPublishedMessage');
+  const message = retrieve<BookClientDepositMessage>('lastPublishedMessage');
   if (!message) {
     throw new Error('No published message found. Publish a message first.');
   }
 
-  const innerMessage = message.message as Record<string, unknown>;
-  const instanceId = innerMessage.InstanceId as number;
-  const reference = innerMessage.Reference as string;
+  const { InstanceId: instanceId, Reference: reference, Amount: expectedAmount } = message.message;
 
   // Use a cutoff slightly before the message sentTime to catch transactions
-  const sentTime = message.sentTime as string;
+  const sentTime = message.sentTime;
   const createdAfter = sentTime
     ? new Date(new Date(sentTime).getTime() - 60_000)   // 1 min before sentTime
     : new Date(Date.now() - 5 * 60_000);                // fallback: 5 min ago
 
-  // Poll the database — the GL service processes the message asynchronously
-  const transactions = await dbClient.getTransactionsByReferenceWithRetry(
+  // Poll the database — the GL service processes the message asynchronously.
+  // We poll for the specific amount match because old rows for the same
+  // Reference may already exist, and we need to wait for the NEW ones.
+  const timeoutMs = 30_000;
+  const intervalMs = 2_000;
+  const start = Date.now();
+  let positiveEntry: Record<string, unknown> | undefined;
+  let negativeEntry: Record<string, unknown> | undefined;
+
+  while (Date.now() - start < timeoutMs) {
+    const transactions = await dbClient.getTransactionsByReference(
+      instanceId,
+      reference,
+      createdAfter,
+    );
+
+    positiveEntry = transactions.find(
+      t => Math.abs((t.AmountNotRounded as number) - expectedAmount) < 0.0001,
+    );
+    negativeEntry = transactions.find(
+      t => Math.abs((t.AmountNotRounded as number) - (-expectedAmount)) < 0.0001,
+    );
+
+    if (positiveEntry && negativeEntry) {
+      logger.info('Both transaction entries found', {
+        elapsedMs: Date.now() - start,
+        totalRows: transactions.length,
+      });
+      break;
+    }
+
+    logger.debug('Waiting for matching transactions...', {
+      expectedAmount,
+      foundPositive: !!positiveEntry,
+      foundNegative: !!negativeEntry,
+      totalRows: transactions.length,
+      elapsedMs: Date.now() - start,
+    });
+    await new Promise(r => setTimeout(r, intervalMs));
+  }
+
+  // ── Assert both entries were found ──
+  expect(positiveEntry, `Expected a transaction with AmountNotRounded ≈ +${expectedAmount} (polled ${timeoutMs / 1000}s)`).to.exist;
+  expect(negativeEntry, `Expected a transaction with AmountNotRounded ≈ ${-expectedAmount} (polled ${timeoutMs / 1000}s)`).to.exist;
+
+  // Both entries must share the same BundleNumber and Reference
+  expect(
+    positiveEntry!.BundleNumber,
+    'Both entries should have the same BundleNumber',
+  ).to.equal(negativeEntry!.BundleNumber);
+
+  expect(
+    positiveEntry!.Reference,
+    'Both entries should have the same Reference',
+  ).to.equal(negativeEntry!.Reference);
+
+  logger.info('Verified book client deposit transactions in Data.Transaction', {
     instanceId,
     reference,
-    30_000,   // timeout: 30 seconds
-    2_000,    // poll interval: 2 seconds
-    createdAfter,
-  );
-
-  expect(transactions.length, 'Expected at least 1 transaction row in Data.Transaction').to.be.at.least(1);
-
-  logger.info('Verified transactions in Data.Transaction', {
-    instanceId,
-    reference,
-    transactionCount: transactions.length,
-    transactions: transactions.map(t => ({
-      Id: t.Id,
-      Amount: t.Amount,
-      ClientId: t.ClientId,
-      Account: t.Account,
-    })),
+    expectedAmount,
+    positiveAmountNotRounded: positiveEntry!.AmountNotRounded,
+    negativeAmountNotRounded: negativeEntry!.AmountNotRounded,
+    bundleNumber: positiveEntry!.BundleNumber,
   });
 });
 

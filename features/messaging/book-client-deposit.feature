@@ -11,16 +11,25 @@ Feature: Booking a Client Deposit
     Then I should receive 1 message within 30 seconds
     And the transactions from the book client deposit message should exist in the database
 
-  # Sending message with duplicate message ID should not result in processing the same message twice
-  Scenario: Verify behavior when publishing book client deposit message with duplicate message ID
+  Scenario: Verify behavior when publishing book client deposit message with duplicate message ID with same message content
     Given I am listening on "general ledger posting service"
     And I am listening on the "general ledger posting service error" exchange
     And I define a valid message for booking a client deposit
     When I publish the message to "general ledger posting service"
     Then I should receive 1 message within 30 seconds
     When I publish the same message again to "general ledger posting service"
-    Then I should not receive any additional messages within the next 30 seconds
-    And there should be an error on the "general ledger posting service error" exchange
+    And there should be no errors on the "general ledger posting service error" exchange
+
+  Scenario: Verify an error is raised when publishing book client deposit message with duplicate message ID with a unique message content
+    Given I am listening on "general ledger posting service"
+    And I am listening on the "general ledger posting service error" exchange
+    And I define a valid message for booking a client deposit
+    When I publish the message to "general ledger posting service"
+    Then I should receive 1 message within 30 seconds
+    When I define a valid message for booking a client deposit
+    And I set the message ID to be the same as the previous message
+    And I publish the message to "general ledger posting service"
+    Then there should be an error on the "general ledger posting service error" exchange
 
   Scenario: Publishing an invalid message should result an error message on the error exchange
     Given I am listening on "general ledger posting service"
