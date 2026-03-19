@@ -66,4 +66,56 @@ Feature: Clients
     And the response should be an array of client departments
 #    And each item in the response array should match schema "client-department"
 
-  #TODO: Need clarify the expected behavior of orderBy for this controller endpoint.
+  @negative
+  Scenario: Verify behavior with invalid instanceId on client departments
+    When I define a GET "client departments request"
+    And I set "instanceId" to "99999"
+    Then I send the client departments request to the API
+    And I get the response code of BadRequest
+    And the response should match schema "gl-error"
+
+  # ── Unconventional input tests ─────────────────────────────────────────────
+  # These tests send values of the wrong type or semantically invalid values
+  @negative @unconventional
+  Scenario Outline: GET clients with unconventional instanceId values
+    When I define a GET "clients request"
+    And I set "instanceId" to "<instanceId>"
+    Then I send the client request to the API
+    And the response status should be BadRequest or NotFound
+
+    Examples:
+      | instanceId |
+      | null       |
+      | abc        |
+      | -1         |
+      | 1.5        |
+      | @!$        |
+
+  @negative @unconventional
+  Scenario Outline: GET client departments with unconventional instanceId values
+    When I define a GET "client departments request"
+    And I set "instanceId" to "<instanceId>"
+    Then I send the client departments request to the API
+    And the response status should be BadRequest or NotFound
+
+    Examples:
+      | instanceId |
+      | null       |
+      | abc        |
+      | -1         |
+      | 1.5        |
+      | @!$        |
+
+  # ── Swagger schema gaps ────────────────────────────────────────────────────
+  # 1. GET /{instanceId}/clients/departments — swagger references GLClient schema for 200
+  #    response, but the actual API returns a different shape (recno, name, description).
+  #    The client-department.schema.json was created from the actual response, not swagger.
+  # 2. The Error component schema uses camelCase (type, message, stackTrace) but the actual
+  #    API serialises with PascalCase (Type, Message, StackTrace). gl-error.schema.json
+  #    already accounts for this, but swagger is misleading.
+  # 3. GLClient component schema has no required fields defined — all three fields
+  #    (orgno, globalId, name) are nullable with no required array.
+  # 4. No documentation on valid values or behavior of the orderBy query parameter
+  #    on GET /{instanceId}/clients.
+  # 5. GET /{instanceId}/clients returns 500 instead of 400 for invalid instanceId — the
+  #    API should return a proper 4xx error.
