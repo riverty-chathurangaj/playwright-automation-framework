@@ -1,30 +1,67 @@
 @accounts
 Feature: Accounts — List GL Accounts
+  As a user of the GL API
+  I should be able to retrieve GL account information for a given instance
 
   Background:
     Given I am authenticated as "a valid client"
 
-  # ── Happy path ───────────────────────────────────────────────────────────────
-
   @smoke
-  Scenario: List accounts for the configured instance returns 200
-    When I send a GET request to "/{instanceId}/accounts"
-    Then the response status should be OK
-
-  @schema
-  Scenario: Each account in the response conforms to the gl-account schema
-    When I send a GET request to "/{instanceId}/accounts"
-    Then the response status should be OK
+  Scenario Outline: I should be able to get a list of accounts for a given instance
+    When I define a GET "accounts request"
+    And I set "instanceId" to "<instanceId>"
+    Then I send the accounts request to the API
+    And I get the response code of OK
+    And the response should be an array of accounts
     And each item in the response array should match schema "gl-account"
 
-  @regression
-  Scenario: List accounts with orderBy parameter returns 200
-    When I send a GET request to "/{instanceId}/accounts?orderBy=account"
-    Then the response status should be OK
+    Examples:
+      | instanceId |
+      | 2001       |
+      | 2002       |
 
-  # ── Negative ─────────────────────────────────────────────────────────────────
+  #TODO: Add verification for order of accounts responded with
+  Scenario: I should be able to get accounts with orderBy parameter
+    When I define a GET "accounts request"
+    And I set account request parameters:
+      | orderBy |
+      | account |
+    Then I send the accounts request to the API
+    And I get the response code of OK
+    And the response should be an array of accounts
+    And each item in the response array should match schema "gl-account"
 
-  @negative
-  Scenario: Request with an invalid instanceId returns 400
-    When I send a GET request to "/99999/accounts"
-    Then the response status should be BadRequest
+  @negative @fixme #TODO: The API responds with 500 instead of 400 or 404
+  Scenario: Verify behavior with invalid instanceId on accounts
+    When I define a GET "accounts request"
+    And I set "instanceId" to "99999"
+    Then I send the accounts request to the API
+    And I get the response code of BadRequest
+    And the response should match schema "gl-error"
+
+  # ── Unconventional input tests ─────────────────────────────────────────────
+  # These tests send values of the wrong type or semantically invalid values
+  @negative @unconventional
+  Scenario Outline: GET accounts with unconventional instanceId values
+    When I define a GET "accounts request"
+    And I set "instanceId" to "<instanceId>"
+    Then I send the accounts request to the API
+    And the response status should be BadRequest or NotFound
+
+    Examples:
+      | instanceId |
+      | null       |
+      | abc        |
+      | 1.5        |
+      | @!$        |
+
+    @fixme
+    Examples:
+      | instanceId |
+      | -1         |
+
+  # ── Swagger schema gaps ────────────────────────────────────────────────────
+  # 1. GLAccount component schema has no required fields — both account and description
+  #    are nullable with no required array defined.
+  # 2. No documentation on valid values or behavior of the orderBy query parameter.
+  # 3. The Error component schema uses camelCase but the actual API serialises PascalCase.

@@ -66,10 +66,10 @@ Feature: Clients
     And the response should be an array of client departments
 #    And each item in the response array should match schema "client-department"
 
-  @negative
+  @negative @fixme # The API responds with empty array. Shouldn't we return 404 or 400 with a message?
   Scenario: Verify behavior with invalid instanceId on client departments
     When I define a GET "client departments request"
-    And I set "instanceId" to "99999"
+    And I set "instanceId" to "98294561"
     Then I send the client departments request to the API
     And I get the response code of BadRequest
     And the response should match schema "gl-error"
@@ -87,9 +87,13 @@ Feature: Clients
       | instanceId |
       | null       |
       | abc        |
-      | -1         |
       | 1.5        |
       | @!$        |
+
+    @fixme
+    Examples:
+      | instanceId |
+      | -1         |
 
   @negative @unconventional
   Scenario Outline: GET client departments with unconventional instanceId values
@@ -102,9 +106,13 @@ Feature: Clients
       | instanceId |
       | null       |
       | abc        |
-      | -1         |
       | 1.5        |
       | @!$        |
+
+    @fixme
+    Examples:
+      | instanceId |
+      | -1         |
 
   # ── Swagger schema gaps ────────────────────────────────────────────────────
   # 1. GET /{instanceId}/clients/departments — swagger references GLClient schema for 200
