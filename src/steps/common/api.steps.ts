@@ -5,6 +5,7 @@ import { PayloadMutator, CorruptionType } from '../../utils/payload-mutator';
 import { Comparator } from '../../utils/comparator';
 import { config } from '../../core/config';
 import { resolveStatus } from '../../utils/http-status';
+import { getTemplate } from '../../utils/request-templates';
 import type { CurrentRequest, CurrentResponse } from '../../fixtures';
 
 const apiBase = `/${config.servicePath}`;
@@ -14,7 +15,37 @@ function resolvePath(path: string, instanceId: number): string {
   return resolved.startsWith('/api') ? resolved : `${apiBase}${resolved}`;
 }
 
-// ─── Request building ───────────────────────────────────────────
+// ─── Request building (generic — templates registered by domain step files) ──
+
+When('I define a GET {string}', function (
+  { currentRequest }: { currentRequest: CurrentRequest },
+  requestName: string,
+) {
+  const template = getTemplate(requestName);
+  currentRequest.method = 'GET';
+  currentRequest.endpoint = template;
+  delete currentRequest.queryParams;
+});
+
+When('I define a PUT {string}', function (
+  { currentRequest }: { currentRequest: CurrentRequest },
+  requestName: string,
+) {
+  const template = getTemplate(requestName);
+  currentRequest.method = 'PUT';
+  currentRequest.endpoint = template;
+  delete currentRequest.queryParams;
+  delete currentRequest.body;
+});
+
+When('I set {string} to {string}', function (
+  { store }: { store: (key: string, value: unknown) => void },
+  param: string,
+  value: string,
+) {
+  const parsed = !isNaN(Number(value)) && value !== '' ? Number(value) : value;
+  store(`${param}Override`, parsed);
+});
 
 Given('I have a request body:', function ({ currentRequest }: { currentRequest: CurrentRequest }, docString: string) {
   currentRequest.body = JSON.parse(docString);

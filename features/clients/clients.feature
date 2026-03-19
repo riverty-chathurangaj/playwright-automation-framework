@@ -24,7 +24,7 @@ Feature: Clients
       | 2022       |
       | 2023       |
 
-  #TODO: This should return either 404 or 400 with a message indicating instance not found. 500 is not appropriate.
+  @fixme #TODO: This should return either 404 or 400 with a message indicating instance not found. 500 is not appropriate.
   Scenario: Verify behavior with invalid instanceId
     When I define a GET "clients request"
     And I set "instanceId" to "99999"
@@ -32,7 +32,7 @@ Feature: Clients
     And I get the response code of BadRequest
     And the response should match schema "gl-error"
 
-  #TODO: Would be better to have active status in the response to assert per-item correctness
+  #TODO: Would be better to have active status in the response to assert per-item correctness.
   Scenario Outline: I should be able to get a list of clients filtered by active status
     When I define a GET "clients request"
     And I set "instanceId" to "2001"
@@ -65,3 +65,5 @@ Feature: Clients
     And I get the response code of OK
     And the response should be an array of client departments
 #    And each item in the response array should match schema "client-department"
+
+  #TODO: Need clarify the expected behavior of orderBy for this controller endpoint.

@@ -94,6 +94,11 @@ export default defineConfig({
       grepInvert: /@manual/,
     },
     {
+      name: 'instances',
+      grep: /@instances/,
+      grepInvert: /@manual/,
+    },
+    {
       name: 'balance',
       grep: /@balance/,
       grepInvert: /@manual/,

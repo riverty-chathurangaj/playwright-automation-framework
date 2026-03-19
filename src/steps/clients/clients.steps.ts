@@ -2,19 +2,22 @@ import { When, Then } from '../../fixtures';
 import { DataTable } from 'playwright-bdd';
 import { expect } from 'chai';
 import { config } from '../../core/config';
+import { registerTemplates } from '../../utils/request-templates';
 import { ClientResponse } from '../../models/responses/client.response';
 import { ClientDepartmentResponse } from '../../models/responses/client-department.response';
 import type { ApiClient } from '../../core/api-client';
 import type { SchemaValidator } from '../../schemas/schema-validator';
 import type { CurrentRequest, CurrentResponse } from '../../fixtures';
-// Note: 'I get the response code of {word}' is defined in common/api.steps.ts
+// Note: 'I define a GET {string}', 'I set {string} to {string}', and
+//       'I get the response code of {word}' are defined in common/api.steps.ts
 
 const apiBase = `/${config.servicePath}`;
 
-const REQUEST_TEMPLATES: Record<string, string> = {
+// Register client-domain request templates into the shared registry
+registerTemplates({
   'clients request': '/{instanceId}/clients',
   'client departments request': '/{instanceId}/clients/departments',
-};
+});
 
 type ClientFixtures = {
   apiClient: ApiClient;
@@ -29,32 +32,6 @@ type ClientFixtures = {
 
 // ─── Request building ─────────────────────────────────────────────────────────
 
-When('I define a GET {string}', function (
-  { currentRequest }: Pick<ClientFixtures, 'currentRequest'>,
-  requestName: string,
-) {
-  const template = REQUEST_TEMPLATES[requestName];
-  if (!template) {
-    throw new Error(
-      `Unknown request name "${requestName}". Known templates: ${Object.keys(REQUEST_TEMPLATES).join(', ')}`,
-    );
-  }
-  currentRequest.method = 'GET';
-  currentRequest.endpoint = template;
-  delete currentRequest.queryParams;
-});
-
-When('I set {string} to {string}', function (
-  { store }: Pick<ClientFixtures, 'store'>,
-  param: string,
-  value: string,
-) {
-  if (param === 'instanceId') {
-    store('instanceIdOverride', Number(value));
-  } else {
-    throw new Error(`Unknown request parameter "${param}". Supported: instanceId`);
-  }
-});
 
 When('I set client request parameters:', function (
   { currentRequest, store }: Pick<ClientFixtures, 'currentRequest' | 'store'>,
