@@ -1,11 +1,11 @@
 import { Given, When, Then } from '../../fixtures';
 import { DataTable } from 'playwright-bdd';
 import { expect } from 'chai';
-import { PayloadMutator, CorruptionType } from '../../utils/payload-mutator';
-import { Comparator } from '../../utils/comparator';
-import { config } from '../../core/config';
-import { resolveStatus } from '../../utils/http-status';
-import { getTemplate } from '../../utils/request-templates';
+import { PayloadMutator, CorruptionType } from '@utils/payload-mutator';
+import { Comparator } from '@utils/comparator';
+import { config } from '@core/config';
+import { resolveStatus } from '@utils/http-status';
+import { getTemplate } from '@utils/request-templates';
 import type { CurrentRequest, CurrentResponse } from '../../fixtures';
 
 const apiBase = `/${config.servicePath}`;
@@ -15,7 +15,6 @@ function resolvePath(path: string, instanceId: number): string {
   return resolved.startsWith('/api') ? resolved : `${apiBase}${resolved}`;
 }
 
-// ─── Request building (generic — templates registered by domain step files) ──
 
 When('I define a GET {string}', function (
   { currentRequest }: { currentRequest: CurrentRequest },
@@ -25,6 +24,17 @@ When('I define a GET {string}', function (
   currentRequest.method = 'GET';
   currentRequest.endpoint = template;
   delete currentRequest.queryParams;
+});
+
+When('I define a POST {string}', function (
+  { currentRequest }: { currentRequest: CurrentRequest },
+  requestName: string,
+) {
+  const template = getTemplate(requestName);
+  currentRequest.method = 'POST';
+  currentRequest.endpoint = template;
+  delete currentRequest.queryParams;
+  delete currentRequest.body;
 });
 
 When('I define a PUT {string}', function (
@@ -51,7 +61,6 @@ Given('I have a request body:', function ({ currentRequest }: { currentRequest: 
   currentRequest.body = JSON.parse(docString);
 });
 
-// ─── Payload mutation (for negative testing) ─────────────────────
 
 When('I set field {string} to {string} in the payload', function (
   { currentRequest }: { currentRequest: CurrentRequest },
@@ -90,7 +99,6 @@ When('I corrupt field {string} with {string}', function (
   );
 });
 
-// ─── HTTP method steps ───────────────────────────────────────────
 
 When('I send a GET request to {string}', async function (
   { apiClient, currentRequest, currentResponse, activeRole, instanceId }: {
@@ -223,7 +231,6 @@ When('I send an invalid POST request to {string} with:', async function (
   Object.assign(currentResponse, await apiClient.post(url, { body }, activeRole.value));
 });
 
-// ─── Response assertions ─────────────────────────────────────────
 
 Then('I get the response code of {word}', function (
   { currentResponse }: { currentResponse: CurrentResponse },

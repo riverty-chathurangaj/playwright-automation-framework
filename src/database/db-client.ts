@@ -188,10 +188,15 @@ export class DatabaseClient {
     instanceId: number,
     reference: string,
     createdAfter?: Date,
+    partitionId?: number,
   ): Promise<Record<string, unknown>[]> {
-    logDb('SELECT', 'Data.Transaction', { instanceId, reference });
+    logDb('SELECT', 'Data.Transaction', { instanceId, reference, partitionId });
     const qb = this.db('Data.Transaction')
       .where({ InstanceId: instanceId, Reference: reference });
+
+    if (partitionId !== undefined) {
+      qb.where('PartitionId', partitionId);
+    }
 
     if (createdAfter) {
       qb.where('CreatedDate', '>=', createdAfter);
@@ -206,12 +211,13 @@ export class DatabaseClient {
     timeoutMs: number = 30_000,
     intervalMs: number = 2_000,
     createdAfter?: Date,
+    partitionId?: number,
   ): Promise<Record<string, unknown>[]> {
     const start = Date.now();
     const cutoff = createdAfter ?? new Date(start - 5 * 60_000); // default: last 5 minutes
 
     while (Date.now() - start < timeoutMs) {
-      const rows = await this.getTransactionsByReference(instanceId, reference, cutoff);
+      const rows = await this.getTransactionsByReference(instanceId, reference, cutoff, partitionId);
       if (rows.length > 0) {
         logger.info('Transactions found in Data.Transaction', {
           instanceId,

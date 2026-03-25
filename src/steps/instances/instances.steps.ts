@@ -7,12 +7,9 @@ import { InstanceResponse } from '../../models/responses/instance.response';
 import type { ApiClient } from '../../core/api-client';
 import type { SchemaValidator } from '../../schemas/schema-validator';
 import type { CurrentRequest, CurrentResponse } from '../../fixtures';
-// Note: 'I define a GET {string}', 'I set {string} to {string}', and
-//       'I get the response code of {word}' are defined in common/api.steps.ts
 
 const apiBase = `/${config.servicePath}`;
 
-// ── 1. REQUEST_TEMPLATES ─────────────────────────────────────────────────────
 registerTemplates({
   'instances request': '/instances',
   'instance by id request': '/instances/{id}',
@@ -32,7 +29,6 @@ type InstanceFixtures = {
   retrieve: <T = unknown>(key: string) => T;
 };
 
-// ── 2. Request building ──────────────────────────────────────────────────────
 
 When('I set instance request parameters:', function (
   { currentRequest, store }: Pick<InstanceFixtures, 'currentRequest' | 'store'>,
@@ -58,7 +54,6 @@ When('I set instance request parameters:', function (
   }
 });
 
-// ── 3. Send steps (one per request type) ─────────────────────────────────────
 
 Then('I send the instances request to the API', async function (
   { apiClient, currentRequest, currentResponse, activeRole }: InstanceFixtures,
@@ -145,7 +140,6 @@ Then('I send the deactivate instance request to the API', async function (
   );
 });
 
-// ── 4. Response assertions ───────────────────────────────────────────────────
 
 Then('the response should be an array of instances', function (
   { currentResponse, schemaValidator }: Pick<InstanceFixtures, 'currentResponse' | 'schemaValidator'>,

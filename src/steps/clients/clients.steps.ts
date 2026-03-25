@@ -8,12 +8,9 @@ import { ClientDepartmentResponse } from '../../models/responses/client-departme
 import type { ApiClient } from '../../core/api-client';
 import type { SchemaValidator } from '../../schemas/schema-validator';
 import type { CurrentRequest, CurrentResponse } from '../../fixtures';
-// Note: 'I define a GET {string}', 'I set {string} to {string}', and
-//       'I get the response code of {word}' are defined in common/api.steps.ts
 
 const apiBase = `/${config.servicePath}`;
 
-// Register client-domain request templates into the shared registry
 registerTemplates({
   'clients request': '/{instanceId}/clients',
   'client departments request': '/{instanceId}/clients/departments',
@@ -29,8 +26,6 @@ type ClientFixtures = {
   store: (key: string, value: unknown) => void;
   retrieve: <T = unknown>(key: string) => T;
 };
-
-// ─── Request building ─────────────────────────────────────────────────────────
 
 
 When('I set client request parameters:', function (
@@ -75,7 +70,6 @@ Then('I send the client request to the API', async function (
   );
 });
 
-// ─── Response assertions ──────────────────────────────────────────────────────
 
 Then('the response should be an array of clients', function (
   { currentResponse, schemaValidator }: Pick<ClientFixtures, 'currentResponse' | 'schemaValidator'>,

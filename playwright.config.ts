@@ -104,6 +104,11 @@ export default defineConfig({
       grepInvert: /@manual/,
     },
     {
+      name: 'accounting-month',
+      grep: /@accounting-month/,
+      grepInvert: /@manual/,
+    },
+    {
       name: 'default',
       grepInvert: /@manual/,
     },

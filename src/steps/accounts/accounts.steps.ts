@@ -7,12 +7,9 @@ import { GLAccountResponse } from '../../models/responses/gl-account.response';
 import type { ApiClient } from '../../core/api-client';
 import type { SchemaValidator } from '../../schemas/schema-validator';
 import type { CurrentRequest, CurrentResponse } from '../../fixtures';
-// Note: 'I define a GET {string}', 'I set {string} to {string}', and
-//       'I get the response code of {word}' are defined in common/api.steps.ts
 
 const apiBase = `/${config.servicePath}`;
 
-// ── 1. REQUEST_TEMPLATES ─────────────────────────────────────────────────────
 registerTemplates({
   'accounts request': '/{instanceId}/accounts',
   'accounts by posting request': '/{instanceId}/accounts/{postingId}',
@@ -29,7 +26,6 @@ type AccountFixtures = {
   retrieve: <T = unknown>(key: string) => T;
 };
 
-// ── 2. Request building ──────────────────────────────────────────────────────
 
 When('I set account request parameters:', function (
   { currentRequest, store }: Pick<AccountFixtures, 'currentRequest' | 'store'>,
@@ -55,7 +51,6 @@ When('I set account request parameters:', function (
   }
 });
 
-// ── 3. Send steps (one per request type) ─────────────────────────────────────
 
 Then('I send the accounts request to the API', async function (
   { apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: AccountFixtures,
@@ -91,7 +86,6 @@ Then('I send the accounts by posting request to the API', async function (
   );
 });
 
-// ── 4. Response assertions ───────────────────────────────────────────────────
 
 Then('the response should be an array of accounts', function (
   { currentResponse, schemaValidator }: Pick<AccountFixtures, 'currentResponse' | 'schemaValidator'>,

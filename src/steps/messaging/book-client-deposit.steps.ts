@@ -66,6 +66,9 @@ Then('the transactions from the book client deposit message should exist in the 
 
   const { InstanceId: instanceId, Reference: reference, Amount: expectedAmount } = message.message;
 
+  // PartitionId for book-client-deposit queries — speeds up Data.Transaction lookups
+  const PARTITION_ID = 20222026;
+
   // Use a cutoff slightly before the message sentTime to catch transactions
   const sentTime = message.sentTime;
   const createdAfter = sentTime
@@ -86,6 +89,7 @@ Then('the transactions from the book client deposit message should exist in the 
       instanceId,
       reference,
       createdAfter,
+      PARTITION_ID,
     );
 
     positiveEntry = transactions.find(
