@@ -343,6 +343,13 @@ Then('the response body should be an array', function (
   expect(Array.isArray(currentResponse.body)).to.be.true;
 });
 
+Then('the response should be an empty array', function (
+  { currentResponse }: { currentResponse: CurrentResponse },
+) {
+  expect(Array.isArray(currentResponse.body), 'Response body should be an array').to.be.true;
+  expect((currentResponse.body as unknown as unknown[]).length, 'Expected an empty array but got items').to.equal(0);
+});
+
 Then('the response body should be an array with at least {int} item(s)', function (
   { currentResponse }: { currentResponse: CurrentResponse },
   count: number,
@@ -427,3 +434,13 @@ Then('the field {string} should be of type {string}', function (
   const actual = Comparator.getNestedValue(currentResponse.body as Record<string, unknown>, field);
   expect(typeof actual).to.equal(expectedType);
 });
+
+Then('I see the error message {string}', function (
+  { currentResponse }: { currentResponse: CurrentResponse },
+  expectedMessage: string,
+) {
+  const body = currentResponse.body as unknown as Record<string, unknown>;
+  expect(body).to.have.property('errorMessage');
+  expect(String(body.errorMessage)).to.equal(expectedMessage);
+});
+

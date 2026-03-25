@@ -109,6 +109,11 @@ export default defineConfig({
       grepInvert: /@manual/,
     },
     {
+      name: 'postings',
+      grep: /@postings/,
+      grepInvert: /@manual/,
+    },
+    {
       name: 'default',
       grepInvert: /@manual/,
     },

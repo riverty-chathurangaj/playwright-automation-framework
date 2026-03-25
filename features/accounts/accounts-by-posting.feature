@@ -10,7 +10,7 @@ Feature: Accounts — Get Accounts by Posting
   @smoke
   Scenario: I should be able to get accounts by posting id
     When I define a GET "accounts by posting request"
-    And I set "postingId" to "1"
+    And I set "postingId" to "904"
     Then I send the accounts by posting request to the API
     And I get the response code of OK
     And the response should be an array of accounts
@@ -27,7 +27,7 @@ Feature: Accounts — Get Accounts by Posting
   Scenario: Invalid instanceId on accounts by posting returns error
     When I define a GET "accounts by posting request"
     And I set "instanceId" to "99999"
-    And I set "postingId" to "1"
+    And I set "postingId" to "904"
     Then I send the accounts by posting request to the API
     And I get the response code of BadRequest
     And the response should match schema "gl-error"
@@ -37,7 +37,7 @@ Feature: Accounts — Get Accounts by Posting
   Scenario Outline: GET accounts by posting with unconventional instanceId values
     When I define a GET "accounts by posting request"
     And I set "instanceId" to "<instanceId>"
-    And I set "postingId" to "1"
+    And I set "postingId" to "904"
     Then I send the accounts by posting request to the API
     And the response status should be BadRequest or NotFound
 

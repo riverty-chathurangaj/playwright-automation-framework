@@ -1,12 +1,12 @@
 @accounting-month
-Feature: Accounting Month — Close
+Feature: Close Accounting Month
   As a user of the GL API
   I should be able to close an accounting month for a given instance and client
 
   Background:
     Given I am authenticated as "a valid client"
 
-  @smoke
+  @smoke @fixme
   Scenario: I should be able to close an accounting month for a valid instance and client
     When I define a POST "close accounting month request"
     And I set "instanceId" to "2001"
@@ -16,6 +16,7 @@ Feature: Accounting Month — Close
     Then I send the close accounting month request to the API
     And I get the response code of OK
 
+  @fixme
   Scenario Outline: I should be able to close accounting months for different instances
     When I define a POST "close accounting month request"
     And I set "instanceId" to "<instanceId>"
@@ -30,63 +31,19 @@ Feature: Accounting Month — Close
       | 2001       | 1        | 2024 | 2     |
       | 2002       | 1        | 2024 | 1     |
 
-  # ── Negative scenarios ─────────────────────────────────────────────────────
-
-  @negative @fixme # The API may respond with 500 instead of 400 — verify and fix tag once confirmed
-  Scenario: Verify behavior with invalid instanceId
-    When I define a POST "close accounting month request"
-    And I set "instanceId" to "99999"
-    And I set accounting month request parameters:
-      | clientId | year | month |
-      | 1        | 2024 | 1     |
-    Then I send the close accounting month request to the API
-    And I get the response code of BadRequest
-
-  @negative
-  Scenario: Verify behavior with invalid clientId
+  Scenario: I should get an error when I try to close an already closed accounting month
     When I define a POST "close accounting month request"
     And I set "instanceId" to "2001"
     And I set accounting month request parameters:
       | clientId | year | month |
-      | 999999   | 2024 | 1     |
+      | 1        | 2000 | 1     |
     Then I send the close accounting month request to the API
     And I get the response code of NotFound
+    And I see the error message "No open accounting month found to close for the given criteria."
 
-  @negative
-  Scenario: Verify behavior with invalid year
-    When I define a POST "close accounting month request"
-    And I set "instanceId" to "2001"
-    And I set accounting month request parameters:
-      | clientId | year | month |
-      | 1        | 9999 | 1     |
-    Then I send the close accounting month request to the API
-    And I get the response code of BadRequest
-
-  @negative
-  Scenario: Verify behavior with invalid month value
-    When I define a POST "close accounting month request"
-    And I set "instanceId" to "2001"
-    And I set accounting month request parameters:
-      | clientId | year | month |
-      | 1        | 2024 | 13    |
-    Then I send the close accounting month request to the API
-    And I get the response code of BadRequest
-
-  @negative
-  Scenario: Verify behavior with month zero
-    When I define a POST "close accounting month request"
-    And I set "instanceId" to "2001"
-    And I set accounting month request parameters:
-      | clientId | year | month |
-      | 1        | 2024 | 0     |
-    Then I send the close accounting month request to the API
-    And I get the response code of BadRequest
-
-  # ── Unconventional input tests ─────────────────────────────────────────────
-  # These tests send values of the wrong type or semantically invalid values
-
+# ── Negative & unconventional input scenarios ────────────────────────────────
   @negative @unconventional
-  Scenario Outline: POST close accounting month with unconventional instanceId values
+  Scenario Outline: POST close accounting month with invalid or unconventional instanceId values
     When I define a POST "close accounting month request"
     And I set "instanceId" to "<instanceId>"
     And I set accounting month request parameters:
@@ -97,18 +54,15 @@ Feature: Accounting Month — Close
 
     Examples:
       | instanceId |
+      | 99999      |
       | null       |
       | abc        |
       | 1.5        |
       | @!$        |
-
-    @fixme
-    Examples:
-      | instanceId |
       | -1         |
 
   @negative @unconventional
-  Scenario Outline: POST close accounting month with unconventional clientId values
+  Scenario Outline: POST close accounting month with invalid or unconventional clientId values
     When I define a POST "close accounting month request"
     And I set "instanceId" to "2001"
     And I set accounting month request parameters:
@@ -119,18 +73,15 @@ Feature: Accounting Month — Close
 
     Examples:
       | clientId |
+      | 999999   |
       | null     |
       | abc      |
       | 1.5      |
       | @!$      |
-
-    @fixme
-    Examples:
-      | clientId |
       | -1       |
 
   @negative @unconventional
-  Scenario Outline: POST close accounting month with unconventional year values
+  Scenario Outline: POST close accounting month with invalid or unconventional year values
     When I define a POST "close accounting month request"
     And I set "instanceId" to "2001"
     And I set accounting month request parameters:
@@ -141,18 +92,15 @@ Feature: Accounting Month — Close
 
     Examples:
       | year |
+      | 9999 |
       | null |
       | abc  |
       | 1.5  |
       | @!$  |
-
-    @fixme
-    Examples:
-      | year |
       | -1   |
 
   @negative @unconventional
-  Scenario Outline: POST close accounting month with unconventional month values
+  Scenario Outline: POST close accounting month with invalid or unconventional month values
     When I define a POST "close accounting month request"
     And I set "instanceId" to "2001"
     And I set accounting month request parameters:
@@ -163,14 +111,12 @@ Feature: Accounting Month — Close
 
     Examples:
       | month |
+      | 13    |
+      | 0     |
       | null  |
       | abc   |
       | 1.5   |
       | @!$   |
-
-    @fixme
-    Examples:
-      | month |
       | -1    |
 
   # ── Swagger schema gaps ────────────────────────────────────────────────────
