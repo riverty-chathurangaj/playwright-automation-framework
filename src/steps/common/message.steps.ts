@@ -133,6 +133,36 @@ Then('there should be no errors on the {string} exchange', async function (
   await dlqMonitor.assertNoDLQMessages(5_000);
 });
 
+Then('there should be {int} error(s) on the {string} exchange within {int} seconds', async function (
+  { dlqMonitor, store }: Pick<MessagingFixtures, 'dlqMonitor' | 'store'>,
+  expectedCount: number,
+  exchangeLabel: string,
+  seconds: number,
+) {
+  const timeoutMs = seconds * 1000;
+  const intervalMs = 500;
+  const start = Date.now();
+
+  while (Date.now() - start < timeoutMs) {
+    const collected = dlqMonitor.getCollectedMessages();
+    if (collected.length >= expectedCount) {
+      store('errorMessages', collected);
+      expect(
+        collected.length,
+        `Expected at least ${expectedCount} error(s) but received ${collected.length}`,
+      ).to.be.at.least(expectedCount);
+      return;
+    }
+    await new Promise(r => setTimeout(r, intervalMs));
+  }
+
+  const collected = dlqMonitor.getCollectedMessages();
+  expect(
+    collected.length,
+    `Timed out waiting for ${expectedCount} error(s) on error exchange (got ${collected.length} in ${seconds}s)`,
+  ).to.be.at.least(expectedCount);
+});
+
 // ─── Message content assertions ──────────────────────────────────
 
 Then('the message should match schema {string}', function (

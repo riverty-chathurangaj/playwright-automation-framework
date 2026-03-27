@@ -6,7 +6,7 @@ Feature: Accounts — List GL Accounts
   Background:
     Given I am authenticated as "a valid client"
 
-  @smoke
+  @accounts @smoke
   Scenario Outline: I should be able to get a list of accounts for a given instance
     When I define a GET "accounts request"
     And I set "instanceId" to "<instanceId>"
@@ -21,6 +21,7 @@ Feature: Accounts — List GL Accounts
       | 2002       |
 
   #TODO: Add verification for order of accounts responded with
+  @accounts
   Scenario: I should be able to get accounts with orderBy parameter
     When I define a GET "accounts request"
     And I set account request parameters:
@@ -31,7 +32,7 @@ Feature: Accounts — List GL Accounts
     And the response should be an array of accounts
     And each item in the response array should match schema "gl-account"
 
-  @negative @fixme #TODO: The API responds with 500 instead of 400 or 404
+  @accounts @fixme #TODO: The API responds with 500 instead of 400 or 404
   Scenario: Verify behavior with invalid instanceId on accounts
     When I define a GET "accounts request"
     And I set "instanceId" to "99999"
@@ -41,7 +42,7 @@ Feature: Accounts — List GL Accounts
 
   # ── Unconventional input tests ─────────────────────────────────────────────
   # These tests send values of the wrong type or semantically invalid values
-  @negative @unconventional
+  @accounts
   Scenario Outline: GET accounts with unconventional instanceId values
     When I define a GET "accounts request"
     And I set "instanceId" to "<instanceId>"

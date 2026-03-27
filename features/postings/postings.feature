@@ -6,7 +6,7 @@ Feature: Postings
   Background:
     Given I am authenticated as "a valid client"
 
-  @smoke
+  @postings @smoke
   Scenario Outline: I should be able to get a list of postings for a given instance
     When I define a GET "postings request"
     And I set "instanceId" to "<instanceId>"
@@ -20,7 +20,7 @@ Feature: Postings
       | 2001       |
       | 2002       |
 
-  @schema
+  @postings
   Scenario: Schema validation for postings response
     When I define a GET "postings request"
     And I set "instanceId" to "2001"
@@ -28,6 +28,7 @@ Feature: Postings
     And I get the response code of OK
     And each item in the response array should match schema "gl-posting"
 
+  @postings
   Scenario: Verify behavior when getting postings for invalid instanceId
     When I define a GET "postings request"
     And I set "instanceId" to "99999"
@@ -35,6 +36,7 @@ Feature: Postings
     And I get the response code of OK
     And the response should be an empty array
 
+  @postings
   Scenario: I should be able to get postings with orderBy parameter
     When I define a GET "postings request"
     And I set "instanceId" to "2001"
@@ -48,7 +50,7 @@ Feature: Postings
 
 
 # ── Negative & unconventional input scenarios ────────────────────────────────
-  @negative @unconventional
+  @postings
   Scenario Outline: GET postings with invalid or unconventional instanceId values
     When I define a GET "postings request"
     And I set "instanceId" to "<instanceId>"

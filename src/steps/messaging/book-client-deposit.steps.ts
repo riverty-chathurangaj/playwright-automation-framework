@@ -5,9 +5,12 @@ import {
   buildBookClientDepositMessage,
   type BookClientDepositMessage,
 } from '@models/test-data/factories/book-client-deposit.factory';
+import { resolveExchange } from '@messaging/exchanges';
+import type { RabbitClient } from '@messaging/rabbit-client';
 import type { DatabaseClient } from '@database/db-client';
 
 type BookClientDepositFixtures = {
+  rabbitClient: RabbitClient;
   store: (key: string, value: unknown) => void;
   retrieve: <T = unknown>(key: string) => T;
   dbClient: DatabaseClient;
@@ -52,6 +55,36 @@ When('I set the message ID to be the same as the previous message', function (
 
   currentMessage.messageId = lastPublished.messageId;
   store('generatedMessageId', lastPublished.messageId);
+});
+
+When('I publish {int} book client deposit message(s) with an invalid message ID to {string}', async function (
+  { rabbitClient, store }: Pick<BookClientDepositFixtures, 'rabbitClient' | 'store'>,
+  count: number,
+  exchangeLabel: string,
+) {
+  const { exchange, routingKey } = resolveExchange(exchangeLabel);
+  const publishedMessages: BookClientDepositMessage[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const invalidId = `not-a-valid-guid-${Date.now()}-${i}`;
+    const message = buildBookClientDepositMessage({}, invalidId);
+
+    await rabbitClient.publish(exchange, routingKey, message);
+
+    publishedMessages.push(message);
+    logger.debug(`Published message ${i + 1}/${count} with invalid messageId`, {
+      messageId: invalidId,
+    });
+  }
+
+  store('publishedBatchMessages', publishedMessages);
+  store('publishedBatchCount', count);
+
+  if (publishedMessages.length > 0) {
+    store('lastPublishedMessage', publishedMessages[publishedMessages.length - 1]);
+  }
+
+  logger.info(`Published ${count} book client deposit message(s) with invalid message IDs`);
 });
 
 // ── Database verification ────────────────────────────────────────────────────

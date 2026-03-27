@@ -13,7 +13,7 @@ Feature: Transactions — Multi-Instance Search
 
   # ── Retrieve by accounting period ────────────────────────────────────────────
 
-  @regression
+  @transactions
   Scenario Outline: Retrieve transactions for a specific instance and accounting period
     When I send a GET request to "/<instanceId>/transactions?accountingYearMonthFrom=<from>&accountingYearMonthTo=<to>&noOfRows=<rows>"
     Then the response status should be OK
@@ -33,7 +33,7 @@ Feature: Transactions — Multi-Instance Search
 
   # ── Schema validation ─────────────────────────────────────────────────────────
 
-  @schema
+  @transactions
   Scenario: Transaction response items conform to the gl-transaction schema
     When I send a GET request to "/2022/transactions?accountingYearMonthFrom=202407&accountingYearMonthTo=202407&noOfRows=5"
     Then the response status should be OK

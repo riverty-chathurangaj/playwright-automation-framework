@@ -7,7 +7,7 @@ Feature: Accounts — Get Accounts by Posting
   Background:
     Given I am authenticated as "a valid client"
 
-  @smoke
+  @accounts @smoke
   Scenario: I should be able to get accounts by posting id
     When I define a GET "accounts by posting request"
     And I set "postingId" to "904"
@@ -16,14 +16,14 @@ Feature: Accounts — Get Accounts by Posting
     And the response should be an array of accounts
     And each item in the response array should match schema "gl-account"
 
-  @negative
+  @accounts
   Scenario: Non-existent postingId returns NotFound
     When I define a GET "accounts by posting request"
     And I set "postingId" to "999999"
     Then I send the accounts by posting request to the API
     And I get the response code of NotFound
 
-  @negative
+  @accounts
   Scenario: Invalid instanceId on accounts by posting returns error
     When I define a GET "accounts by posting request"
     And I set "instanceId" to "99999"
@@ -33,7 +33,7 @@ Feature: Accounts — Get Accounts by Posting
     And the response should match schema "gl-error"
 
   # ── Unconventional input tests ─────────────────────────────────────────────
-  @negative @unconventional
+  @accounts
   Scenario Outline: GET accounts by posting with unconventional instanceId values
     When I define a GET "accounts by posting request"
     And I set "instanceId" to "<instanceId>"
@@ -53,7 +53,7 @@ Feature: Accounts — Get Accounts by Posting
       | instanceId |
       | -1         |
 
-  @negative @unconventional
+  @accounts
   Scenario Outline: GET accounts by posting with unconventional postingId values
     When I define a GET "accounts by posting request"
     And I set "postingId" to "<postingId>"

@@ -6,7 +6,7 @@ Feature: Instances
   Background:
     Given I am authenticated as "a valid client"
 
-  @smoke
+  @instances @smoke
   Scenario: I should be able to get the list of all instances
     When I define a GET "instances request"
     Then I send the instances request to the API
@@ -14,7 +14,7 @@ Feature: Instances
     And the response should be an array of instances
     And each item in the response array should match schema "instance"
 
-  @smoke
+  @instances @smoke
   Scenario Outline: I should be able to get an instance by id
     When I define a GET "instance by id request"
     And I set "id" to "<id>"
@@ -32,7 +32,7 @@ Feature: Instances
       | 2004 |
 
   # The API responds with 500 instead of 400, so marking this test as fixme to investigate and fix the issue
-  @fixme
+  @instances @fixme
   Scenario: Verify behavior with invalid instance id
     When I define a GET "instance by id request"
     And I set "id" to "99999"
@@ -40,6 +40,7 @@ Feature: Instances
     And I get the response code of BadRequest
     And the response should match schema "gl-error"
 
+  @instances
   Scenario Outline: I should be able to get instances filtered by mi parameter
     When I define a GET "instances request"
     And I send the instances request to the API
@@ -63,7 +64,7 @@ Feature: Instances
       | true  |
       | false |
 
-  @fixme # The API responds with 403 even though the user has access to the instance, need to investigate and fix the issue
+  @instances @fixme # The API responds with 403 even though the user has access to the instance, need to investigate and fix the issue
   Scenario Outline: I should be able to get an instance by source system id
     When I define a GET "instance by source system request"
     And I set "sourceSystemId" to "<sourceSystemId>"
@@ -75,7 +76,7 @@ Feature: Instances
       | 2001           |
       | 2002           |
 
-  @fixme # Depends on source system endpoint access being resolved first
+  @instances @fixme # Depends on source system endpoint access being resolved first
   Scenario Outline: I should be able to get an instance by source system id with mi parameter
     When I define a GET "instance by source system request"
     And I set "sourceSystemId" to "<sourceSystemId>"
@@ -92,13 +93,14 @@ Feature: Instances
       | 2002           | true  |
       | 2002           | false |
 
-  @fixme # The API responds with 403 instead of 404, so marking this test as fixme to investigate and fix the issue
+  @instances @fixme # The API responds with 403 instead of 404, so marking this test as fixme to investigate and fix the issue
   Scenario: Verify behavior with invalid source system id
     When I define a GET "instance by source system request"
     And I set "sourceSystemId" to "99999"
     Then I send the instance by source system request to the API
     And I get the response code of NotFound
 
+  @instances
   Scenario: I should be able to deactivate an instance
     When I define a PUT "deactivate instance request"
     And I set "id" to "2001"
@@ -112,6 +114,7 @@ Feature: Instances
     And the response should be a valid instance
     And the instance should have isActive equal to "false"
 
+  @instances
   Scenario: I should be able to activate an instance
     When I define a PUT "activate instance request"
     And I set "id" to "2001"
@@ -125,7 +128,7 @@ Feature: Instances
     And the response should be a valid instance
     And the instance should have isActive equal to "true"
 
-  @negative @fixme # The API responds with 500 instead of 404 or 400 with a message
+  @instances @fixme # The API responds with 500 instead of 404 or 400 with a message
   Scenario: Verify activate with invalid instance id
     When I define a PUT "activate instance request"
     And I set "id" to "99999"
@@ -133,7 +136,7 @@ Feature: Instances
     And I get the response code of BadRequest
     And the response should match schema "gl-error"
 
-  @negative @fixme # The API responds with 500 instead of 404 or 400 with a message
+  @instances @fixme # The API responds with 500 instead of 404 or 400 with a message
   Scenario: Verify deactivate with invalid instance id
     When I define a PUT "deactivate instance request"
     And I set "id" to "99999"
@@ -143,7 +146,7 @@ Feature: Instances
 
   # ── Unconventional input tests ─────────────────────────────────────────────
   # These tests send values of the wrong type or semantically invalid values
-  @negative @unconventional
+  @instances
   Scenario Outline: GET instance by id with unconventional id values
     When I define a GET "instance by id request"
     And I set "id" to "<id>"
@@ -162,7 +165,7 @@ Feature: Instances
       | id |
       | -1 |
 
-  @negative @unconventional
+  @instances
   Scenario Outline: GET instance by source system id with unconventional sourceSystemId values
     When I define a GET "instance by source system request"
     And I set "sourceSystemId" to "<sourceSystemId>"
@@ -181,7 +184,7 @@ Feature: Instances
         | sourceSystemId |
         | -1             |
 
-  @negative @unconventional
+  @instances
   Scenario Outline: PUT activate instance with unconventional id values
     When I define a PUT "activate instance request"
     And I set "id" to "<id>"
@@ -200,7 +203,7 @@ Feature: Instances
       | id |
       | -1 |
 
-  @negative @unconventional
+  @instances
   Scenario Outline: PUT deactivate instance with unconventional id values
     When I define a PUT "deactivate instance request"
     And I set "id" to "<id>"

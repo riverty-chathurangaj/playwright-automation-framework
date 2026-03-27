@@ -14,7 +14,7 @@ Feature: Transactions — Filter by OrgnoClient
   Background:
     Given I am authenticated as "a valid client"
 
-  @regression
+  @transactions
   Scenario Outline: OrgnoClient filter is accepted and applied to all returned items
     When I send a GET request to "/<instanceId>/transactions?orgnoClient=<orgno>&accountingYearMonthFrom=<from>&accountingYearMonthTo=<to>&noOfRows=<rows>"
     Then the response status should be OK

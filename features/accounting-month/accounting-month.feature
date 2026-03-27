@@ -6,7 +6,7 @@ Feature: Close Accounting Month
   Background:
     Given I am authenticated as "a valid client"
 
-  @smoke @fixme
+  @accounting-month @smoke @fixme
   Scenario: I should be able to close an accounting month for a valid instance and client
     When I define a POST "close accounting month request"
     And I set "instanceId" to "2001"
@@ -16,7 +16,7 @@ Feature: Close Accounting Month
     Then I send the close accounting month request to the API
     And I get the response code of OK
 
-  @fixme
+  @accounting-month @fixme
   Scenario Outline: I should be able to close accounting months for different instances
     When I define a POST "close accounting month request"
     And I set "instanceId" to "<instanceId>"
@@ -31,6 +31,7 @@ Feature: Close Accounting Month
       | 2001       | 1        | 2024 | 2     |
       | 2002       | 1        | 2024 | 1     |
 
+  @accounting-month
   Scenario: I should get an error when I try to close an already closed accounting month
     When I define a POST "close accounting month request"
     And I set "instanceId" to "2001"
@@ -42,7 +43,7 @@ Feature: Close Accounting Month
     And I see the error message "No open accounting month found to close for the given criteria."
 
 # ── Negative & unconventional input scenarios ────────────────────────────────
-  @negative @unconventional
+  @accounting-month
   Scenario Outline: POST close accounting month with invalid or unconventional instanceId values
     When I define a POST "close accounting month request"
     And I set "instanceId" to "<instanceId>"
@@ -61,7 +62,7 @@ Feature: Close Accounting Month
       | @!$        |
       | -1         |
 
-  @negative @unconventional
+  @accounting-month
   Scenario Outline: POST close accounting month with invalid or unconventional clientId values
     When I define a POST "close accounting month request"
     And I set "instanceId" to "2001"
@@ -80,7 +81,7 @@ Feature: Close Accounting Month
       | @!$      |
       | -1       |
 
-  @negative @unconventional
+  @accounting-month
   Scenario Outline: POST close accounting month with invalid or unconventional year values
     When I define a POST "close accounting month request"
     And I set "instanceId" to "2001"
@@ -99,7 +100,7 @@ Feature: Close Accounting Month
       | @!$  |
       | -1   |
 
-  @negative @unconventional
+  @accounting-month
   Scenario Outline: POST close accounting month with invalid or unconventional month values
     When I define a POST "close accounting month request"
     And I set "instanceId" to "2001"

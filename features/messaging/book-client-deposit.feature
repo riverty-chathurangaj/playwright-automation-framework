@@ -1,9 +1,9 @@
-@messaging
+@book-client-deposit
 Feature: Booking a Client Deposit
   A rabbitmq message published for booking a client deposit should be consumed by the GL service.
   This should result in adding transactions to the database according to the message content.
 
-  @smoke
+  @book-client-deposit @smoke
   Scenario: Verify publishing a valid book client deposit message creates transactions in the database
     Given I am listening on "general ledger posting service"
     And I define a valid message for booking a client deposit
@@ -12,6 +12,7 @@ Feature: Booking a Client Deposit
     And the transactions from the book client deposit message should exist in the database
     And the transactions should have the posting number "904"
 
+  @book-client-deposit
   Scenario: Verify behavior when publishing book client deposit message with duplicate message ID with same message content
     Given I am listening on "general ledger posting service"
     And I am listening on the "general ledger posting service error" exchange
@@ -21,6 +22,7 @@ Feature: Booking a Client Deposit
     When I publish the same message again to "general ledger posting service"
     And there should be no errors on the "general ledger posting service error" exchange
 
+  @book-client-deposit
   Scenario: Verify an error is raised when publishing book client deposit message with duplicate message ID with a unique message content
     Given I am listening on "general ledger posting service"
     And I am listening on the "general ledger posting service error" exchange
@@ -32,6 +34,7 @@ Feature: Booking a Client Deposit
     And I publish the message to "general ledger posting service"
     Then there should be an error on the "general ledger posting service error" exchange
 
+  @book-client-deposit
   Scenario: Publishing an invalid message should result an error message on the error exchange
     Given I am listening on "general ledger posting service"
     And I am listening on the "general ledger posting service error" exchange

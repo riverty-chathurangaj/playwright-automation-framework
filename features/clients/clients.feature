@@ -6,7 +6,7 @@ Feature: Clients
   Background:
     Given I am authenticated as "a valid client"
 
-  @smoke
+  @clients @smoke
   Scenario Outline: I should be able to get a list of clients for a given instance
     When I define a GET "clients request"
     And I set "instanceId" to "<instanceId>"
@@ -24,7 +24,7 @@ Feature: Clients
       | 2022       |
       | 2023       |
 
-  @fixme #TODO: This should return either 404 or 400 with a message indicating instance not found. 500 is not appropriate.
+  @clients @fixme #TODO: This should return either 404 or 400 with a message indicating instance not found. 500 is not appropriate.
   Scenario: Verify behavior with invalid instanceId
     When I define a GET "clients request"
     And I set "instanceId" to "99999"
@@ -33,6 +33,7 @@ Feature: Clients
     And the response should match schema "gl-error"
 
   #TODO: Would be better to have active status in the response to assert per-item correctness.
+  @clients
   Scenario Outline: I should be able to get a list of clients filtered by active status
     When I define a GET "clients request"
     And I set "instanceId" to "2001"
@@ -58,6 +59,7 @@ Feature: Clients
       | false    |
 
   #TODO: The schema is not correct for the response in swagger.json. It should be updated to reflect the actual response.
+  @clients
   Scenario: I should be able to get a list of client departments for a given instance
     When I define a GET "client departments request"
     And I set "instanceId" to "2001"
@@ -66,7 +68,7 @@ Feature: Clients
     And the response should be an array of client departments
 #    And each item in the response array should match schema "client-department"
 
-  @negative @fixme # The API responds with empty array. Shouldn't we return 404 or 400 with a message?
+  @clients @fixme # The API responds with empty array. Shouldn't we return 404 or 400 with a message?
   Scenario: Verify behavior with invalid instanceId on client departments
     When I define a GET "client departments request"
     And I set "instanceId" to "98294561"
@@ -76,7 +78,7 @@ Feature: Clients
 
   # ── Unconventional input tests ─────────────────────────────────────────────
   # These tests send values of the wrong type or semantically invalid values
-  @negative @unconventional
+  @clients
   Scenario Outline: GET clients with unconventional instanceId values
     When I define a GET "clients request"
     And I set "instanceId" to "<instanceId>"
@@ -95,7 +97,7 @@ Feature: Clients
       | instanceId |
       | -1         |
 
-  @negative @unconventional
+  @clients
   Scenario Outline: GET client departments with unconventional instanceId values
     When I define a GET "client departments request"
     And I set "instanceId" to "<instanceId>"
