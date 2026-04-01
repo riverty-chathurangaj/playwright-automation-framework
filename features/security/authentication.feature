@@ -1,8 +1,6 @@
 @security
 Feature: Security — Authentication & Authorization
 
-  # ── No credentials ──────────────────────────────────────────────────────────
-
   @security @smoke
   Scenario: Unauthenticated request to instances endpoint returns 401
     Given I am not authenticated
@@ -20,8 +18,6 @@ Feature: Security — Authentication & Authorization
     Given I am not authenticated
     When I send a GET request to "/{instanceId}/balance"
     Then the response status should be Unauthorized
-
-  # ── Invalid / expired tokens ─────────────────────────────────────────────────
 
   @security
   Scenario: Invalid token is rejected by the API gateway

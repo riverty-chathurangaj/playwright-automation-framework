@@ -1,51 +1,65 @@
 @balance
 Feature: Balance — Get Account Balances
+  As a user of the GL API
+  I should be able to retrieve account balance information for a given instance
 
   Background:
     Given I am authenticated as "a valid client"
 
-  # ── Happy path ───────────────────────────────────────────────────────────────
-
   @balance @smoke
-  Scenario: Get balance for the configured instance returns 200
-    When I send a GET request to "/{instanceId}/balance"
-    Then the response status should be OK
+  Scenario: Get balance for the configured instance returns OK
+    When I define a GET "balance request"
+    Then I send the balance request to the API
+    And I get the response code of OK
 
   @balance
   Scenario: Each balance entry conforms to the gl-account-balance schema
-    When I send a GET request to "/{instanceId}/balance"
-    Then the response status should be OK
+    When I define a GET "balance request"
+    Then I send the balance request to the API
+    And I get the response code of OK
     And each item in the response array should match schema "gl-account-balance"
 
-  # ── Filtered queries ─────────────────────────────────────────────────────────
+  @balance
+  Scenario: Filter balance by account range returns OK
+    When I define a GET "balance request"
+    And I set balance request parameters:
+      | accountfrom | accountto |
+      | 1000        | 9999      |
+    Then I send the balance request to the API
+    And I get the response code of OK
 
   @balance
-  Scenario: Filter balance by account range returns 200
-    When I send a GET request to "/{instanceId}/balance?accountfrom=1000&accountto=9999"
-    Then the response status should be OK
+  Scenario: Filter balance by accounting year-month range returns OK
+    When I define a GET "balance request"
+    And I set balance request parameters:
+      | accountingYearMonthFrom | accountingYearMonthTo |
+      | 202401                  | 202412                |
+    Then I send the balance request to the API
+    And I get the response code of OK
 
   @balance
-  Scenario: Filter balance by accounting year-month range returns 200
-    When I send a GET request to "/{instanceId}/balance?accountingYearMonthFrom=202401&accountingYearMonthTo=202412"
-    Then the response status should be OK
+  Scenario: Filter balance by clientId returns OK
+    When I define a GET "balance request"
+    And I set balance request parameters:
+      | clientId |
+      | 1        |
+    Then I send the balance request to the API
+    And I get the response code of OK
 
-  @balance
-  Scenario: Filter balance by clientId returns 200
-    When I send a GET request to "/{instanceId}/balance?clientId=1"
-    Then the response status should be OK
-
-  # Ported from: GetBalancebyClientAllAccounts.feature (.NET suite)
-  # Note: depends on test data inserted by the GL Test Support Service.
-  # Will return 200 with empty array if BalanceTestClient data is not present.
   @balance
   Scenario: Retrieve balance for all accounts of a specific client
-    When I send a GET request to "/2001/balance?orgnoClient=BalanceTestClient&accountingYearMonthFrom=202501&accountingYearMonthTo=202501"
-    Then the response status should be OK
-
-  # ── Negative ─────────────────────────────────────────────────────────────────
+    When I define a GET "balance request"
+    And I set "instanceId" to "2001"
+    And I set balance request parameters:
+      | orgnoClient       | accountingYearMonthFrom | accountingYearMonthTo |
+      | BalanceTestClient | 202501                  | 202501                |
+    Then I send the balance request to the API
+    And I get the response code of OK
 
   @balance
-  Scenario: Request with an invalid instanceId returns 400
-    When I send a GET request to "/99999/balance"
-    Then the response status should be BadRequest
+  Scenario: Request with an invalid instanceId returns BadRequest
+    When I define a GET "balance request"
+    And I set "instanceId" to "99999"
+    Then I send the balance request to the API
+    And I get the response code of BadRequest
 

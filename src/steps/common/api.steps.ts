@@ -57,6 +57,18 @@ When('I set {string} to {string}', function (
   store(`${param}Override`, parsed);
 });
 
+When('I set {string} to the stored value {string}', function (
+  { store, retrieve }: { store: (key: string, value: unknown) => void; retrieve: <T>(key: string) => T },
+  param: string,
+  key: string,
+) {
+  const value = retrieve(key);
+  if (value === undefined || value === null) {
+    throw new Error(`Stored value "${key}" is ${String(value)}. Did you store it in a previous step?`);
+  }
+  store(`${param}Override`, value);
+});
+
 Given('I have a request body:', function ({ currentRequest }: { currentRequest: CurrentRequest }, docString: string) {
   currentRequest.body = JSON.parse(docString);
 });

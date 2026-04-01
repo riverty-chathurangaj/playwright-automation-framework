@@ -36,14 +36,20 @@ export class Comparator {
     return Comparator.valuesEqual(actual, expectedValue);
   }
 
-  // Get nested field value via dot notation: "data.amount"
+  // Get nested field value via dot notation ("data.amount") or bracket array index ("[0].voucherNo", "items[1].name")
   static getNestedValue(obj: Record<string, unknown>, path: string): unknown {
-    const parts = path.split('.');
+    // Normalise bracket notation → dots: "[0].field" → "0.field", "items[2].name" → "items.2.name"
+    const normalised = path.replace(/\[(\d+)]/g, '.$1');
+    const parts = normalised.split('.').filter(p => p !== '');
     let current: unknown = obj;
 
     for (const part of parts) {
       if (current === null || current === undefined) return undefined;
-      current = (current as Record<string, unknown>)[part];
+      if (Array.isArray(current)) {
+        current = current[Number(part)];
+      } else {
+        current = (current as Record<string, unknown>)[part];
+      }
     }
 
     return current;

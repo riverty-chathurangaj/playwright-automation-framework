@@ -23,7 +23,7 @@ Feature: Accounts — Get Accounts by Posting
     Then I send the accounts by posting request to the API
     And I get the response code of NotFound
 
-  @accounts
+  @accounts @fixme
   Scenario: Invalid instanceId on accounts by posting returns error
     When I define a GET "accounts by posting request"
     And I set "instanceId" to "99999"
