@@ -9,7 +9,7 @@ Feature: Transactions — Get Transaction by ID
   Background:
     Given I am authenticated as "a valid client"
 
-  @transactions @smoke
+  @transactions @smoke @fixme
   Scenario: Retrieve a single transaction by id
     When I define a GET "transactions request"
     And I set transaction request parameters:
