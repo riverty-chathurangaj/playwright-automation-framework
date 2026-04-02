@@ -210,7 +210,9 @@ And the account "1001" balance should have changed by 5000.00
 
 ### AI Integration
 
-Set `AI_ENABLED=true` and provide `ANTHROPIC_API_KEY` to activate:
+Set `AI_ENABLED=true` and configure one provider to activate:
+- Anthropic: `AI_PROVIDER=anthropic` + `ANTHROPIC_API_KEY`
+- OpenAI: `AI_PROVIDER=openai` + `OPENAI_API_KEY`
 - Automatic failure analysis on test failures (attached to Playwright report)
 - AI prompts for scenario generation, test data synthesis, schema analysis in `.ai/prompts/`
 
@@ -249,7 +251,9 @@ See `.env.example` for the complete reference. Key variables:
 | `RABBITMQ_URL` | amqp://user:pass@host:5672 |
 | `DB_CLIENT` | mssql / pg / mysql2 |
 | `AI_ENABLED` | true to activate AI failure analysis |
-| `ANTHROPIC_API_KEY` | Required when `AI_ENABLED=true` |
+| `AI_PROVIDER` | anthropic (default) or openai |
+| `ANTHROPIC_API_KEY` | Required when `AI_PROVIDER=anthropic` |
+| `OPENAI_API_KEY` | Required when `AI_PROVIDER=openai` |
 | `XRAY_CLIENT_ID` | For Xray result publishing |
 | `GIT_SHA` | Injected by CI; used in `X-Test-Run-Id` header |
 

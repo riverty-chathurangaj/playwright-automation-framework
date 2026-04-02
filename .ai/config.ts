@@ -1,7 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { config } from '../src/core/config';
 
-export const anthropicClient = new Anthropic({ apiKey: config.ai.apiKey });
+export const anthropicClient = config.ai.anthropicApiKey
+  ? new Anthropic({ apiKey: config.ai.anthropicApiKey })
+  : null;
 
 export const AI_MODELS = {
   primary: 'claude-opus-4-6',

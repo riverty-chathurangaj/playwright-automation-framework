@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { config } from '../core/config';
 import { logger } from '../core/logger';
 
@@ -26,13 +27,50 @@ export interface GeneratedFeature {
 }
 
 export class AIEnricher {
-  private client: Anthropic;
+  private anthropicClient?: Anthropic;
+  private openaiClient?: OpenAI;
 
   constructor() {
-    if (!config.ai.apiKey) {
-      throw new Error('ANTHROPIC_API_KEY must be set to use AI enrichment');
+    if (config.ai.provider === 'anthropic') {
+      if (!config.ai.anthropicApiKey) {
+        throw new Error('ANTHROPIC_API_KEY must be set to use Anthropic AI enrichment');
+      }
+      this.anthropicClient = new Anthropic({ apiKey: config.ai.anthropicApiKey });
+      return;
     }
-    this.client = new Anthropic({ apiKey: config.ai.apiKey });
+
+    if (!config.ai.openaiApiKey) {
+      throw new Error('OPENAI_API_KEY must be set to use OpenAI AI enrichment');
+    }
+    this.openaiClient = new OpenAI({ apiKey: config.ai.openaiApiKey });
+  }
+
+  private async runPrompt(prompt: string): Promise<string> {
+    if (config.ai.provider === 'anthropic') {
+      const response = await this.anthropicClient!.messages.create({
+        model: config.ai.model,
+        max_tokens: config.ai.maxTokens,
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      const content = response.content[0];
+      if (content.type !== 'text') {
+        throw new Error('Unexpected Anthropic response type');
+      }
+      return content.text;
+    }
+
+    const response = await this.openaiClient!.responses.create({
+      model: config.ai.model,
+      input: prompt,
+      max_output_tokens: config.ai.maxTokens,
+    });
+
+    const text = response.output_text?.trim();
+    if (!text) {
+      throw new Error('Unexpected OpenAI response payload');
+    }
+    return text;
   }
 
   async analyzeFailure(context: FailureContext): Promise<FailureAnalysis> {
@@ -64,24 +102,15 @@ Respond ONLY with a JSON object matching this structure:
   "severity": "critical|high|medium|low"
 }`;
 
-    const response = await this.client.messages.create({
-      model: config.ai.model,
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const content = response.content[0];
-    if (content.type !== 'text') {
-      throw new Error('Unexpected AI response type');
-    }
+    const text = await this.runPrompt(prompt);
 
     try {
-      return JSON.parse(content.text) as FailureAnalysis;
+      return JSON.parse(text) as FailureAnalysis;
     } catch {
       // If JSON parse fails, return a structured fallback
       return {
         summary: 'AI analysis could not parse structured response',
-        probableCause: content.text.substring(0, 500),
+        probableCause: text.substring(0, 500),
         impactAssessment: 'Unknown',
         suggestedFix: 'Review error details manually',
         relatedPatterns: [],
@@ -118,16 +147,8 @@ Respond with JSON:
   "coverageAnalysis": "Brief analysis of coverage gaps"
 }`;
 
-    const response = await this.client.messages.create({
-      model: config.ai.model,
-      max_tokens: config.ai.maxTokens,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const content = response.content[0];
-    if (content.type !== 'text') throw new Error('Unexpected AI response');
-
-    return JSON.parse(content.text) as GeneratedFeature;
+    const text = await this.runPrompt(prompt);
+    return JSON.parse(text) as GeneratedFeature;
   }
 }
 

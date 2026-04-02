@@ -40,9 +40,15 @@ src/
 │   ├── json-schemas/              # *.schema.json — one per response type
 │   └── schema-validator.ts        # Loads + validates via Ajv
 ├── models/
-│   ├── responses/                 # *.response.ts — TypeScript interfaces
-│   └── test-data/fixtures/
-│       └── swagger.json           # OpenAPI spec (starting point — verify against actual API)
+│   ├── responses/                 # *.response.ts — HTTP response interfaces ONLY
+│   └── test-data/
+│       ├── factories/             # *.factory.ts — MassTransit envelope + payload interfaces + builder
+│       └── fixtures/
+│           └── swagger.json       # OpenAPI spec (starting point — verify against actual API)
+├── messaging/
+│   ├── exchanges.ts               # Friendly label → RabbitMQ exchange name registry
+│   ├── message-schemas/           # *.schema.json — schemas for consumed/DLQ messages (NOT API responses)
+│   └── ...                        # rabbit-client, publisher, consumer-harness, dlq-monitor, message-validator
 └── support/                       # global-setup, global-teardown, ai-enricher
 features/
 └── <domain>/
@@ -418,6 +424,59 @@ buildBookClientDepositMessage(payloadOverrides?, messageId?)
 
 Reference: `src/steps/messaging/book-client-deposit.steps.ts`
 
+### Factory file structure — two exported interfaces (co-located, never in `src/models/responses/`)
+
+Each factory file exports **two TypeScript interfaces** and a builder function:
+
+```typescript
+// ── 1. MassTransit outer envelope ────────────────────────────────────────────
+export interface BookClientDepositMessage {
+  messageId: string;           // UUID
+  conversationId: string;
+  messageType: string[];       // ['urn:message:GeneralLedger:BookClientDeposit']
+  message: BookClientDepositPayload;  // ← GL domain payload
+  sentTime: string;            // ISO timestamp — used as CreatedDate cutoff in DB polling
+  headers: Record<string, unknown>;
+  host: Record<string, unknown>;
+  // null fields: requestId, correlationId, initiatorId, responseAddress, faultAddress, expirationTime
+}
+
+// ── 2. GL domain payload ─────────────────────────────────────────────────────
+export interface BookClientDepositPayload {
+  InstanceId: number;
+  ClientId: number;
+  Source: string;
+  Amount: number;              // randomized via DataGenerator.amount() — NEVER a string
+  CreatedByUser: string;
+  SettledDate: string;
+  Reference: string;
+  BundleNoSettled: number;
+  MerchantId: string;
+}
+
+export function buildBookClientDepositMessage(
+  payloadOverrides: Partial<BookClientDepositPayload> = {},
+  messageId: string = randomUUID(),
+): BookClientDepositMessage { /* ... */ }
+```
+
+**Rule:** `src/models/responses/` is for HTTP response interfaces only. Message interfaces (envelope + payload) are always co-located in their factory file.
+
+### Message schemas (consumed messages / DLQ)
+
+Runtime schemas for **consumed** messages live in `src/messaging/message-schemas/` — loaded by `MessageValidator` (`src/messaging/message-validator.ts`), **not** the HTTP `SchemaValidator`.
+
+- `dlq-error.schema.json` (`$id: "dlq-error-event"`) — validates `x-death` / DLQ headers
+
+There is **no runtime JSON schema for outbound messages** — TypeScript interfaces enforce the outbound contract at compile time only. Add a `src/messaging/message-schemas/<message>.schema.json` only when you need to validate consumed message structure in a step.
+
+### Adding a new message type — checklist
+
+- [ ] `src/models/test-data/factories/<message>.factory.ts` — export `*Message` (envelope) + `*Payload` interfaces and builder function
+- [ ] `src/messaging/exchanges.ts` — register the exchange label if new; **never use raw exchange strings in feature files**
+- [ ] `src/steps/messaging/<message>.steps.ts` — publish step, `store('lastPublishedMessage', msg)`, DB verification step
+- [ ] (Optional) `src/messaging/message-schemas/<message>.schema.json` — only if runtime validation of a consumed message structure is needed
+
 ---
 
 ## Tag → Run Profile Mapping
@@ -457,3 +516,6 @@ Reference: `src/steps/messaging/book-client-deposit.steps.ts`
 | Querying `Data.Transaction` without date filter | Always pass `CreatedDate` cutoff — table is large |
 | Matching message Amount against `Amount` column | Match against `AmountNotRounded` — `Amount` is rounded |
 | Polling DB returning on `rows.length > 0` | Poll until specific amount match — old records exist for same Reference |
+| Putting message interfaces in `src/models/responses/` | Co-locate in factory file: `src/models/test-data/factories/<message>.factory.ts` |
+| Raw exchange string in feature/step file | Register label in `src/messaging/exchanges.ts`, use `resolveExchange(label)` |
+| Runtime message validation using HTTP `SchemaValidator` | Use `MessageValidator` (`src/messaging/message-validator.ts`) + schemas from `src/messaging/message-schemas/` |
