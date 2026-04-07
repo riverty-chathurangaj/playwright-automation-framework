@@ -1,7 +1,6 @@
-# Testonaut GL — Framework Guide & Implementation Patterns
+# Testonaut — Framework Guide & Implementation Patterns
 
-You are helping a developer work on the **Testonaut GL** BDD test automation framework.
-When asked to implement new features, step definitions, schemas, or models, follow every pattern below exactly.
+You are helping a developer work on a **Testonaut** BDD test automation framework project. When asked to implement new features, step definitions, schemas, or models, follow every pattern below exactly.
 
 ---
 
@@ -35,20 +34,25 @@ src/
 │   │   ├── database.steps.ts
 │   │   └── message.steps.ts
 │   └── <domain>/
-│       └── <domain>.steps.ts      # REQUEST_TEMPLATES + send step + assertions
+│       └── <domain>.steps.ts      # registerTemplates() + send step + assertions
 ├── schemas/
 │   ├── json-schemas/              # *.schema.json — one per response type
 │   └── schema-validator.ts        # Loads + validates via Ajv
 ├── models/
 │   ├── responses/                 # *.response.ts — HTTP response interfaces ONLY
 │   └── test-data/
-│       ├── factories/             # *.factory.ts — MassTransit envelope + payload interfaces + builder
+│       ├── factories/             # *.factory.ts — message envelope + payload interfaces + builder
 │       └── fixtures/
 │           └── swagger.json       # OpenAPI spec (starting point — verify against actual API)
 ├── messaging/
 │   ├── exchanges.ts               # Friendly label → RabbitMQ exchange name registry
 │   ├── message-schemas/           # *.schema.json — schemas for consumed/DLQ messages (NOT API responses)
 │   └── ...                        # rabbit-client, publisher, consumer-harness, dlq-monitor, message-validator
+├── database/
+│   └── db-client.ts               # Knex database client with configurable auth
+├── utils/
+│   ├── request-templates.ts       # Central template registry: registerTemplates(), getTemplate(), resolveEndpoint()
+│   └── http-status.ts             # Status label → code map: resolveStatus('OK') → 200
 └── support/                       # global-setup, global-teardown, ai-enricher
 features/
 └── <domain>/
@@ -90,10 +94,9 @@ Use `src/models/test-data/fixtures/swagger.json` as the **starting point** only.
 ### Artifact 1 — TypeScript Interface (`src/models/responses/`)
 
 ```typescript
-// src/models/responses/client-department.response.ts
-// Client department as returned by GET /gl-service/{instanceId}/clients/departments
-export interface ClientDepartmentResponse {
-  recno: number;
+// src/models/responses/department.response.ts
+export interface DepartmentResponse {
+  id: number;
   name: string;
   description: string | null;
 }
@@ -108,11 +111,11 @@ export interface ClientDepartmentResponse {
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "client-department",
-  "title": "GLClientDepartment",
+  "$id": "department",
+  "title": "Department",
   "type": "object",
   "properties": {
-    "recno":       { "type": "integer" },
+    "id":          { "type": "integer" },
     "name":        { "type": "string" },
     "description": { "type": ["string", "null"] }
   },
@@ -120,7 +123,7 @@ export interface ClientDepartmentResponse {
 }
 ```
 
-- `$id` must match the name used in `schemaValidator.validate('client-department', item)`
+- `$id` must match the name used in `schemaValidator.validate('department', item)`
 - Nullable fields: `["type", "null"]` — NOT OpenAPI's `nullable: true`
 - `"additionalProperties": false` — locks schema to known fields
 - Schema type is always `"object"` (never array at the root)
@@ -132,7 +135,7 @@ export interface ClientDepartmentResponse {
 ## Pattern 3 — Step Organisation
 
 - **Common steps** go in `src/steps/common/` — if reusable across domains
-- **Domain steps** go in `src/steps/<domain>/` — REQUEST_TEMPLATES, send steps, assertions
+- **Domain steps** go in `src/steps/<domain>/` — `registerTemplates()`, send steps, assertions
 - Never duplicate a step definition across files
 
 ### All step files import from fixtures — no exceptions
@@ -148,14 +151,140 @@ import { When, Then } from 'playwright-bdd';       // ❌
 
 ### Available common steps (do NOT re-define in domain files)
 
+#### auth.steps.ts
+
 ```gherkin
 Given I am authenticated as {string}
+Given I am not authenticated
+Given I am authenticated with an expired token
+Given I am authenticated with an invalid token
+```
+
+#### api.steps.ts — Request Building
+
+```gherkin
+When I define a GET {string}
+When I define a POST {string}
+When I define a PUT {string}
+When I set {string} to {string}
+When I set {string} to the stored value {string}
+Given I have a request body:
+When I set field {string} to {string} in the payload
+When I remove field {string} from the payload
+When I corrupt field {string} with {string}
+When I send a GET request to {string}
+When I send a POST request to {string}
+When I send a PUT request to {string}
+When I send a PATCH request to {string}
+When I send a DELETE request to {string}
+When I send a valid POST request to {string} with:
+When I send an invalid POST request to {string} with:
+```
+
+#### api.steps.ts — Response Assertions
+
+```gherkin
 Then I get the response code of {word}
-Then the response should match schema {string}
-Then each item in the response array should match schema {string}
+Then the response status should be {word}
+Then the response status should be {word} or {word}
 Then the response field {string} should equal {string}
+Then the response field {string} should equal {float}
+Then the response field {string} should be {string}
+Then the response field {string} should not be empty
+Then the response field {string} should be a valid UUID
+Then the response field {string} should be one of {string}
+Then the response should contain field {string}
+Then the response should contain required fields:
+Then the field {string} should be of type {string}
 Then I store the response field {string} as {string}
-Then the stored count {string} should be less than {string}
+Then the response body should be an array
+Then the response should be an empty array
+Then the response body should be an array with at least {int} item(s)
+Then the response array should contain exactly {int} items
+Then each item in the response array field {string} should equal {string}
+Then the error message should reference field {string}
+Then the error should indicate {string}
+Then I see the error message {string}
+Then the response time should be under {int} milliseconds
+```
+
+#### schema.steps.ts
+
+```gherkin
+Then the response should match schema {string}
+Then the response should NOT match schema {string}
+Then each item in the response array should match schema {string}
+Then no new undocumented fields should be present in the response
+Then no previously documented fields should be missing
+Then no field types should have changed from the baseline
+Then I have the baseline schema snapshot for {string}
+```
+
+#### contract.steps.ts
+
+```gherkin
+Then the response should satisfy contract {string}
+Then the contract should be satisfied for {string} on {string}
+Then the response schema should be valid against contract {string}
+```
+
+#### message.steps.ts
+
+```gherkin
+Given I am listening on {string}
+Given I am listening on the {string} exchange
+When I publish the message to {string}
+When I publish the message to {string} with routing key {string}
+When I publish the same message again to {string}
+When I publish a message to {string}:
+Then I should receive {int} message(s) within {int} seconds
+Then no messages should be received within {int} seconds
+Then I should not receive any additional messages within the next {int} seconds
+Then there should be an error on the {string} exchange
+Then there should be no errors on the {string} exchange
+Then there should be {int} error(s) on the {string} exchange within {int} seconds
+Then the message should match schema {string}
+Then the message field {string} should equal {string}
+Then the message field {string} should equal {float}
+Then the message field {string} should match the API response {string}
+Then the message header {string} should equal {string}
+Then the message property {string} should not be empty
+Then the messages should be in chronological order
+Then each message should have a unique {string}
+Then each message {string} should match its API response correlation
+Then the message should appear in the DLQ within {int} seconds
+Then the DLQ message header {string} should contain routing information
+Then the DLQ message header {string} should be {string}
+Then the DLQ message header {string} should be {int}
+Then the message should be retried {int} times
+Then after retries are exhausted the message should appear in the DLQ
+```
+
+#### database.steps.ts
+
+```gherkin
+Given account {string} exists in the database with balance {float}
+Given I capture a database snapshot of account {string}
+Given I capture account {string} balance
+When I query the database for trial balance totals
+When I query for journal entries with non-existent account codes
+When I query for posted journal entries without audit trail
+When I send {int} concurrent POST requests to {string} for account {string}
+Then a journal entry row should exist in the database with:
+Then a journal entry row should exist in the database matching the API response
+Then the account {string} balance should have changed by {float}
+Then the journal entry should have a {string} timestamp within {int} seconds of now
+Then an audit trail entry should exist with:
+Then an audit trail entry should exist for the journal posting
+Then the audit {string} should be null
+Then the audit {string} should contain the persisted journal data
+Then the sum of all debit amounts should equal the sum of all credit amounts
+Then the difference should be exactly {float}
+Then the result set should be empty
+Then the trial balance totals should still be balanced
+Then all {int} responses should have status {int}
+Then no duplicate journal entry IDs should exist in the database
+Then the final account {string} balance should equal the initial balance plus the sum of all posted amounts
 ```
 
 ---
@@ -194,8 +323,8 @@ When('...', async function (this: any, arg) { this.currentResponse = ...; }); //
 |---|---|
 | `currentRequest` | Set properties: `currentRequest.method = 'GET'` |
 | `currentResponse` | `Object.assign(currentResponse, apiResult)` — never reassign |
-| `activeRole` | `activeRole.value = 'a valid client'` |
-| `instanceId` (primitive) | `store('instanceIdOverride', Number(value))` |
+| `activeRole` | `activeRole.value = 'a valid user'` |
+| primitive values | `store('keyOverride', Number(value))` |
 
 **Never do `currentResponse = result`** — rebinds local variable only. Always use `Object.assign`.
 
@@ -206,21 +335,22 @@ When('...', async function (this: any, arg) { this.currentResponse = ...; }); //
 ```typescript
 import { When, Then } from '../../fixtures';
 import { expect } from 'chai';
-import { config } from '../../core/config';
-import { ClientResponse } from '../../models/responses/client.response';
+import { registerTemplates, resolveEndpoint } from '@utils/request-templates';
+import { config } from '@core/config';
+import { OrderResponse } from '../../models/responses/order.response';
 import type { ApiClient } from '../../core/api-client';
 import type { SchemaValidator } from '../../schemas/schema-validator';
 import type { CurrentRequest, CurrentResponse } from '../../fixtures';
 
 const apiBase = `/${config.servicePath}`;
 
-// ── 1. REQUEST_TEMPLATES ─────────────────────────────────────────────────────
-const REQUEST_TEMPLATES: Record<string, string> = {
-  'clients request': '/{instanceId}/clients',
-  'client departments request': '/{instanceId}/clients/departments',
-};
+// ── 1. Register templates at module load ─────────────────────────
+registerTemplates({
+  'orders request': '/{instanceId}/orders',
+  'order by id request': '/{instanceId}/orders/{orderId}',
+});
 
-type ClientFixtures = {
+type OrderFixtures = {
   apiClient: ApiClient;
   schemaValidator: SchemaValidator;
   currentRequest: CurrentRequest;
@@ -231,37 +361,9 @@ type ClientFixtures = {
   retrieve: <T = unknown>(key: string) => T;
 };
 
-// ── 2. Request building ──────────────────────────────────────────────────────
-
-When('I define a GET {string}', function (
-  { currentRequest }: Pick<ClientFixtures, 'currentRequest'>,
-  requestName: string,
-) {
-  const template = REQUEST_TEMPLATES[requestName];
-  if (!template) {
-    throw new Error(`Unknown request: "${requestName}". Known: ${Object.keys(REQUEST_TEMPLATES).join(', ')}`);
-  }
-  currentRequest.method = 'GET';
-  currentRequest.endpoint = template;  // stored as template — resolved at send time
-  delete currentRequest.queryParams;
-});
-
-When('I set {string} to {string}', function (
-  { store }: Pick<ClientFixtures, 'store'>,
-  param: string,
-  value: string,
-) {
-  if (param === 'instanceId') {
-    store('instanceIdOverride', Number(value));
-  } else {
-    throw new Error(`Unknown parameter "${param}"`);
-  }
-});
-
-// ── 3. Send steps (one per request type) ────────────────────────────────────
-
-Then('I send the client request to the API', async function (
-  { apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: ClientFixtures,
+// ── 2. Domain-specific send step ─────────────────────────────────
+Then('I send the order request to the API', async function (
+  { apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: OrderFixtures,
 ) {
   const { method, endpoint } = currentRequest;
   if (!method || !endpoint) throw new Error('No request defined.');
@@ -273,16 +375,15 @@ Then('I send the client request to the API', async function (
   );
 });
 
-// ── 4. Response assertions ───────────────────────────────────────────────────
-
-Then('the response should be an array of clients', function (
-  { currentResponse, schemaValidator }: Pick<ClientFixtures, 'currentResponse' | 'schemaValidator'>,
+// ── 3. Domain-specific assertions ────────────────────────────────
+Then('the response should be an array of orders', function (
+  { currentResponse, schemaValidator }: Pick<OrderFixtures, 'currentResponse' | 'schemaValidator'>,
 ) {
-  const body = currentResponse.body as unknown as ClientResponse[];
+  const body = currentResponse.body as unknown as OrderResponse[];
   expect(Array.isArray(body), 'Response body should be an array').to.be.true;
-  expect(body.length, 'Expected at least 1 client').to.be.at.least(1);
-  body.forEach((client, index) => {
-    const result = schemaValidator.validate('client', client);
+  expect(body.length, 'Expected at least 1 order').to.be.at.least(1);
+  body.forEach((item, index) => {
+    const result = schemaValidator.validate('order', item);
     expect(result.valid, `Schema failed at [${index}]:\n${result.errors?.map(e => `  [${e.path}] ${e.message}`).join('\n')}`).to.be.true;
   });
 });
@@ -293,70 +394,72 @@ Then('the response should be an array of clients', function (
 ## Pattern 6 — Feature File Structure
 
 ```gherkin
-@clients
-Feature: Clients
-  As a user of the GL API
-  I should be able to retrieve client information for a given instance
+@orders
+Feature: Orders
+  As a user of the API
+  I should be able to retrieve order information
 
   Background:
-    Given I am authenticated as "a valid client"
+    Given I am authenticated as "a valid user"
 
   @smoke
-  Scenario Outline: I should be able to get a list of clients for a given instance
-    When I define a GET "clients request"
+  Scenario Outline: Get orders for an instance
+    When I define a GET "orders request"
     And I set "instanceId" to "<instanceId>"
-    Then I send the client request to the API
+    Then I send the order request to the API
     And I get the response code of OK
-    And the response should be an array of clients
+    And the response should be an array of orders
 
     Examples:
       | instanceId |
-      | 2001       |
-      | 2002       |
+      | 1001       |
+      | 1002       |
 
-  Scenario: Verify behavior with invalid instanceId
-    When I define a GET "clients request"
+  Scenario: Invalid instanceId returns error
+    When I define a GET "orders request"
     And I set "instanceId" to "99999"
-    Then I send the client request to the API
+    Then I send the order request to the API
     And I get the response code of BadRequest
-    And the response should match schema "gl-error"
-
-  Scenario: I should be able to get a list of client departments for a given instance
-    When I define a GET "client departments request"
-    And I set "instanceId" to "2001"
-    Then I send the client departments request to the API
-    And I get the response code of OK
-    And the response should be an array of client departments
-    And each item in the response array should match schema "client-department"
+    And the response should match schema "error"
 ```
 
 ### Array response — two-step validation pattern
 
 ```gherkin
-And the response should be an array of clients                       ← domain step: non-empty check
-And each item in the response array should match schema "client"     ← common step: schema contract
+And the response should be an array of orders                        ← domain step: non-empty check
+And each item in the response array should match schema "order"      ← common step: schema contract
 ```
 
 Do NOT combine both into one step — separate concerns = clearer failure messages.
 
 ---
 
-## Pattern 7 — Adding a New Controller (checklist)
+## Pattern 7 — Tag Architecture
 
-- [ ] Read `src/models/test-data/fixtures/swagger.json` for endpoint definition
-- [ ] Make a live API call to verify actual response shape (swagger may be wrong)
-- [ ] `src/models/responses/<entity>.response.ts` — TypeScript interface
-- [ ] `src/schemas/json-schemas/<entity>.schema.json` — JSON Schema Draft-07
-- [ ] `features/<domain>/<domain>.feature` — Gherkin with `@<domain>` tag
-- [ ] `src/steps/<domain>/<domain>.steps.ts` — REQUEST_TEMPLATES + send + assertions
-- [ ] Add project to `playwright.config.ts` projects array for new domain
+Tags follow a **dual-layer** system:
+
+- **Domain tags** (mutually exclusive): Each feature has exactly ONE — maps to a Playwright project in `playwright.config.ts`. Examples: `@orders`, `@products`, `@accounts`, `@messaging`.
+- **Cross-cutting tags** (additive): `@smoke`, `@regression`, `@negative`, `@schema`, `@security` — filtered via `--grep` at CLI. A scenario can have multiple cross-cutting tags.
+- **Special tags**: `@fixme` → `test.fixme()` (skipped), `@manual` → excluded from all runs via `grepInvert`.
+
+### When adding a new domain
+
+1. Add `@<domain>` tag to the feature file
+2. Add a project entry in `playwright.config.ts`:
+   ```typescript
+   { name: '<domain>', grep: /@<domain>\b/, grepInvert: /@manual/ }
+   ```
+3. Optionally add npm scripts:
+   ```json
+   "test:<domain>": "npm run bdd:gen && playwright test --project=<domain>"
+   ```
 
 ---
 
-## Fixture Reference
+## Pattern 8 — Fixture Reference
 
 ```typescript
-type GLFixtures = {
+type Fixtures = {
   apiClient: ApiClient;               // Playwright HTTP client
   currentRequest: CurrentRequest;     // { method, endpoint, body, headers, queryParams }
   currentResponse: CurrentResponse;   // { status, body, headers, duration, correlationId }
@@ -366,98 +469,71 @@ type GLFixtures = {
   schemaValidator: SchemaValidator;   // Ajv validator, loads *.schema.json on startup
   store: (key: string, value: unknown) => void;
   retrieve: <T>(key: string) => T;
-  // Lazy: rabbitClient, consumerHarness, messagePublisher, dlqMonitor, messageValidator
-  // Lazy: dbClient, snapshotManager, cleanupManager, queryBuilder
-  _afterTestHook: void;               // Auto: attaches req/resp on failure, optional AI analysis
+  // Lazy (initialised only when needed):
+  rabbitClient: RabbitClient;
+  consumerHarness: ConsumerHarness;
+  messagePublisher: MessagePublisher;
+  dlqMonitor: DLQMonitor;
+  messageValidator: MessageValidator;
+  dbClient: DatabaseClient;
+  snapshotManager: SnapshotManager;
+  cleanupManager: CleanupManager;
+  queryBuilder: QueryBuilder;
+  _afterTestHook: void;               // Auto: attaches req/resp on failure
 };
 ```
 
 ---
 
-## Database — Azure SQL with Entra ID Passwordless
+## Pattern 9 — Adding a New Controller (checklist)
 
-The framework connects to **Azure SQL Database** via Microsoft Entra ID passwordless authentication (`@azure/identity` → `DefaultAzureCredential`). No username/password — developer must be logged in via `az login`.
-
-**Knex + Azure AD gotcha:** Set `type: 'azure-active-directory-default'` at the **connection root level** — NOT nested under `authentication`. Knex maps it internally via `_generateConnection()`.
-
-```typescript
-// CORRECT — in db-client.ts buildConnectionConfig()
-return { server: cfg.host, database: cfg.name, type: 'azure-active-directory-default', options: { encrypt: true } };
-// WRONG — knex strips nested authentication
-return { authentication: { type: 'azure-active-directory-default' } };  // ❌
-```
-
-**Large tables:** `Data.Transaction` is large — always pass a `CreatedDate` filter to avoid query timeouts.
-
-**`Data.Transaction` columns:** `Id`, `PartitionId`, `InstanceId`, `BundleNumber`, `ClientId`, `OrgnoClient`, `EventId`, `EventCombinationId`, `EventCombinationNumber`, `PostingId`, `PostingNumber`, `AccountingYear`, `AccountingMonth`, `AccountingYearMonth`, `Account`, `Amount`, `AmountNotRounded`, `ReceiverBankAccount`, `CustomerGuid`, `CustomerNumber`, `InvoiceNumber`, `OrderNumber`, `MerchantId`, `VoucherGuid`, `VoucherAllocationGuid`, `VoucherDate`, `ParentTransactionReference`, `Reference`, `Reference2`, `CreatedDate`, `CreatedByUser`, `ApplicationId`, `TransactionRequestLogId`
-
-Reference: `src/database/db-client.ts`, `src/core/config.ts` (`database.authType`)
+- [ ] Read `src/models/test-data/fixtures/swagger.json` for endpoint definition
+- [ ] Make a live API call to verify actual response shape (swagger may be wrong)
+- [ ] `src/models/responses/<entity>.response.ts` — TypeScript interface
+- [ ] `src/schemas/json-schemas/<entity>.schema.json` — JSON Schema Draft-07
+- [ ] `features/<domain>/<domain>.feature` — Gherkin with `@<domain>` tag
+- [ ] `src/steps/<domain>/<domain>.steps.ts` — `registerTemplates()` + send + assertions
+- [ ] Add project to `playwright.config.ts` projects array for new domain
 
 ---
 
-## Messaging → DB Verification Pattern
+## Adding a New Message Type (checklist)
 
-After publishing a RabbitMQ message and confirming consumption, verify the resulting database transactions:
-1. `lastPublishedMessage` is stored by common message steps
-2. Extract `InstanceId`, `Reference`, `sentTime` from the stored message
-3. Poll `Data.Transaction` with `getTransactionsByReferenceWithRetry()` using a `CreatedDate` cutoff
-4. Assert at least 1 transaction row exists
+- [ ] `src/models/test-data/factories/<message>.factory.ts` — export envelope + payload interfaces and builder function
+- [ ] `src/messaging/exchanges.ts` — register the exchange label if new; **never use raw exchange strings in feature files**
+- [ ] `src/steps/messaging/<message>.steps.ts` — publish step, `store('lastPublishedMessage', msg)`, DB verification step
+- [ ] (Optional) `src/messaging/message-schemas/<message>.schema.json` — only if runtime validation of a consumed message structure is needed
 
-```gherkin
-Then I should receive 1 message within 30 seconds
-And the transactions from the book client deposit message should exist in the database
-```
+---
 
-**Important:** The message `Amount` (a number with up to 4 decimals) maps to the `AmountNotRounded` column — NOT `Amount`. The `Amount` column stores the rounded value.
-
-**Polling caveat:** Old records may already exist for the same `Reference`. The polling loop must check for the specific amount match — not just `rows.length > 0`.
-
-## Message factories
-
-RabbitMQ message templates live in `src/models/test-data/factories/`. Each factory exports a builder function with an overrides parameter:
-
-```typescript
-// src/models/test-data/factories/book-client-deposit.factory.ts
-buildBookClientDepositMessage(payloadOverrides?, messageId?)
-// Amount is randomized via DataGenerator.amount() — always a number, never a string
-```
-
-Reference: `src/steps/messaging/book-client-deposit.steps.ts`
-
-### Factory file structure — two exported interfaces (co-located, never in `src/models/responses/`)
+## Message Factory Structure
 
 Each factory file exports **two TypeScript interfaces** and a builder function:
 
 ```typescript
-// ── 1. MassTransit outer envelope ────────────────────────────────────────────
-export interface BookClientDepositMessage {
+// src/models/test-data/factories/<action>.factory.ts
+import { randomUUID } from 'crypto';
+
+// ── Outer envelope ──────────────────────────────────────────────
+export interface SomeActionMessage {
   messageId: string;           // UUID
   conversationId: string;
-  messageType: string[];       // ['urn:message:GeneralLedger:BookClientDeposit']
-  message: BookClientDepositPayload;  // ← GL domain payload
-  sentTime: string;            // ISO timestamp — used as CreatedDate cutoff in DB polling
+  messageType: string[];       // ['urn:message:YourNamespace:SomeAction']
+  message: SomeActionPayload;
+  sentTime: string;            // ISO timestamp
   headers: Record<string, unknown>;
   host: Record<string, unknown>;
-  // null fields: requestId, correlationId, initiatorId, responseAddress, faultAddress, expirationTime
 }
 
-// ── 2. GL domain payload ─────────────────────────────────────────────────────
-export interface BookClientDepositPayload {
-  InstanceId: number;
-  ClientId: number;
-  Source: string;
-  Amount: number;              // randomized via DataGenerator.amount() — NEVER a string
-  CreatedByUser: string;
-  SettledDate: string;
-  Reference: string;
-  BundleNoSettled: number;
-  MerchantId: string;
+// ── Domain payload ──────────────────────────────────────────────
+export interface SomeActionPayload {
+  // ... domain-specific fields
 }
 
-export function buildBookClientDepositMessage(
-  payloadOverrides: Partial<BookClientDepositPayload> = {},
+export function buildSomeActionMessage(
+  payloadOverrides: Partial<SomeActionPayload> = {},
   messageId: string = randomUUID(),
-): BookClientDepositMessage { /* ... */ }
+): SomeActionMessage { /* ... */ }
 ```
 
 **Rule:** `src/models/responses/` is for HTTP response interfaces only. Message interfaces (envelope + payload) are always co-located in their factory file.
@@ -466,34 +542,56 @@ export function buildBookClientDepositMessage(
 
 Runtime schemas for **consumed** messages live in `src/messaging/message-schemas/` — loaded by `MessageValidator` (`src/messaging/message-validator.ts`), **not** the HTTP `SchemaValidator`.
 
-- `dlq-error.schema.json` (`$id: "dlq-error-event"`) — validates `x-death` / DLQ headers
-
 There is **no runtime JSON schema for outbound messages** — TypeScript interfaces enforce the outbound contract at compile time only. Add a `src/messaging/message-schemas/<message>.schema.json` only when you need to validate consumed message structure in a step.
-
-### Adding a new message type — checklist
-
-- [ ] `src/models/test-data/factories/<message>.factory.ts` — export `*Message` (envelope) + `*Payload` interfaces and builder function
-- [ ] `src/messaging/exchanges.ts` — register the exchange label if new; **never use raw exchange strings in feature files**
-- [ ] `src/steps/messaging/<message>.steps.ts` — publish step, `store('lastPublishedMessage', msg)`, DB verification step
-- [ ] (Optional) `src/messaging/message-schemas/<message>.schema.json` — only if runtime validation of a consumed message structure is needed
 
 ---
 
-## Tag → Run Profile Mapping
+## Database Integration
 
-| Tag | npm script | Purpose |
-|---|---|---|
-| `@smoke` | `npm run test:smoke` | Fast sanity checks |
-| `@regression` | `npm run test:regression` | Full coverage |
-| `@negative` | `npm run test:negative` | Error paths |
-| `@schema` | `npm run test:schema` | Contract/schema validation |
-| `@security` | `npm run test:security` | Auth & permissions |
-| `@clients` | `npm run test:clients` | Client endpoints |
-| `@accounts` | `npm run test:accounts` | Account endpoints |
-| `@balance` | `npm run test:balance` | Balance endpoints |
-| `@transactions` | `npm run test:transactions` | Transaction endpoints |
-| `@messaging` | `npm run test:messaging` | Async queue ops |
-| `@manual` | (excluded) | Manual testing only |
+The framework supports database verification via Knex.js (`src/database/db-client.ts`).
+
+- **Auth modes:** SQL auth (default) and Azure AD passwordless (`DB_AUTH_TYPE` env var)
+- **Knex mssql + Azure AD gotcha:** Set `type: 'azure-active-directory-default'` at the **connection root level** — NOT nested under `authentication`. Knex maps it internally via `_generateConnection()`.
+
+```typescript
+// CORRECT — in db-client.ts buildConnectionConfig()
+return { server: cfg.host, database: cfg.name, type: 'azure-active-directory-default', options: { encrypt: true } };
+// WRONG — knex strips nested authentication
+return { authentication: { type: 'azure-active-directory-default' } };  // ❌
+```
+
+- **Large tables:** Always filter by date to avoid query timeouts.
+- **Polling pattern:** When verifying async processing (e.g., message → DB), poll with a specific value match — not just `rows.length > 0`. Old records may exist for the same reference key.
+
+---
+
+## Environment Variables
+
+All configuration is loaded via `src/core/config.ts`. Defaults exist for all values — no env var is strictly required.
+
+| Category | Variables |
+|---|---|
+| **Core** | `BASE_URL`, `SERVICE_PATH`, `INSTANCE_ID`, `API_VERSION`, `TEST_ENV`, `API_TIMEOUT` |
+| **Auth** | `AUTH_BASE_URL`, `AUTH_CLIENT_ID`, `AUTH_CLIENT_SECRET`, `AUTH_AUDIENCE` |
+| **RabbitMQ** | `RABBITMQ_URL`, `RABBITMQ_EXCHANGE`, `RABBITMQ_DLQ`, `RABBITMQ_VHOST`, `RABBITMQ_HEARTBEAT`, `MESSAGE_WAIT_TIMEOUT` |
+| **Database** | `DB_CLIENT`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SCHEMA`, `DB_AUTH_TYPE`, `DB_QUERY_TIMEOUT` |
+| **AI** | `AI_ENABLED`, `AI_PROVIDER`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `AI_MODEL`, `AI_MAX_TOKENS` |
+
+---
+
+## TypeScript Path Aliases
+
+| Alias | Resolves to |
+|---|---|
+| `@core/*` | `src/core/*` |
+| `@utils/*` | `src/utils/*` |
+| `@models/*` | `src/models/*` |
+| `@schemas/*` | `src/schemas/*` |
+| `@messaging/*` | `src/messaging/*` |
+| `@database/*` | `src/database/*` |
+| `@steps/*` | `src/steps/*` |
+| `@support/*` | `src/support/*` |
+| `@fixtures/*` | `src/fixtures/*` |
 
 ---
 
@@ -504,18 +602,16 @@ There is **no runtime JSON schema for outbound messages** — TypeScript interfa
 | `import { Given } from '@cucumber/cucumber'` | `import { Given } from '../../fixtures'` |
 | `this.currentResponse = result` | `Object.assign(currentResponse, result)` |
 | `currentResponse = result` (local rebind) | `Object.assign(currentResponse, result)` |
-| `body as ClientResponse[]` | `body as unknown as ClientResponse[]` |
+| `body as MyType[]` | `body as unknown as MyType[]` |
 | Numeric codes in features (`200`, `404`) | Labels: `OK`, `NotFound` |
 | Re-defining a common step in a domain file | Check `src/steps/common/` first |
 | Using OpenAPI `nullable: true` in JSON schema | Use `["type", "null"]` (Draft-07) |
 | Trusting swagger without verifying against live API | Always run the endpoint and check actual response |
 | Forgetting `npm run bdd:gen` after feature changes | Run before any test run |
-| One generic "send" step for all request types | Each request type gets its own named send step |
-| Root-level array schema in `schemaValidator.validate()` | Object schema + `each item in the response array should match schema` |
+| One generic "send" step for all request types | Each domain gets its own named send step |
+| Root-level array schema | Object schema + `each item in the response array should match schema` |
 | Nesting `authentication` in knex mssql connection | Use `type: 'azure-active-directory-default'` at root level |
-| Querying `Data.Transaction` without date filter | Always pass `CreatedDate` cutoff — table is large |
-| Matching message Amount against `Amount` column | Match against `AmountNotRounded` — `Amount` is rounded |
-| Polling DB returning on `rows.length > 0` | Poll until specific amount match — old records exist for same Reference |
+| Querying large tables without date filter | Always pass date cutoff |
 | Putting message interfaces in `src/models/responses/` | Co-locate in factory file: `src/models/test-data/factories/<message>.factory.ts` |
-| Raw exchange string in feature/step file | Register label in `src/messaging/exchanges.ts`, use `resolveExchange(label)` |
-| Runtime message validation using HTTP `SchemaValidator` | Use `MessageValidator` (`src/messaging/message-validator.ts`) + schemas from `src/messaging/message-schemas/` |
+| Raw exchange string in feature/step file | Register label in `src/messaging/exchanges.ts` |
+| Runtime message validation using HTTP `SchemaValidator` | Use `MessageValidator` + schemas from `src/messaging/message-schemas/` |

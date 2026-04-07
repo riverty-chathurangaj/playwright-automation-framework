@@ -9,14 +9,22 @@ BDD API test automation framework for the GL (General Ledger) service.
 
 ```bash
 npm run bdd:gen               # Compile .feature → .features-gen/*.spec.ts (REQUIRED after any .feature change)
+npm run test                  # Run all tests (all domain projects, excludes @manual)
 npm run test:smoke            # Run @smoke tagged tests
 npm run test:clients          # Run @clients tagged tests (one script per domain tag)
+npm run test:accounts         # Run @accounts tagged tests
+npm run test:balance          # Run @balance tagged tests
+npm run test:transactions     # Run @transactions tagged tests
+npm run test:messaging        # Run @messaging tagged tests
+npm run test:security         # Run @security tagged tests
 npm run test:accounting-month # Run @accounting-month tagged tests
+npm run test:feature          # Run a single feature: npm run test:feature -- "@clients"
 npm run test:ui               # Interactive Playwright UI runner
 npm run type-check            # tsc --noEmit (no compile output)
 npm run lint                  # ESLint on src/
 npm run lint:fix              # ESLint with auto-fix
 npm run clean                 # Remove dist, reports, .features-gen
+npm run report                # Generate + open Allure report
 npm run report:generate       # Generate Allure HTML report from allure-results
 npm run report:open           # Open generated Allure HTML report
 npm run report:serve          # Serve Allure from raw results (no generate step)
@@ -24,7 +32,7 @@ npm run report:serve          # Serve Allure from raw results (no generate step)
 
 `bdd:gen` must run before every test execution — all `test:*` scripts call it automatically, but a bare `npx playwright test` does not.
 
-**Note:** `@instances` and `@postings` have projects in `playwright.config.ts` but no dedicated npm scripts — run them via `npx playwright test --project=instances` / `--project=postings` after `npm run bdd:gen`.
+**Note:** `@instances`, `@postings`, and `@report` have projects in `playwright.config.ts` but no dedicated npm scripts — run them via `npx playwright test --project=<name>` after `npm run bdd:gen`.
 
 ---
 
@@ -72,6 +80,7 @@ import { When, Then } from '../../fixtures';   // ← always from fixtures
 import { registerTemplates, resolveEndpoint } from '@utils/request-templates';
 
 // Call at module load — keys registered globally, resolved by common "I define a GET/POST" steps
+// ⚠️  Template names must be unique across all domains — duplicates overwrite silently
 registerTemplates({
   'clients request': '/{instanceId}/clients',   // {placeholder} resolved via store overrides
   'client departments request': '/{instanceId}/clients/departments',
@@ -102,47 +111,170 @@ Reference: `src/steps/clients/clients.steps.ts`, `src/utils/request-templates.ts
 
 ## Common Steps (do NOT re-define in domain files)
 
-Defined in `src/steps/common/` — use as-is in feature files:
+Defined in `src/steps/common/` — use as-is in feature files. See `src/steps/common/*.steps.ts` for the authoritative, exhaustive list — highlights below:
+
+### auth.steps.ts — Authentication
 
 ```gherkin
-# Auth (auth.steps.ts)
-Given I am authenticated as "a valid client"
+Given I am authenticated as {string}
 Given I am not authenticated
 Given I am authenticated with an expired token
 Given I am authenticated with an invalid token
+```
 
-# Request building (api.steps.ts) — do NOT re-define in domain files
-When I define a GET "clients request"
-When I define a POST "clients request"
-When I define a PUT "clients request"
-When I set "instanceId" to "2001"
-When I set "instanceId" to the stored value "createdId"
+### api.steps.ts — Request Building
 
-# Response status (api.steps.ts)
-Then I get the response code of OK
-Then the response status should be OK
+```gherkin
+# Template-based request definition (templates registered by domain step files)
+When I define a GET {string}
+When I define a POST {string}
+When I define a PUT {string}
+When I set {string} to {string}
+When I set {string} to the stored value {string}
 
-# Response field assertions (api.steps.ts)
-Then the response field "status" should equal "active"
-Then the response field "status" should be "null"
-Then the response field "id" should not be empty
-Then the response field "guid" should be a valid UUID
-Then I store the response field "id" as "createdId"
+# Payload manipulation
+Given I have a request body:
+When I set field {string} to {string} in the payload
+When I remove field {string} from the payload
+When I corrupt field {string} with {string}
 
-# Array assertions (api.steps.ts)
+# Direct HTTP verb steps (bypass templates — use URL string directly)
+When I send a GET request to {string}
+When I send a POST request to {string}
+When I send a PUT request to {string}
+When I send a PATCH request to {string}
+When I send a DELETE request to {string}
+When I send a valid POST request to {string} with:
+When I send an invalid POST request to {string} with:
+```
+
+### api.steps.ts — Response Assertions
+
+```gherkin
+# Status
+Then I get the response code of {word}
+Then the response status should be {word}
+Then the response status should be {word} or {word}
+
+# Field assertions
+Then the response field {string} should equal {string}
+Then the response field {string} should equal {float}
+Then the response field {string} should be {string}
+Then the response field {string} should not be empty
+Then the response field {string} should be a valid UUID
+Then the response field {string} should be one of {string}
+Then the response should contain field {string}
+Then the response should contain required fields:
+Then the field {string} should be of type {string}
+Then I store the response field {string} as {string}
+
+# Array assertions
 Then the response body should be an array
 Then the response should be an empty array
-Then the response body should be an array with at least 1 item(s)
-Then the response array should contain exactly 5 items
+Then the response body should be an array with at least {int} item(s)
+Then the response array should contain exactly {int} items
+Then each item in the response array field {string} should equal {string}
 
-# Schema validation (schema.steps.ts)
-Then the response should match schema "gl-error"
-Then the response should NOT match schema "client"
-Then each item in the response array should match schema "client"
+# Error assertions
+Then the error message should reference field {string}
+Then the error should indicate {string}
+Then I see the error message {string}
+
+# Performance
+Then the response time should be under {int} milliseconds
+```
+
+### schema.steps.ts — Schema Validation
+
+```gherkin
+Then the response should match schema {string}
+Then the response should NOT match schema {string}
+Then each item in the response array should match schema {string}
 Then no new undocumented fields should be present in the response
+Then no previously documented fields should be missing
+Then no field types should have changed from the baseline
+Then I have the baseline schema snapshot for {string}
+```
 
-# Contract validation (contract.steps.ts)
-Then the response should satisfy contract "journal-entries"
+### contract.steps.ts — Contract Validation
+
+```gherkin
+Then the response should satisfy contract {string}
+Then the contract should be satisfied for {string} on {string}
+Then the response schema should be valid against contract {string}
+```
+
+### message.steps.ts — RabbitMQ Messaging
+
+```gherkin
+# Setup / Publishing
+Given I am listening on {string}
+Given I am listening on the {string} exchange
+When I publish the message to {string}
+When I publish the message to {string} with routing key {string}
+When I publish the same message again to {string}
+When I publish a message to {string}:
+
+# Consumption assertions
+Then I should receive {int} message(s) within {int} seconds
+Then no messages should be received within {int} seconds
+Then I should not receive any additional messages within the next {int} seconds
+
+# Error exchange assertions
+Then there should be an error on the {string} exchange
+Then there should be no errors on the {string} exchange
+Then there should be {int} error(s) on the {string} exchange within {int} seconds
+
+# Message field / header assertions
+Then the message should match schema {string}
+Then the message field {string} should equal {string}
+Then the message field {string} should equal {float}
+Then the message field {string} should match the API response {string}
+Then the message header {string} should equal {string}
+Then the message property {string} should not be empty
+Then the messages should be in chronological order
+Then each message should have a unique {string}
+Then each message {string} should match its API response correlation
+
+# DLQ assertions
+Then the message should appear in the DLQ within {int} seconds
+Then the DLQ message header {string} should contain routing information
+Then the DLQ message header {string} should be {string}
+Then the DLQ message header {string} should be {int}
+Then the message should be retried {int} times
+Then after retries are exhausted the message should appear in the DLQ
+```
+
+### database.steps.ts — Database Validation
+
+```gherkin
+# Setup
+Given account {string} exists in the database with balance {float}
+Given I capture a database snapshot of account {string}
+Given I capture account {string} balance
+
+# Assertions
+Then a journal entry row should exist in the database with:
+Then a journal entry row should exist in the database matching the API response
+Then the account {string} balance should have changed by {float}
+Then the journal entry should have a {string} timestamp within {int} seconds of now
+Then an audit trail entry should exist with:
+Then an audit trail entry should exist for the journal posting
+Then the audit {string} should be null
+Then the audit {string} should contain the persisted journal data
+Then the sum of all debit amounts should equal the sum of all credit amounts
+Then the difference should be exactly {float}
+Then the result set should be empty
+Then the trial balance totals should still be balanced
+Then all {int} responses should have status {int}
+Then no duplicate journal entry IDs should exist in the database
+Then the final account {string} balance should equal the initial balance plus the sum of all posted amounts
+
+# Query steps
+When I query the database for trial balance totals
+When I query for journal entries with non-existent account codes
+When I query for posted journal entries without audit trail
+When I send {int} concurrent POST requests to {string} for account {string}
 ```
 
 Array validation pattern (two steps, separate concerns):
@@ -173,7 +305,7 @@ All fixtures + `{ Given, When, Then }` are exported from a single file. Key fixt
 
 ## Auth Flow
 
-`AuthManager` acquires OAuth2 `client_credentials` tokens against `config.auth.baseUrl/oauth/token`. Tokens are cached and auto-refreshed 60 s before expiry. Role strings like `"a valid client"` map to the `AUTH_*` env vars. Setting `AUTH_DISABLED=true` bypasses auth entirely (returns empty token).
+`AuthManager` acquires OAuth2 `client_credentials` tokens against `config.auth.baseUrl/oauth/token`. Tokens are cached and auto-refreshed 60 s before expiry. Role strings like `"a valid client"` map to the `AUTH_*` env vars. Auth can be disabled programmatically via `clearTokens()` (used by the `Given I am not authenticated` step). Static tokens can be injected for negative testing via `setStaticToken()` (used by the expired/invalid token steps).
 
 ---
 
@@ -314,12 +446,68 @@ Step files may also use relative `../../fixtures` — both are valid, but `@core
 
 ## Environment Variables (`.env`)
 
-Key variables: `BASE_URL`, `SERVICE_PATH` (default: `gl-service`), `INSTANCE_ID`, `AUTH_BASE_URL`, `AUTH_CLIENT_ID`, `AUTH_CLIENT_SECRET`, `AUTH_AUDIENCE`, `AUTH_DISABLED` (`true` bypasses auth), `RABBITMQ_URL`, `DB_HOST`, `DB_AUTH_TYPE` (`default` or `azure-active-directory-default`), `DB_NAME`, `AI_ENABLED`, `ANTHROPIC_API_KEY` (required when `AI_ENABLED=true`), `GIT_SHA` (injected by CI; used in `X-Test-Run-Id` header).
+All variables loaded by `config.ts` have sensible defaults — none are strictly required for the framework to load. However, functional tests need valid credentials.
 
-`src/core/config.ts` throws on startup for any `required()` variable that is unset.
+### Loaded by `src/core/config.ts` (runtime)
+
+**Core:** `BASE_URL` (default: `http://localhost:5000`), `SERVICE_PATH` (default: `gl-service`), `INSTANCE_ID` (default: `1001`), `API_VERSION` (default: `v1`), `TEST_ENV` (default: `dev`), `API_TIMEOUT` (default: `30000`ms)
+
+**Auth:** `AUTH_BASE_URL`, `AUTH_CLIENT_ID`, `AUTH_CLIENT_SECRET`, `AUTH_AUDIENCE` — all empty by default; must be set for authenticated tests. Auth uses a **single shared M2M credential set** for all roles (role string is a label only — backend enforces authorization).
+
+**RabbitMQ:** `RABBITMQ_URL` (default: `amqp://guest:guest@localhost:5672`), `RABBITMQ_EXCHANGE`, `RABBITMQ_DLQ`, `RABBITMQ_VHOST`, `RABBITMQ_HEARTBEAT`, `MESSAGE_WAIT_TIMEOUT` (default: `15000`ms)
+
+**Database:** `DB_CLIENT` (default: `mssql`), `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` (default: `GL_Database`), `DB_SCHEMA`, `DB_AUTH_TYPE` (`default` or `azure-active-directory-default`), `DB_QUERY_TIMEOUT`
+
+**AI:** `AI_ENABLED` (default: `false`), `AI_PROVIDER` (`anthropic` or `openai`), `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `AI_MODEL`, `AI_MAX_TOKENS`
+
+**Xray:** `XRAY_CLIENT_ID`, `XRAY_CLIENT_SECRET`, `XRAY_BASE_URL`, `XRAY_PROJECT_KEY`, `XRAY_EXECUTION_KEY`
+
+**CI/Reporting:** `GIT_SHA` (injected by CI; used in `X-Test-Run-Id` header), `LOG_LEVEL` (default: `info`), `REPORT_DIR`
+
+### Present in `.env.example` only (not loaded by config.ts)
+
+`JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`, `GIT_BRANCH`, `GIT_REPO`, `ALLURE_RESULTS_DIR`, `LOG_DIR` — used by CI pipelines or external tooling, not by the framework at runtime.
 
 ---
 
 ## HTTP Status Labels
 
 `src/utils/http-status.ts` maps labels to codes. Valid labels: `OK` `Created` `Accepted` `NoContent` `BadRequest` `Unauthorized` `Forbidden` `NotFound` `MethodNotAllowed` `Conflict` `UnprocessableEntity` `TooManyRequests` `InternalServerError` `BadGateway` `ServiceUnavailable`
+
+---
+
+## Tags & Run Profiles
+
+### Domain projects (mutually exclusive — one per feature)
+
+Defined as Playwright projects in `playwright.config.ts` with `grep: /@<tag>\b/` and `grepInvert: /@manual/`.
+
+| Project | Tag | npm script |
+|---|---|---|
+| `clients` | `@clients` | `npm run test:clients` |
+| `accounts` | `@accounts` | `npm run test:accounts` |
+| `balance` | `@balance` | `npm run test:balance` |
+| `transactions` | `@transactions` | `npm run test:transactions` |
+| `instances` | `@instances` | `npx playwright test --project=instances` |
+| `accounting-month` | `@accounting-month` | `npm run test:accounting-month` |
+| `postings` | `@postings` | `npx playwright test --project=postings` |
+| `messaging` | `@messaging` | `npm run test:messaging` |
+| `security` | `@security` | `npm run test:security` |
+| `report` | `@report` | `npx playwright test --project=report` |
+
+### Cross-cutting tags (filtered via `--grep` at CLI)
+
+These are NOT Playwright projects — they apply across all domain projects.
+
+| Tag | npm script | Purpose |
+|---|---|---|
+| `@smoke` | `npm run test:smoke` | Fast sanity checks |
+| `@regression` | `npm run test:regression` | Full coverage |
+| `@negative` | `npm run test:negative` | Error paths |
+| `@schema` | `npm run test:schema` | Contract/schema validation |
+
+### Special tags
+
+- `@fixme` — playwright-bdd converts to `test.fixme()` → scenario is **skipped** (not executed). Used to mark known API issues.
+- `@manual` — Excluded from all automated runs via `grepInvert`.
+- `@book-client-deposit` — Sub-domain tag on messaging features (alongside the `@messaging` domain tag).

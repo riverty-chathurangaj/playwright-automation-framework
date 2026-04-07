@@ -11,6 +11,8 @@ This is a **Playwright BDD API test automation framework** for the GL (General L
 - Run `npm run bdd:gen` after every change to a `.feature` file
 - JSON schema nullable fields use `["type", "null"]` — not OpenAPI's `nullable: true`
 - Always verify response shape against a live API run — the swagger.json may reference the wrong component schema
+- Domain step files register endpoints via `registerTemplates()` from `@utils/request-templates` — never use inline `REQUEST_TEMPLATES` const
+- Common steps in `src/steps/common/` must not be re-defined in domain files — check before adding
 
 ## Database — Azure SQL with Entra ID
 
@@ -48,15 +50,18 @@ buildBookClientDepositMessage(payloadOverrides?, messageId?)
 | File | Purpose |
 |---|---|
 | `src/fixtures/index.ts` | All fixtures + `{ Given, When, Then }` exports |
-| `src/steps/common/` | Shared steps (do not re-define in domain files) |
-| `src/steps/<domain>/<domain>.steps.ts` | REQUEST_TEMPLATES + send step + assertions |
+| `src/steps/common/` | Shared steps: auth, api, schema, contract, database, message |
+| `src/steps/<domain>/<domain>.steps.ts` | `registerTemplates()` + send step + assertions |
+| `src/utils/request-templates.ts` | Central template registry: `registerTemplates()`, `getTemplate()`, `resolveEndpoint()` |
+| `src/utils/http-status.ts` | Status label → code map: `resolveStatus('OK')` → `200` |
 | `src/schemas/json-schemas/*.schema.json` | JSON Schema Draft-07, `$id` = schema name |
 | `src/models/responses/*.response.ts` | TypeScript interfaces for response bodies |
 | `src/models/test-data/fixtures/swagger.json` | OpenAPI spec (starting point only — verify against actual API) |
 | `src/models/test-data/factories/*.factory.ts` | Message/payload builders with randomized data + overrides |
 | `src/database/db-client.ts` | Knex database client with Azure AD auth support |
-| `src/core/config.ts` | Config including `database.authType` for Azure AD |
-| `playwright.config.ts` | BDD wiring + project/tag mapping |
+| `src/core/config.ts` | Config — all env vars with defaults (none strictly required) |
+| `src/core/auth-manager.ts` | OAuth2 client_credentials + token cache + static token injection |
+| `playwright.config.ts` | BDD wiring + project/tag mapping (10 domain projects) |
 
 ## For full implementation patterns
 
