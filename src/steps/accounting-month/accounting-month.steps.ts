@@ -1,5 +1,6 @@
-import { When, Then } from '../../fixtures';
+import { Given, When, Then } from '../../fixtures';
 import { DataTable } from 'playwright-bdd';
+import { expect } from 'chai';
 import { config } from '../../core/config';
 import { registerTemplates, resolveEndpoint } from '../../utils/request-templates';
 import type { ApiClient } from '../../core/api-client';
@@ -11,6 +12,7 @@ const apiBase = `/${config.servicePath}`;
 
 registerTemplates({
   'close accounting month request': '/{instanceId}/AccountingMonth/Close',
+  'open accounting month request': '/{instanceId}/AccountingMonth/Open',
 });
 
 type AccountingMonthFixtures = {
@@ -47,6 +49,64 @@ When('I set accounting month request parameters:', function (
   }
 });
 
+// Helper: compute year/month offset from "now" in UTC to avoid timezone drift
+function getUtcYearMonth(monthOffset: number): { year: number; month: number } {
+  const date = new Date();
+  const utcYear = date.getUTCFullYear();
+  const utcMonth = date.getUTCMonth() + monthOffset; // 0-based + offset
+  // Normalize: e.g. month = -1 → December of previous year
+  const d = new Date(Date.UTC(utcYear, utcMonth, 1));
+  return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
+}
+
+function resolvePeriodOffset(period: string): number {
+  if (period === 'current') return 0;
+  if (period === 'previous') return -1;
+  throw new Error(`Unknown period "${period}". Use "current" or "previous".`);
+}
+
+// ── Setup steps (ensure state, fire-and-forget — no assertions) ──────────────
+
+Given('the {word} accounting month is closed for instance {string} and client {string}', async function (
+  { apiClient, activeRole }: Pick<AccountingMonthFixtures, 'apiClient' | 'activeRole'>,
+  period: string, instanceId: string, clientId: string,
+) {
+  const { year, month } = getUtcYearMonth(resolvePeriodOffset(period));
+  const endpoint = `${apiBase}/${instanceId}/AccountingMonth/Close`;
+  await apiClient.post(endpoint, { queryParams: { clientId: Number(clientId), year, month } }, activeRole.value);
+});
+
+Given('the {word} accounting month is open for instance {string} and client {string}', async function (
+  { apiClient, activeRole }: Pick<AccountingMonthFixtures, 'apiClient' | 'activeRole'>,
+  period: string, instanceId: string, clientId: string,
+) {
+  const { year, month } = getUtcYearMonth(resolvePeriodOffset(period));
+  const endpoint = `${apiBase}/${instanceId}/AccountingMonth/Open`;
+  await apiClient.post(endpoint, { queryParams: { clientId: Number(clientId), year, month } }, activeRole.value);
+});
+
+When('I set accounting month to current month', function (
+  { currentRequest }: Pick<AccountingMonthFixtures, 'currentRequest'>,
+) {
+  const { year, month } = getUtcYearMonth(0);
+  currentRequest.queryParams = { ...currentRequest.queryParams, year, month };
+});
+
+When('I set accounting month to previous month', function (
+  { currentRequest }: Pick<AccountingMonthFixtures, 'currentRequest'>,
+) {
+  const { year, month } = getUtcYearMonth(-1);
+  currentRequest.queryParams = { ...currentRequest.queryParams, year, month };
+});
+
+When('I set accounting month to {int} months ago', function (
+  { currentRequest }: Pick<AccountingMonthFixtures, 'currentRequest'>,
+  monthsAgo: number,
+) {
+  const { year, month } = getUtcYearMonth(-monthsAgo);
+  currentRequest.queryParams = { ...currentRequest.queryParams, year, month };
+});
+
 // ── 3. Send steps ────────────────────────────────────────────────────────────
 
 Then('I send the close accounting month request to the API', async function (
@@ -64,5 +124,44 @@ Then('I send the close accounting month request to the API', async function (
     currentResponse,
     await apiClient.post(resolvedEndpoint, { queryParams: currentRequest.queryParams }, activeRole.value),
   );
+});
+
+Then('I send the open accounting month request to the API', async function (
+  { apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: AccountingMonthFixtures,
+) {
+  const { method, endpoint } = currentRequest;
+
+  if (!method || !endpoint) {
+    throw new Error('No request defined. Use a "When I define a POST..." step first.');
+  }
+
+  const resolvedEndpoint = `${apiBase}${resolveEndpoint(endpoint, retrieve, { instanceId })}`;
+
+  Object.assign(
+    currentResponse,
+    await apiClient.post(resolvedEndpoint, { queryParams: currentRequest.queryParams }, activeRole.value),
+  );
+});
+
+// ── 4. Response verification ─────────────────────────────────────────────────
+
+Then('the response should confirm the accounting month parameters', function (
+  { currentResponse, currentRequest, retrieve, instanceId }: Pick<AccountingMonthFixtures, 'currentResponse' | 'currentRequest' | 'retrieve' | 'instanceId'>,
+) {
+  const body = currentResponse.body as unknown as Record<string, unknown>;
+  const effectiveInstanceId = retrieve<number>('instanceIdOverride') ?? instanceId;
+  const queryParams = currentRequest.queryParams ?? {};
+
+  expect(body.instanceId, 'Response instanceId should match request').to.equal(effectiveInstanceId);
+
+  if (queryParams.clientId !== undefined) {
+    expect(body.clientId, 'Response clientId should match request').to.equal(Number(queryParams.clientId));
+  }
+  if (queryParams.year !== undefined) {
+    expect(body.year, 'Response year should match request').to.equal(Number(queryParams.year));
+  }
+  if (queryParams.month !== undefined) {
+    expect(body.month, 'Response month should match request').to.equal(Number(queryParams.month));
+  }
 });
 
