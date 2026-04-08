@@ -1,4 +1,4 @@
-@book-client-deposit
+@messaging @book-client-deposit
 Feature: Utility scenarios for messaging simulations
   These scenarios are not meant to be run as part of the regular test suite, but can be used for manual testing and debugging of messaging-related features.
 

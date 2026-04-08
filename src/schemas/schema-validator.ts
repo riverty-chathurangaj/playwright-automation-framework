@@ -2,7 +2,7 @@ import Ajv, { ValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
 import * as fs from 'fs';
 import * as path from 'path';
-import { logger } from '../core/logger';
+import { logger } from '@core/logger';
 
 export interface ValidationResult {
   valid: boolean;

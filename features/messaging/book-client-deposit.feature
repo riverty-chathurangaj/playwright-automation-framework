@@ -1,4 +1,4 @@
-@book-client-deposit
+@messaging @book-client-deposit
 Feature: Booking a Client Deposit
   A rabbitmq message published for booking a client deposit should be consumed by the GL service.
   This should result in adding transactions to the database according to the message content.

@@ -47,74 +47,57 @@ export default defineConfig({
 
   // ─── Projects mirror Cucumber profiles ────────────────────────
 
+  // Domain projects only — each feature has exactly one domain tag, so no overlap.
+  // Cross-cutting tags (@smoke, @regression, etc.) are filtered via --grep at CLI level.
   projects: [
     {
-      name: 'smoke',
-      grep: /@smoke/,
-      grepInvert: /@manual/,
-    },
-    {
-      name: 'regression',
-      grep: /@regression/,
-      grepInvert: /@manual/,
-    },
-    {
-      name: 'negative',
-      grep: /@negative/,
-      grepInvert: /@manual/,
-    },
-    {
-      name: 'schema',
-      grep: /@schema/,
-      grepInvert: /@manual/,
-    },
-    {
-      name: 'security',
-      grep: /@security/,
-      grepInvert: /@manual/,
-    },
-    {
-      name: 'transactions',
-      grep: /@transactions/,
-      grepInvert: /@manual/,
-    },
-    {
-      name: 'messaging',
-      grep: /@messaging/,
+      name: 'clients',
+      grep: /@clients\b/,
       grepInvert: /@manual/,
     },
     {
       name: 'accounts',
-      grep: /@accounts/,
-      grepInvert: /@manual/,
-    },
-    {
-      name: 'clients',
-      grep: /@clients/,
-      grepInvert: /@manual/,
-    },
-    {
-      name: 'instances',
-      grep: /@instances/,
+      grep: /@accounts\b/,
       grepInvert: /@manual/,
     },
     {
       name: 'balance',
-      grep: /@balance/,
+      grep: /@balance\b/,
+      grepInvert: /@manual/,
+    },
+    {
+      name: 'transactions',
+      grep: /@transactions\b/,
+      grepInvert: /@manual/,
+    },
+    {
+      name: 'instances',
+      grep: /@instances\b/,
       grepInvert: /@manual/,
     },
     {
       name: 'accounting-month',
-      grep: /@accounting-month/,
+      grep: /@accounting-month\b/,
       grepInvert: /@manual/,
     },
     {
       name: 'postings',
-      grep: /@postings/,
+      grep: /@postings\b/,
       grepInvert: /@manual/,
     },
     {
-      name: 'default',
+      name: 'messaging',
+      grep: /@messaging\b/,
+      grepInvert: /@manual/,
+    },
+    {
+      name: 'security',
+      grep: /@security\b/,
+      grepInvert: /@manual/,
+    },
+    {
+      name: 'report',
+      grep: /@report\b/,
       grepInvert: /@manual/,
     },
   ],
