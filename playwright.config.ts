@@ -22,6 +22,7 @@ export default defineConfig({
   testDir: outputDir as string,
   timeout: 60_000,
   expect: { timeout: 10_000 },
+  retries: 1,
 
   globalSetup: './src/support/global-setup.ts',
   globalTeardown: './src/support/global-teardown.ts',
@@ -76,13 +77,8 @@ export default defineConfig({
       grepInvert: /@manual/,
     },
     {
-      name: 'open-accounting-month',
-      grep: /@open-accounting-month\b/,
-      grepInvert: /@manual/,
-    },
-    {
-      name: 'close-accounting-month',
-      grep: /@close-accounting-month\b/,
+      name: 'accounting-month',
+      grep: /@accounting-month\b/,
       grepInvert: /@manual/,
     },
     {

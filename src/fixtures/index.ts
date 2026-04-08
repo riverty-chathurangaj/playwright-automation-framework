@@ -1,19 +1,19 @@
 import { test as base } from 'playwright-bdd';
 import type { TestInfo } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
-import { ApiClient } from '../core/api-client';
-import { RabbitClient } from '../messaging/rabbit-client';
-import { ConsumerHarness } from '../messaging/consumer-harness';
-import { MessagePublisher } from '../messaging/publisher';
-import { DLQMonitor } from '../messaging/dlq-monitor';
-import { MessageValidator } from '../messaging/message-validator';
-import { DatabaseClient } from '../database/db-client';
-import { SnapshotManager } from '../database/snapshot-manager';
-import { CleanupManager } from '../database/cleanup-manager';
-import { GLQueryBuilder } from '../database/query-builder';
-import { SchemaValidator } from '../schemas/schema-validator';
-import { config } from '../core/config';
-import { logger } from '../core/logger';
+import { ApiClient } from '@core/api-client';
+import { RabbitClient } from '@messaging/rabbit-client';
+import { ConsumerHarness } from '@messaging/consumer-harness';
+import { MessagePublisher } from '@messaging/publisher';
+import { DLQMonitor } from '@messaging/dlq-monitor';
+import { MessageValidator } from '@messaging/message-validator';
+import { DatabaseClient } from '@database/db-client';
+import { SnapshotManager } from '@database/snapshot-manager';
+import { CleanupManager } from '@database/cleanup-manager';
+import { GLQueryBuilder } from '@database/query-builder';
+import { SchemaValidator } from '@schemas/schema-validator';
+import { config } from '@core/config';
+import { logger } from '@core/logger';
 
 // ─── State interfaces (previously in world.ts) ───────────────────
 
