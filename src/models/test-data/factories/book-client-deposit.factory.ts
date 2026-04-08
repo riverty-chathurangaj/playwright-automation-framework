@@ -61,6 +61,11 @@ export function buildBookClientDepositMessage(
 
   const amount = DataGenerator.amount(1, 10_000, 4);
 
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const settledDate = `${year}-${month}-23T00:00:00`;
+
   return {
     messageId,
     requestId: null,
@@ -80,7 +85,7 @@ export function buildBookClientDepositMessage(
       Source: 'settlement-service',
       Amount: amount,
       CreatedByUser: 'PhoenixTest\\SR_HorizonAppUser',
-      SettledDate: '2026-02-23T00:00:00',
+      SettledDate: settledDate,
       Reference: '12346789012',
       BundleNoSettled: 12345678907,
       MerchantId: 'GL_TEST01',

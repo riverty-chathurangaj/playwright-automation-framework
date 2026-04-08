@@ -51,3 +51,5 @@ Feature: Booking a Client Deposit
       }
       """
     Then there should be an error on the "general ledger posting service error" exchange
+
+  # TODO: Add scenario which does a book client deposit for a month which is already closed and verify transaction is rejected by the exchange.
