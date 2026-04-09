@@ -5,7 +5,7 @@ import { PayloadMutator, CorruptionType } from '@utils/payload-mutator';
 import { Comparator } from '@utils/comparator';
 import { config } from '@core/config';
 import { resolveStatus } from '@utils/http-status';
-import { getTemplate } from '@utils/request-templates';
+import { getTemplate, resolveEndpoint } from '@utils/request-templates';
 import type { CurrentRequest, CurrentResponse } from '../../fixtures';
 
 const apiBase = `/${config.servicePath}`;
@@ -55,6 +55,15 @@ When('I set {string} to {string}', function (
 ) {
   const parsed = !isNaN(Number(value)) && value !== '' ? Number(value) : value;
   store(`${param}Override`, parsed);
+});
+
+When('I add query parameter {string} with value {string}', function (
+  { currentRequest }: { currentRequest: CurrentRequest },
+  key: string,
+  value: string,
+) {
+  const parsed = !isNaN(Number(value)) && value !== '' ? Number(value) : value;
+  currentRequest.queryParams = { ...currentRequest.queryParams, [key]: parsed as string };
 });
 
 When('I set {string} to the stored value {string}', function (
@@ -454,5 +463,49 @@ Then('I see the error message {string}', function (
   const body = currentResponse.body as unknown as Record<string, unknown>;
   expect(body).to.have.property('errorMessage');
   expect(String(body.errorMessage)).to.equal(expectedMessage);
+});
+
+// Generic send step — resolves the template set by "I define a GET/POST/PUT..." and sends the request.
+// Unlike domain-specific send steps, this works for any registered template and any HTTP method.
+Then('I send the request to the API', async function (
+  { apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: {
+    apiClient: import('../../core/api-client').ApiClient;
+    currentRequest: CurrentRequest;
+    currentResponse: CurrentResponse;
+    activeRole: { value: string };
+    instanceId: number;
+    retrieve: <T = unknown>(key: string) => T;
+  },
+) {
+  const { method, endpoint } = currentRequest;
+  if (!method || !endpoint) {
+    throw new Error('No request defined. Use a "When I define a GET/POST/PUT..." step first.');
+  }
+
+  const resolved = `${apiBase}${resolveEndpoint(endpoint, retrieve, { instanceId })}`;
+  const opts = { body: currentRequest.body, queryParams: currentRequest.queryParams };
+
+  let result;
+  switch (method) {
+    case 'GET':
+      result = await apiClient.get(resolved, { queryParams: currentRequest.queryParams }, activeRole.value);
+      break;
+    case 'POST':
+      result = await apiClient.post(resolved, opts, activeRole.value);
+      break;
+    case 'PUT':
+      result = await apiClient.put(resolved, opts, activeRole.value);
+      break;
+    case 'PATCH':
+      result = await apiClient.patch(resolved, opts, activeRole.value);
+      break;
+    case 'DELETE':
+      result = await apiClient.delete(resolved, { queryParams: currentRequest.queryParams }, activeRole.value);
+      break;
+    default:
+      throw new Error(`Unsupported HTTP method: ${method}`);
+  }
+
+  Object.assign(currentResponse, result);
 });
 

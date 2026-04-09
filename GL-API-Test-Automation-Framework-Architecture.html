@@ -2202,82 +2202,18 @@ AI_MAX_TOKENS=4096</code></pre>
       <h2 id="s12">CI/CD Pipeline Integration</h2>
     </div>
 
-    <p>The framework runs at multiple pipeline stages with different test subsets.</p>
+    <p>The framework integrates with GitHub Actions at three pipeline stages, each targeting a different test scope.</p>
 
     <table>
       <thead>
-        <tr><th>Pipeline Stage</th><th>Trigger</th><th>Tags</th><th>Duration Target</th></tr>
+        <tr><th>Pipeline Stage</th><th>Trigger</th><th>Scope</th><th>Purpose</th></tr>
       </thead>
       <tbody>
-        <tr><td><strong>PR Validation</strong></td><td>Pull request created/updated</td><td><code>@smoke</code></td><td>&lt; 5 minutes</td></tr>
-        <tr><td><strong>Post-Merge</strong></td><td>Merge to main/develop</td><td><code>@smoke and @contract</code></td><td>&lt; 10 minutes</td></tr>
-        <tr><td><strong>Nightly Regression</strong></td><td>Scheduled (daily 2 AM)</td><td><code>@regression</code></td><td>&lt; 30 minutes</td></tr>
-        <tr><td><strong>Release Gate</strong></td><td>Pre-deployment to staging/prod</td><td><code>@critical and @contract</code></td><td>&lt; 15 minutes</td></tr>
-        <tr><td><strong>On-Demand</strong></td><td>Manual dispatch</td><td>Configurable</td><td>Variable</td></tr>
+        <tr><td><strong>PR Validation</strong></td><td>Pull request created / updated</td><td><code>@smoke</code> tests only</td><td>Fast feedback — catches regressions before merge</td></tr>
+        <tr><td><strong>Nightly Regression</strong></td><td>Scheduled (nightly)</td><td>All tests</td><td>Full coverage run across every domain</td></tr>
+        <tr><td><strong>On-Demand</strong></td><td>Manual workflow dispatch</td><td>Configurable</td><td>Targeted runs for debugging, exploratory testing, or ad-hoc validation</td></tr>
       </tbody>
     </table>
-
-    <div class="code-label">YAML — GitHub Actions Pipeline</div>
-<pre><code>name: GL API Test Suite
-on:
-  pull_request:
-    branches: [main, develop]
-  schedule:
-    - cron: '0 2 * * *'       # Nightly at 2 AM UTC
-  workflow_dispatch:
-    inputs:
-      environment:
-        type: choice
-        options: [dev, staging, uat]
-      tags:
-        description: 'Playwright project (e.g. smoke, regression, clients)'
-        default: 'smoke'
-
-jobs:
-  api-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run API Tests
-        run: |
-          npm run bdd:gen
-          npx playwright test \
-            --project="${{ inputs.tags || 'smoke' }}"
-        env:
-          BASE_URL: ${{ secrets[format('API_URL_{0}', inputs.environment)] }}
-          AUTH_CLIENT_ID: ${{ secrets.AUTH_CLIENT_ID }}
-          AUTH_CLIENT_SECRET: ${{ secrets.AUTH_CLIENT_SECRET }}
-          DB_AUTH_TYPE: azure-active-directory-default
-
-      - name: AI Failure Analysis
-        if: failure()
-        run: echo "AI analysis runs inline via _afterTestHook fixture during test execution"
-        env:
-          AI_ENABLED: 'true'
-          AI_PROVIDER: azure-openai
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_ENDPOINT: ${{ secrets.OPENAI_ENDPOINT }}
-          AI_MODEL: o4-mini
-
-      - name: Publish to Xray
-        if: always()
-        run: npx ts-node src/support/xray-reporter.ts publish
-        env:
-          XRAY_CLIENT_ID: ${{ secrets.XRAY_CLIENT_ID }}
-          XRAY_CLIENT_SECRET: ${{ secrets.XRAY_CLIENT_SECRET }}
-
-      - name: Upload Reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-reports
-          path: reports/</code></pre>
   </div>
 
   <!-- ============================== SECTION 13 ============================== -->
