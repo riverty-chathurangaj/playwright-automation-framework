@@ -12,7 +12,7 @@ export const AI_MODELS = {
 } as const;
 
 export const AI_DEFAULTS = {
-  temperature: 0.3,       // Low temperature for consistent, deterministic outputs
+  temperature: 0.3,
   maxTokens: 4096,
   systemPrompt: `You are an expert test automation engineer specializing in financial API testing.
 You understand GL (General Ledger) domain concepts including:
