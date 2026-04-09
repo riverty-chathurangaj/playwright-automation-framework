@@ -1,54 +1,58 @@
-# Failure Analyzer Prompt Template
+# Failure Analyzer Prompt
 
 ## Purpose
-Analyze test failures for the GL Service API and provide actionable root cause analysis.
+Analyze a failing GL API test and return a structured root cause assessment.
+This prompt is used by `src/support/ai-enricher.ts → analyzeFailure()`.
 
 ## Input Variables
-- `{{scenarioName}}` — Name of the failing scenario
-- `{{failedStep}}` — The specific Gherkin step that failed
-- `{{errorMessage}}` — The assertion error message
-- `{{request}}` — HTTP request details (method, URL, headers, body)
-- `{{response}}` — HTTP response details (status, headers, body)
-- `{{recentChanges}}` — Recent API changes (from git log or CHANGELOG)
-- `{{historicalFailures}}` — Similar failures in the past 30 days
+- `{{scenarioName}}` — Gherkin scenario title
+- `{{tags}}` — Scenario tags (e.g. @balance @smoke)
+- `{{error}}` — Assertion error message
+- `{{request}}` — HTTP request (method, URL, headers, body) as JSON
+- `{{response}}` — HTTP response (status, headers, body) as JSON
 
-## Prompt Template
+## Live prompt (in ai-enricher.ts)
 
 ```
-You are an expert test automation engineer analyzing a failing API test for a financial GL service.
+You are a test automation expert analyzing a failing API test for a financial GL (General Ledger) Service.
 
 FAILED SCENARIO: {{scenarioName}}
-FAILED STEP: {{failedStep}}
-ERROR: {{errorMessage}}
+TAGS: {{tags}}
+ERROR: {{error}}
+REQUEST: {{request}}
+RESPONSE: {{response}}
 
-REQUEST:
-{{request}}
+Analyze this failure and provide:
+1. A one-line summary
+2. The probable root cause (API bug, test data issue, environment issue, schema change, etc.)
+3. Impact assessment (what downstream consumers or systems may be affected)
+4. A specific suggested fix
+5. Any related patterns that might indicate a wider issue
+6. Severity: critical/high/medium/low
 
-RESPONSE:
-{{response}}
-
-RECENT CHANGES: {{recentChanges}}
-HISTORICAL FAILURES: {{historicalFailures}}
-
-Analyze this failure and respond with a JSON object:
+Respond ONLY with a JSON object matching this structure:
 {
-  "summary": "One-line summary of the failure",
-  "probableCause": "Detailed explanation of the root cause",
-  "causeCategory": "api-bug | test-data | environment | schema-change | config | assertion-error | timing",
-  "impactAssessment": "What downstream consumers or systems may be affected",
-  "suggestedFix": "Specific, actionable fix recommendation",
-  "relatedPatterns": ["Similar failures or patterns to watch for"],
-  "severity": "critical | high | medium | low",
-  "isFlaky": true/false,
-  "flakyReason": "Explanation if likely flaky"
+  "summary": "string",
+  "probableCause": "string",
+  "impactAssessment": "string",
+  "suggestedFix": "string",
+  "relatedPatterns": ["string"],
+  "severity": "critical|high|medium|low"
 }
-
-FINANCIAL DOMAIN CONTEXT:
-- balance precision issues (1000.1 vs 1000.10) indicate serialization changes
-- 422 on valid balanced entries suggests business rule validation changes
-- 409 on unique fields suggests state contamination from previous test
-- Schema validation failures suggest API response structure changes
 ```
 
-## Output Format
+## Output format
 JSON matching the structure above.
+
+## Allure integration
+After analysis the result is:
+- Rendered as an HTML table on the Allure Overview tab via `allureDescriptionHtml()`
+- Severity is mapped to an Allure label: critical→critical, high→blocker, medium→normal, low→minor
+
+## Severity / Allure label mapping
+| AI severity | Allure severity label |
+|---|---|
+| critical | critical |
+| high | blocker |
+| medium | normal |
+| low | minor |

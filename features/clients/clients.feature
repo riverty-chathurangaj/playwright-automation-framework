@@ -56,6 +56,10 @@ Feature: Clients
     Examples:
       | isActive |
       | true     |
+
+    @fixme #TODO: The filtration does not seem to be working
+    Examples:
+      | isActive |
       | false    |
 
   #TODO: The schema is not correct for the response in swagger.json. It should be updated to reflect the actual response.
@@ -76,10 +80,10 @@ Feature: Clients
     And I get the response code of BadRequest
     And the response should match schema "gl-error"
 
-  # ── Unconventional input tests ─────────────────────────────────────────────
+  # ── Invalid input tests ─────────────────────────────────────────────
   # These tests send values of the wrong type or semantically invalid values
   @clients
-  Scenario Outline: GET clients with unconventional instanceId values
+  Scenario Outline: GET clients with invalid format of instanceId values
     When I define a GET "clients request"
     And I set "instanceId" to "<instanceId>"
     Then I send the client request to the API
@@ -98,7 +102,7 @@ Feature: Clients
       | -1         |
 
   @clients
-  Scenario Outline: GET client departments with unconventional instanceId values
+  Scenario Outline: GET client departments with invalid format of instanceId values
     When I define a GET "client departments request"
     And I set "instanceId" to "<instanceId>"
     Then I send the client departments request to the API

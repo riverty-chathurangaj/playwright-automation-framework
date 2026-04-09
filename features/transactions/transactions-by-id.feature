@@ -27,7 +27,6 @@ Feature: Transactions — Get Transaction by ID
     And the response should match schema "gl-transaction"
 
   @transactions @fixme
-  # Swagger does not document 404
   Scenario: Non-existent transaction id returns not found
     When I define a GET "transactions by id request"
     And I set "instanceId" to "2002"

@@ -40,10 +40,10 @@ Feature: Accounts — List GL Accounts
     And I get the response code of BadRequest
     And the response should match schema "gl-error"
 
-  # ── Unconventional input tests ─────────────────────────────────────────────
+  # ── Invalid input tests ─────────────────────────────────────────────
   # These tests send values of the wrong type or semantically invalid values
   @accounts
-  Scenario Outline: GET accounts with unconventional instanceId values
+  Scenario Outline: GET accounts with invalid format of instanceId values
     When I define a GET "accounts request"
     And I set "instanceId" to "<instanceId>"
     Then I send the accounts request to the API

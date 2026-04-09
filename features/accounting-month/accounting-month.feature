@@ -197,7 +197,7 @@ Feature: Close Accounting Month
       | -1    |
 
   # ----------------------------------------------------------------------------------------
-  #Close Accounting Month Scenarios
+  # Close Accounting Month Scenarios
   # ----------------------------------------------------------------------------------------
   @smoke @accounting-month
   Scenario: I should be able to close the current accounting month
@@ -290,7 +290,7 @@ Feature: Close Accounting Month
       | -1         |
 
   @accounting-month
-  Scenario Outline: POST close accounting month with invalid clientId values
+  Scenario Outline: POST close accounting month with invalid format of clientId values
     When I define a POST "close accounting month request"
     And I set "instanceId" to "2022"
     And I set accounting month request parameters:
@@ -309,7 +309,7 @@ Feature: Close Accounting Month
       | -1       |
 
   @accounting-month
-  Scenario Outline: POST close accounting month with invalid year values
+  Scenario Outline: POST close accounting month with invalid format of year values
     When I define a POST "close accounting month request"
     And I set "instanceId" to "2022"
     And I set accounting month request parameters:
@@ -328,7 +328,7 @@ Feature: Close Accounting Month
       | -1   |
 
   @accounting-month
-  Scenario Outline: POST close accounting month with invalid month values
+  Scenario Outline: POST close accounting month with invalid format of month values
     When I define a POST "close accounting month request"
     And I set "instanceId" to "2022"
     And I set accounting month request parameters:

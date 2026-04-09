@@ -90,7 +90,7 @@ Feature: Transactions
     And I get the response code of OK
 
   @transactions
-  Scenario: noOfRows parameter limits the result set
+  Scenario: Verify noOfRows parameter limits the result set
     When I define a GET "transactions request"
     And I set transaction request parameters:
       | instanceId | accountingYearMonthFrom | accountingYearMonthTo | noOfRows |
@@ -108,7 +108,7 @@ Feature: Transactions
     And the response should match schema "gl-error"
 
   @transactions
-  Scenario Outline: Unconventional instanceId values return BadRequest or NotFound
+  Scenario Outline: Invalid format of instanceId values return BadRequest or NotFound
     When I define a GET "transactions request"
     And I set "instanceId" to "<instanceId>"
     Then I send the transactions request to the API

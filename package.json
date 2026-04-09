@@ -8,6 +8,7 @@
   },
   "scripts": {
     "bdd:gen": "bddgen",
+    "ai:generate": "ts-node -r tsconfig-paths/register src/support/ai-enricher.ts generate",
     "test": "npm run bdd:gen && playwright test",
     "test:ui": "npm run bdd:gen && playwright test --ui",
     "test:smoke": "npm run bdd:gen && playwright test --grep \"@smoke\"",

@@ -1,4 +1,3 @@
-#Need test posting id for test cases
 @accounts
 Feature: Accounts — Get Accounts by Posting
   As a user of the GL API
@@ -34,7 +33,7 @@ Feature: Accounts — Get Accounts by Posting
 
   # ── Unconventional input tests ─────────────────────────────────────────────
   @accounts
-  Scenario Outline: GET accounts by posting with unconventional instanceId values
+  Scenario Outline: GET accounts by posting with invalid format of instanceId values
     When I define a GET "accounts by posting request"
     And I set "instanceId" to "<instanceId>"
     And I set "postingId" to "904"
@@ -54,7 +53,7 @@ Feature: Accounts — Get Accounts by Posting
       | -1         |
 
   @accounts
-  Scenario Outline: GET accounts by posting with unconventional postingId values
+  Scenario Outline: GET accounts by posting with invalid format of postingId values
     When I define a GET "accounts by posting request"
     And I set "postingId" to "<postingId>"
     Then I send the accounts by posting request to the API

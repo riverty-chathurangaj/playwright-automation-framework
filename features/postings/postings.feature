@@ -49,9 +49,9 @@ Feature: Postings
     And each item in the response array should match schema "gl-posting"
 
 
-# ── Negative & unconventional input scenarios ────────────────────────────────
+# ── Negative & invalid input scenarios ────────────────────────────────
   @postings
-  Scenario Outline: GET postings with invalid or unconventional instanceId values
+  Scenario Outline: GET postings with invalid format of instanceId values
     When I define a GET "postings request"
     And I set "instanceId" to "<instanceId>"
     Then I send the postings request to the API

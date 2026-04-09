@@ -75,7 +75,7 @@ Feature: Balance — Balance Report
     And I get the response code of BadRequest
 
   @report
-  Scenario Outline: GET balance report with unconventional instanceId values
+  Scenario Outline: GET balance report with invalid format of instanceId values
     When I define a GET "balance report request"
     And I set "instanceId" to "<instanceId>"
     Then I send the balance report request to the API

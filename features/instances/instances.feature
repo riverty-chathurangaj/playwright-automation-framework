@@ -144,10 +144,10 @@ Feature: Instances
     And I get the response code of BadRequest
     And the response should match schema "gl-error"
 
-  # ── Unconventional input tests ─────────────────────────────────────────────
+  # ── Invalid input tests ─────────────────────────────────────────────
   # These tests send values of the wrong type or semantically invalid values
   @instances
-  Scenario Outline: GET instance by id with unconventional id values
+  Scenario Outline: GET instance by id with invalid format of id values
     When I define a GET "instance by id request"
     And I set "id" to "<id>"
     Then I send the instance by id request to the API
@@ -166,7 +166,7 @@ Feature: Instances
       | -1 |
 
   @instances
-  Scenario Outline: GET instance by source system id with unconventional sourceSystemId values
+  Scenario Outline: GET instance by source system id with invalid format of sourceSystemId values
     When I define a GET "instance by source system request"
     And I set "sourceSystemId" to "<sourceSystemId>"
     Then I send the instance by source system request to the API
@@ -185,7 +185,7 @@ Feature: Instances
         | -1             |
 
   @instances
-  Scenario Outline: PUT activate instance with unconventional id values
+  Scenario Outline: PUT activate instance with invalid format of id values
     When I define a PUT "activate instance request"
     And I set "id" to "<id>"
     Then I send the activate instance request to the API
@@ -204,7 +204,7 @@ Feature: Instances
       | -1 |
 
   @instances
-  Scenario Outline: PUT deactivate instance with unconventional id values
+  Scenario Outline: PUT deactivate instance with invalid format of id values
     When I define a PUT "deactivate instance request"
     And I set "id" to "<id>"
     Then I send the deactivate instance request to the API
