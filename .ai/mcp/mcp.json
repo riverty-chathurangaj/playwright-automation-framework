@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "testonaut-gl": {
+      "description": "Testonaut GL test automation framework — AI tooling context",
+      "command": "npx",
+      "args": ["ts-node", "-r", "tsconfig-paths/register", "src/support/ai-enricher.ts"],
+      "env": {
+        "AI_PROVIDER": "azure-openai",
+        "OPENAI_ENDPOINT": "${OPENAI_ENDPOINT}",
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+        "OPENAI_API_VERSION": "${OPENAI_API_VERSION}",
+        "AI_MODEL": "${AI_MODEL}"
+      },
+      "note": "Not yet wired as an MCP server. Kept here as a reference for future integration."
+    }
+  }
+}
