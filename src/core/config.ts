@@ -32,9 +32,11 @@ export interface AuthConfig {
 
 export interface AIConfig {
   enabled: boolean;
-  provider: 'anthropic' | 'openai';
+  provider: 'anthropic' | 'openai' | 'azure-openai';
   anthropicApiKey: string;
   openaiApiKey: string;
+  openaiEndpoint: string;
+  openaiApiVersion: string;
   model: string;
   maxTokens: number;
 }
@@ -115,10 +117,12 @@ export const config: FrameworkConfig = {
 
   ai: {
     enabled: optional('AI_ENABLED', 'false') === 'true',
-    provider: (optional('AI_PROVIDER', 'anthropic') as 'anthropic' | 'openai'),
+    provider: (optional('AI_PROVIDER', 'anthropic') as 'anthropic' | 'openai' | 'azure-openai'),
     anthropicApiKey: optional('ANTHROPIC_API_KEY', ''),
     openaiApiKey: optional('OPENAI_API_KEY', ''),
-    model: optional('AI_MODEL', optional('AI_PROVIDER', 'anthropic') === 'openai' ? 'gpt-4o-mini' : 'claude-opus-4-6'),
+    openaiEndpoint: optional('OPENAI_ENDPOINT', ''),
+    openaiApiVersion: optional('OPENAI_API_VERSION', '2024-12-01-preview'),
+    model: optional('AI_MODEL', optional('AI_PROVIDER', 'anthropic') === 'openai' || optional('AI_PROVIDER', 'anthropic') === 'azure-openai' ? 'gpt-4o-mini' : 'claude-opus-4-6'),
     maxTokens: Number(optional('AI_MAX_TOKENS', '4096')),
   },
 

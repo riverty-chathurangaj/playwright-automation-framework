@@ -12,6 +12,7 @@ import { SnapshotManager } from '@database/snapshot-manager';
 import { CleanupManager } from '@database/cleanup-manager';
 import { GLQueryBuilder } from '@database/query-builder';
 import { SchemaValidator } from '@schemas/schema-validator';
+import { AIEnricher } from '@support/ai-enricher';
 import { config } from '@core/config';
 import { logger } from '@core/logger';
 
@@ -210,7 +211,6 @@ export const test = base.extend<GLFixtures>({
       // AI failure analysis (optional)
       if (status === 'failed' && process.env.AI_ENABLED === 'true') {
         try {
-          const { AIEnricher } = await import('../support/ai-enricher');
           const enricher = new AIEnricher();
           const analysis = await enricher.analyzeFailure({
             scenarioName: testInfo.title,

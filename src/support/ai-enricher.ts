@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import OpenAI from 'openai';
+import OpenAI, { AzureOpenAI } from 'openai';
 import { config } from '../core/config';
 import { logger } from '../core/logger';
 
@@ -29,6 +29,7 @@ export interface GeneratedFeature {
 export class AIEnricher {
   private anthropicClient?: Anthropic;
   private openaiClient?: OpenAI;
+  private azureOpenaiClient?: AzureOpenAI;
 
   constructor() {
     if (config.ai.provider === 'anthropic') {
@@ -36,6 +37,21 @@ export class AIEnricher {
         throw new Error('ANTHROPIC_API_KEY must be set to use Anthropic AI enrichment');
       }
       this.anthropicClient = new Anthropic({ apiKey: config.ai.anthropicApiKey });
+      return;
+    }
+
+    if (config.ai.provider === 'azure-openai') {
+      if (!config.ai.openaiApiKey) {
+        throw new Error('OPENAI_API_KEY must be set to use Azure OpenAI AI enrichment');
+      }
+      if (!config.ai.openaiEndpoint) {
+        throw new Error('OPENAI_ENDPOINT must be set to use Azure OpenAI AI enrichment');
+      }
+      this.azureOpenaiClient = new AzureOpenAI({
+        endpoint: config.ai.openaiEndpoint,
+        apiKey: config.ai.openaiApiKey,
+        apiVersion: config.ai.openaiApiVersion,
+      });
       return;
     }
 
@@ -58,6 +74,20 @@ export class AIEnricher {
         throw new Error('Unexpected Anthropic response type');
       }
       return content.text;
+    }
+
+    if (config.ai.provider === 'azure-openai') {
+      const response = await this.azureOpenaiClient!.chat.completions.create({
+        model: config.ai.model,
+        max_completion_tokens: config.ai.maxTokens,
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      const text = response.choices[0]?.message?.content?.trim();
+      if (!text) {
+        throw new Error('Unexpected Azure OpenAI response payload');
+      }
+      return text;
     }
 
     const response = await this.openaiClient!.responses.create({
