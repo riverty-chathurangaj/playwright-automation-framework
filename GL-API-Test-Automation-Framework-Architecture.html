@@ -523,7 +523,7 @@
     </div>
 
     <div class="cover-version">
-      <strong>Version 2.0</strong> &nbsp;·&nbsp; April 2026 &nbsp;·&nbsp; Riverty Group GmbH &nbsp;·&nbsp; Quality Engineering
+      <strong>Version 2.1</strong> &nbsp;·&nbsp; April 2026 &nbsp;·&nbsp; Riverty Group GmbH &nbsp;·&nbsp; Quality Engineering
     </div>
   </div>
 </div>
@@ -664,6 +664,7 @@
           <li class="toc-sub-item"><a href="#s9-1"><span class="toc-sub-num">9.1</span>AI-Powered Failure Analysis</a></li>
           <li class="toc-sub-item"><a href="#s9-2"><span class="toc-sub-num">9.2</span>AI Provider Configuration</a></li>
           <li class="toc-sub-item"><a href="#s9-3"><span class="toc-sub-num">9.3</span>AI Architecture</a></li>
+<li class="toc-sub-item"><a href="#s9-4"><span class="toc-sub-num">9.4</span>Allure Report Integration</a></li>
         </ul>
       </div>
     </div>
@@ -1982,41 +1983,121 @@ Feature: Concurrent Transaction Handling
     <p>AI capabilities are integrated as an <strong>opt-in enhancement</strong> — the framework functions fully without AI. When enabled, AI enriches failure reports with root cause analysis.</p>
 
     <h3 id="s9-1">9.1 AI-Powered Failure Analysis</h3>
-    <p>When tests fail, the <code>ai-enricher.ts</code> module (in <code>src/support/</code>) analyses the failure context — scenario name, failed step, request/response payloads, and error messages — to provide probable root cause analysis. This analysis is attached to the test report.</p>
+    <p>When tests fail, the <code>ai-enricher.ts</code> module (in <code>src/support/</code>) analyses the failure context — scenario name, failed step, request/response payloads, and error messages — and produces a structured root-cause analysis. The analysis is rendered as a formatted HTML table directly on the <strong>Allure Overview tab</strong> of the failed test, and also preserved as a JSON attachment for programmatic access.</p>
 
     <div class="code-label">TypeScript — AI Enricher (_afterTestHook in fixtures)</div>
 <pre><code>// Integrated via the _afterTestHook fixture (auto-runs after each test)
-// When the test fails and AI_ANALYSIS is enabled:
-// 1. Attaches request/response to the Playwright report
-// 2. Sends failure context to LLM (Claude or OpenAI)
-// 3. Attaches AI analysis as a JSON artifact
+// When the test fails and AI_ENABLED=true:
+// 1. Sends failure context (error, request, response, tags) to Azure OpenAI
+// 2. Renders structured HTML analysis on the Allure Overview tab
+// 3. Sets Allure severity label from AI assessment
+// 4. Keeps JSON attachment for programmatic access
 
-const analysis = await aiEnricher.analyzeFailure({
+const analysis = await enricher.analyzeFailure({
   scenarioName: testInfo.title,
-  error: testInfo.error?.message,
-  request: currentRequest,
-  response: currentResponse,
+  error:        testInfo.errors.map(e => e.message).join('\n'),
+  request:      currentRequest,
+  response:     currentResponse,
+  tags:         testInfo.tags,
 });
-// Attached to Allure / Playwright report</code></pre>
+
+// Render on Allure Overview tab
+await allureDescriptionHtml(formatAnalysisHtml(analysis));
+
+// Map AI severity → Allure severity label
+await allureLabel('severity', severityMap[analysis.severity]);
+
+// JSON attachment for machine readability
+await testInfo.attach('AI Failure Analysis', {
+  body: JSON.stringify(analysis, null, 2),
+  contentType: 'application/json',
+});</code></pre>
 
     <div class="callout callout-info">
-      <div class="callout-title">AI Analysis Output Example</div>
-      <p style="margin:0"><strong>Root Cause:</strong> The <code>balance</code> field returned <code>1000.1</code> instead of <code>1000.10</code>. This suggests a serialization change — likely a <code>JsonSerializerOptions</code> update that now trims trailing zeros.<br><strong>Impact:</strong> Breaks contract for consumers expecting 2 decimal places.<br><strong>Suggested Fix:</strong> Update the API's decimal serializer to always output 2 decimal places.</p>
+      <div class="callout-title">AI Analysis Output — Allure Overview Tab</div>
+      <p style="margin:0">
+        <strong>🟠 Severity: HIGH</strong><br>
+        <strong>Summary:</strong> Balance endpoint returns 500 for valid date-range filter.<br>
+        <strong>Root Cause:</strong> The <code>dateFrom</code> query parameter triggers an unhandled exception in the GL service date parser — likely a culture/format mismatch (ISO 8601 vs locale-specific).<br>
+        <strong>Impact:</strong> All consumers filtering by date range receive 500. Balance reporting is unavailable for date-scoped queries.<br>
+        <strong>Suggested Fix:</strong> Ensure the API date parser enforces ISO 8601 (<code>yyyy-MM-dd</code>) and returns <code>400 BadRequest</code> with a descriptive message for invalid formats rather than a 500.<br>
+        <strong>Related Patterns:</strong> Similar to <em>accounting-month filter failures</em> seen in previous runs.
+      </p>
     </div>
 
     <h3 id="s9-2">9.2 AI Provider Configuration</h3>
     <table>
       <thead>
-        <tr><th>Provider</th><th>Environment Variable</th><th>Status</th></tr>
+        <tr><th>Provider</th><th>Key Environment Variables</th><th>Status</th></tr>
       </thead>
       <tbody>
-        <tr><td>Anthropic Claude</td><td><code>ANTHROPIC_API_KEY</code></td><td><span class="tag tag-green">Implemented</span></td></tr>
-        <tr><td>OpenAI GPT</td><td><code>OPENAI_API_KEY</code></td><td><span class="tag tag-green">Implemented</span></td></tr>
+        <tr><td>Anthropic Claude</td><td><code>ANTHROPIC_API_KEY</code>, <code>AI_MODEL</code></td><td><span class="tag tag-green">Implemented</span></td></tr>
+        <tr><td>OpenAI GPT</td><td><code>OPENAI_API_KEY</code>, <code>AI_MODEL</code></td><td><span class="tag tag-green">Implemented</span></td></tr>
+        <tr><td><strong>Azure OpenAI</strong></td><td><code>OPENAI_API_KEY</code>, <code>OPENAI_ENDPOINT</code>, <code>OPENAI_API_VERSION</code>, <code>AI_MODEL</code></td><td><span class="tag tag-green">Implemented</span></td></tr>
       </tbody>
     </table>
 
+    <p>Select the provider via <code>AI_PROVIDER=azure-openai</code> (or <code>anthropic</code> / <code>openai</code>). All provider-specific logic is isolated in <code>ai-enricher.ts</code>; no test code changes are needed when switching providers.</p>
+
+    <div class="code-label">.env — Azure OpenAI configuration (active)</div>
+<pre><code>AI_ENABLED=true
+AI_PROVIDER=azure-openai
+OPENAI_API_KEY=&lt;your-azure-openai-key&gt;
+OPENAI_ENDPOINT=https://&lt;resource&gt;.openai.azure.com/
+OPENAI_API_VERSION=2024-12-01-preview
+AI_MODEL=o4-mini
+AI_MAX_TOKENS=4096</code></pre>
+
+    <div class="callout callout-warning">
+      <div class="callout-title">o4-mini Model Note</div>
+      <p style="margin:0">The <code>o4-mini</code> reasoning model requires <code>max_completion_tokens</code> instead of the standard <code>max_tokens</code> parameter. This is handled automatically by <code>ai-enricher.ts</code> when <code>AI_PROVIDER=azure-openai</code>.</p>
+    </div>
+
     <h3 id="s9-3">9.3 AI Architecture</h3>
-    <p>AI is isolated in <code>src/support/ai-enricher.ts</code>. It is triggered by the <code>_afterTestHook</code> fixture only when <code>AI_ANALYSIS=true</code> is set. No AI is used in the critical test execution path — it runs post-failure only.</p>
+    <p>AI is isolated in <code>src/support/ai-enricher.ts</code>. It is triggered by the <code>_afterTestHook</code> fixture (with <code>{ auto: true }</code>) only when <code>AI_ENABLED=true</code>. No AI is used in the critical test execution path — it runs post-failure only, after all test steps have completed.</p>
+
+    <div class="flow-container">
+      <div class="flow-box">Test Fails<br><small>any domain</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">_afterTestHook<br><small>auto fixture</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">AIEnricher<br><small>ai-enricher.ts</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">Azure OpenAI<br><small>o4-mini</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box">Allure Report<br><small>Overview tab</small></div>
+    </div>
+
+    <h3 id="s9-4">9.4 Allure Report Integration</h3>
+    <p>AI analysis is surfaced directly on the <strong>Overview tab</strong> of each failed test in the Allure report — no need to dig through attachments. The <code>formatAnalysisHtml()</code> helper in <code>ai-enricher.ts</code> produces a styled HTML table, which is injected via <code>allureDescriptionHtml()</code> from <code>allure-js-commons</code>.</p>
+
+    <table>
+      <thead>
+        <tr><th>Allure Integration Point</th><th>API Used</th><th>Effect</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Overview tab description</td><td><code>descriptionHtml(html)</code></td><td>Renders full AI analysis table at the top of the test Overview tab</td></tr>
+        <tr><td>Severity label</td><td><code>label('severity', value)</code></td><td>Sets Allure severity badge from AI assessment — drives priority filters &amp; dashboards</td></tr>
+        <tr><td>JSON attachment</td><td><code>testInfo.attach()</code></td><td>Raw analysis JSON available under the test Attachments tab for programmatic use</td></tr>
+      </tbody>
+    </table>
+
+    <table style="margin-top:16px">
+      <thead>
+        <tr><th>AI Severity</th><th>Allure Label</th><th>Visual Badge</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>critical</code></td><td><code>critical</code></td><td>🔴 RED</td></tr>
+        <tr><td><code>high</code></td><td><code>blocker</code></td><td>🟠 ORANGE</td></tr>
+        <tr><td><code>medium</code></td><td><code>normal</code></td><td>🟡 YELLOW</td></tr>
+        <tr><td><code>low</code></td><td><code>minor</code></td><td>🟢 GREEN</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout-info">
+      <div class="callout-title">Works in all Playwright modes</div>
+      <p style="margin:0">AI analysis triggers automatically regardless of how Playwright is invoked — <code>npm run test:*</code> scripts, <code>npx playwright test</code> CLI, or the <strong>Playwright UI runner</strong> (<code>npm run test:ui</code>). The <code>_afterTestHook</code> auto-fixture fires in every execution mode.</p>
+    </div>
   </div>
 
   <!-- ============================== SECTION 10 ============================== -->
@@ -2107,9 +2188,9 @@ const analysis = await aiEnricher.analyzeFailure({
       <tbody>
         <tr><td><strong>Playwright HTML</strong></td><td>HTML</td><td>QA Team</td><td>Step-by-step results with request/response logs, timing, attachments</td></tr>
         <tr><td><strong>JSON Reporter</strong></td><td>JSON</td><td>CI/Xray Pipeline</td><td>Machine-readable results for Xray import and downstream processing</td></tr>
-        <tr><td><strong>Allure Dashboard</strong></td><td>HTML</td><td>Engineering Leadership</td><td>Visual dashboards with trends, categories, severity breakdowns</td></tr>
+        <tr><td><strong>Allure Dashboard</strong></td><td>HTML</td><td>Engineering Leadership</td><td>Visual dashboards with trends, categories, severity breakdowns. Failed tests show AI analysis on the Overview tab.</td></tr>
         <tr><td><strong>Xray Execution</strong></td><td>Jira</td><td>Project Management</td><td>Test execution linked to Jira with requirement traceability</td></tr>
-        <tr><td><strong>AI Analysis Report</strong></td><td>JSON</td><td>QA + Dev</td><td>AI root cause analysis (opt-in, attached to Playwright report)</td></tr>
+        <tr><td><strong>AI Analysis Report</strong></td><td>HTML + JSON</td><td>QA + Dev</td><td>AI root cause analysis rendered on Allure Overview tab (HTML) and as a JSON attachment. Opt-in via <code>AI_ENABLED=true</code>. Severity label drives Allure dashboards.</td></tr>
       </tbody>
     </table>
   </div>
@@ -2176,9 +2257,13 @@ jobs:
 
       - name: AI Failure Analysis
         if: failure()
-        run: npx ts-node src/support/ai-enricher.ts analyze-failures
+        run: echo "AI analysis runs inline via _afterTestHook fixture during test execution"
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AI_ENABLED: 'true'
+          AI_PROVIDER: azure-openai
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_ENDPOINT: ${{ secrets.OPENAI_ENDPOINT }}
+          AI_MODEL: o4-mini
 
       - name: Publish to Xray
         if: always()
@@ -2240,7 +2325,7 @@ jobs:
         <tr>
           <td><strong>AI Enrichment</strong></td>
           <td><span class="tag tag-blue">Opt-in</span></td>
-          <td>Failure analysis via Claude/OpenAI. Opt-in via AI_ANALYSIS=true env var.</td>
+          <td>Failure analysis via Azure OpenAI (o4-mini), Anthropic Claude, or standard OpenAI. Analysis rendered as HTML on Allure Overview tab with colour-coded severity. Opt-in via <code>AI_ENABLED=true</code>. Works in all execution modes (CLI, Playwright UI runner).</td>
         </tr>
         <tr>
           <td><strong>Xray Integration</strong></td>
