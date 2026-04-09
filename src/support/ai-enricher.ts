@@ -193,3 +193,63 @@ if (require.main === module) {
     logger.info('Usage: ts-node src/support/ai-enricher.ts generate "Ticket summary" "AC" "/endpoint"');
   }
 }
+
+const severityColors: Record<string, string> = {
+  critical: '#d32f2f',
+  high: '#f57c00',
+  medium: '#fbc02d',
+  low: '#388e3c',
+};
+
+const severityEmoji: Record<string, string> = {
+  critical: '🔴',
+  high: '🟠',
+  medium: '🟡',
+  low: '🟢',
+};
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+export function formatAnalysisHtml(analysis: FailureAnalysis): string {
+  const sev = analysis.severity;
+  const color = severityColors[sev] || '#666';
+  const emoji = severityEmoji[sev] || '⚪';
+  const patterns = analysis.relatedPatterns?.length
+    ? `<ul>${analysis.relatedPatterns.map((p) => `<li>${escapeHtml(p)}</li>`).join('')}</ul>`
+    : '<em>None identified</em>';
+
+  return `
+<h2>🤖 AI Failure Analysis</h2>
+<table>
+  <tr>
+    <th style="text-align:left;padding:6px 12px;width:160px">Severity</th>
+    <td style="padding:6px 12px"><strong style="color:${color}">${emoji} ${escapeHtml(sev.toUpperCase())}</strong></td>
+  </tr>
+  <tr>
+    <th style="text-align:left;padding:6px 12px">Summary</th>
+    <td style="padding:6px 12px">${escapeHtml(analysis.summary)}</td>
+  </tr>
+  <tr>
+    <th style="text-align:left;padding:6px 12px">Root Cause</th>
+    <td style="padding:6px 12px">${escapeHtml(analysis.probableCause)}</td>
+  </tr>
+  <tr>
+    <th style="text-align:left;padding:6px 12px">Impact</th>
+    <td style="padding:6px 12px">${escapeHtml(analysis.impactAssessment)}</td>
+  </tr>
+  <tr>
+    <th style="text-align:left;padding:6px 12px">Suggested Fix</th>
+    <td style="padding:6px 12px">${escapeHtml(analysis.suggestedFix)}</td>
+  </tr>
+  <tr>
+    <th style="text-align:left;padding:6px 12px;vertical-align:top">Related Patterns</th>
+    <td style="padding:6px 12px">${patterns}</td>
+  </tr>
+</table>`.trim();
+}

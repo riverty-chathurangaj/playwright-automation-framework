@@ -12,7 +12,8 @@ import { SnapshotManager } from '@database/snapshot-manager';
 import { CleanupManager } from '@database/cleanup-manager';
 import { GLQueryBuilder } from '@database/query-builder';
 import { SchemaValidator } from '@schemas/schema-validator';
-import { AIEnricher } from '@support/ai-enricher';
+import { AIEnricher, formatAnalysisHtml } from '@support/ai-enricher';
+import { descriptionHtml as allureDescriptionHtml, label as allureLabel } from 'allure-js-commons';
 import { config } from '@core/config';
 import { logger } from '@core/logger';
 
@@ -219,6 +220,20 @@ export const test = base.extend<GLFixtures>({
             response: currentResponse as Record<string, unknown>,
             tags: testInfo.tags ?? [],
           });
+
+          // Show AI analysis on the Allure Overview tab
+          await allureDescriptionHtml(formatAnalysisHtml(analysis));
+
+          // Map AI severity to Allure severity label
+          const severityMap: Record<string, string> = {
+            critical: 'critical',
+            high: 'blocker',
+            medium: 'normal',
+            low: 'minor',
+          };
+          await allureLabel('severity', severityMap[analysis.severity] ?? 'normal');
+
+          // Keep JSON attachment for machine readability
           await testInfo.attach('AI Failure Analysis', {
             body: JSON.stringify(analysis, null, 2),
             contentType: 'application/json',
