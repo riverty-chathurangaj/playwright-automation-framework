@@ -45,7 +45,7 @@ export class ApiClient {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
           'X-Test-Run-Id': config.gitSha,
-          'X-Framework': 'testonaut-gl',
+          'X-Framework': 'pw-testforge-gls',
         },
         ignoreHTTPSErrors: true,
         timeout: config.apiTimeout,

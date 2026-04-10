@@ -461,8 +461,8 @@ Then('I see the error message {string}', function (
   expectedMessage: string,
 ) {
   const body = currentResponse.body as unknown as Record<string, unknown>;
-  expect(body).to.have.property('errorMessage');
-  expect(String(body.errorMessage)).to.equal(expectedMessage);
+  expect(body).to.have.property('message');
+  expect(String(body.message)).to.equal(expectedMessage);
 });
 
 // Generic send step — resolves the template set by "I define a GET/POST/PUT..." and sends the request.

@@ -1,4 +1,4 @@
-# Testonaut GL — Agent Guide
+# pw-testforge-gls — Agent Guide
 
 BDD API test automation framework for the GL (General Ledger) service.
 **Stack:** TypeScript 5.x · Playwright `APIRequestContext` · playwright-bdd 8.x · Chai 5.x · Ajv 8.x · Winston · RabbitMQ (amqplib) · Knex.js

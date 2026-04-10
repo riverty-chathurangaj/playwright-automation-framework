@@ -510,7 +510,7 @@
       </div>
       <div class="cover-meta-item">
         <div class="cover-meta-label">Framework</div>
-        <div class="cover-meta-value">Testonaut GL</div>
+        <div class="cover-meta-value">pw-testforge-gls</div>
       </div>
       <div class="cover-meta-item">
         <div class="cover-meta-label">Stack</div>
@@ -726,7 +726,7 @@
       <h2 id="s1">Executive Summary</h2>
     </div>
 
-    <p>This document presents the architecture for <strong>Testonaut GL</strong> — an intelligent, AI-augmented test automation framework designed to ensure the quality, reliability, and contract compliance of the GL (General Ledger) Service API.</p>
+    <p>This document presents the architecture for <strong>pw-testforge-gls</strong> — an intelligent, AI-augmented test automation framework designed to ensure the quality, reliability, and contract compliance of the GL (General Ledger) Service API.</p>
 
     <p>The GL Service API is a financial-domain .NET application that requires rigorous testing across functional, schema, contract, and security dimensions. The test framework is intentionally decoupled from the development project, operating as an independent black-box test suite that communicates exclusively through the API's HTTP interface.</p>
 
@@ -949,7 +949,7 @@
     <div class="diagram">
 <pre>
 ┌──────────────────────────────────────────────────────────────────────────────────────┐
-│                              TESTONAUT GL FRAMEWORK                                   │
+│                              pw-testforge-gls FRAMEWORK                                   │
 │                                                                                      │
 │  ┌──────────────────────────────────────────────────────────────────────────────┐     │
 │  │                         FEATURE LAYER (Gherkin)                              │     │
@@ -1019,7 +1019,7 @@
 
     <h3 id="s4-2">4.2 Project Structure</h3>
     <div class="code-label">PROJECT TREE</div>
-<pre><code>testonaut-gl/
+<pre><code>pw-testforge-gls/
 ├── src/
 │   ├── core/
 │   │   ├── api-client.ts               # Playwright APIRequestContext wrapper
@@ -2351,13 +2351,13 @@ AI_MAX_TOKENS=4096</code></pre>
 
     <div class="callout callout-success">
       <div class="callout-title">Summary</div>
-      <p style="margin:0">Testonaut GL is a comprehensive <strong>BDD API test automation framework</strong> built on Playwright and playwright-bdd. It covers all GL API domains with JSON Schema validation, tests RabbitMQ message flows end-to-end (publish → consume → database verification), and connects to Azure SQL via Entra ID passwordless auth. AI-powered failure analysis is available as an opt-in enhancement. Xray Cloud integration provides complete traceability from requirements to test execution.</p>
+      <p style="margin:0">pw-testforge-gls is a comprehensive <strong>BDD API test automation framework</strong> built on Playwright and playwright-bdd. It covers all GL API domains with JSON Schema validation, tests RabbitMQ message flows end-to-end (publish → consume → database verification), and connects to Azure SQL via Entra ID passwordless auth. AI-powered failure analysis is available as an opt-in enhancement. Xray Cloud integration provides complete traceability from requirements to test execution.</p>
     </div>
   </div>
 </div>
 
 <div class="doc-footer">
-  <p><strong>Testonaut GL — Test Automation Framework Architecture</strong></p>
+  <p><strong>pw-testforge-gls — Test Automation Framework Architecture</strong></p>
   <p>Version 2.0 · April 2026 · Riverty Group GmbH · Quality Engineering</p>
   <p>This document is confidential and intended for internal use only.</p>
 </div>

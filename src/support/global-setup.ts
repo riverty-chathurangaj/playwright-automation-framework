@@ -5,7 +5,7 @@ import { logger } from '../core/logger';
 
 export default async function globalSetup(): Promise<void> {
   logger.info('========================================');
-  logger.info('  TESTONAUT GL — Test Run Starting       ');
+  logger.info('  PW-TESTFORGE-GLS — Test Run Starting       ');
   logger.info('========================================');
   logger.info('Configuration', {
     baseUrl: config.baseUrl,

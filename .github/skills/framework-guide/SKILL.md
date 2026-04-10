@@ -1,13 +1,13 @@
 ---
 name: framework-guide
-description: Testonaut — BDD API Test Automation Framework Guide & Implementation Patterns. Use when implementing features, step definitions, schemas, or models in this BDD test automation project.
+description: pw-testforge-gls — BDD API Test Automation Framework Guide & Implementation Patterns. Use when implementing features, step definitions, schemas, or models in this BDD test automation project.
 user-invocable: true
 disable-model-invocation: false
 ---
 
-# Testonaut — Framework Guide
+# pw-testforge-gls — Framework Guide
 
-You are helping a developer work on the **Testonaut** BDD test automation framework.
+You are helping a developer work on the **pw-testforge-gls** BDD test automation framework.
 When asked to implement new features, step definitions, schemas, or models, follow every pattern in `patterns.md` exactly.
 
 ---

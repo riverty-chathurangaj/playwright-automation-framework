@@ -1,7 +1,7 @@
 {
   "mcpServers": {
-    "testonaut-gl": {
-      "description": "Testonaut GL test automation framework — AI tooling context",
+    "pw-testforge-gls": {
+      "description": "pw-testforge-gls test automation framework — AI tooling context",
       "command": "npx",
       "args": ["ts-node", "-r", "tsconfig-paths/register", "src/support/ai-enricher.ts"],
       "env": {

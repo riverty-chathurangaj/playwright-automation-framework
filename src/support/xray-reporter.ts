@@ -101,7 +101,7 @@ export class XrayReporter {
       testExecutionKey: config.xray.executionKey || undefined,
       info: {
         summary: `GL API Tests - ${config.env} - ${new Date().toISOString().split('T')[0]}`,
-        description: `Automated BDD execution via Testonaut GL | Tags: ${process.env.CUCUMBER_TAGS || 'all'} | Build: ${config.gitSha}`,
+        description: `Automated BDD execution via pw-testforge-gls | Tags: ${process.env.CUCUMBER_TAGS || 'all'} | Build: ${config.gitSha}`,
         startDate: this.executionStartTime,
         finishDate: new Date().toISOString(),
         testEnvironments: [config.env],

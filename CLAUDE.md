@@ -1,4 +1,4 @@
-# Testonaut GL — Claude Code Context
+# pw-testforge-gls — Claude Code Context
 
 This is a **Playwright BDD API test automation framework** for the GL (General Ledger) service.
 

@@ -1,4 +1,4 @@
-# Testonaut GL — GL Service API Test Automation Framework
+# pw-testforge-gls — GL Service API Test Automation Framework
 
 An intelligent, AI-powered BDD test automation framework for financial API quality assurance.
 
@@ -77,7 +77,7 @@ Opens a browser-based UI where you can filter by tag, project, or test name, see
 ## Project Structure
 
 ```
-testonaut-gl/
+pw-testforge-gls/
 ├── .ai/
 │   └── prompts/                # AI prompt templates (scenario gen, failure analysis, etc.)
 ├── .claude/
@@ -283,4 +283,4 @@ Migrated from `@cucumber/cucumber` to `playwright-bdd`:
 
 ---
 
-*Testonaut GL — Version 1.0 · March 2026 · Riverty Group GmbH · Quality Engineering*
+*pw-testforge-gls — Version 1.0 · March 2026 · Riverty Group GmbH · Quality Engineering*

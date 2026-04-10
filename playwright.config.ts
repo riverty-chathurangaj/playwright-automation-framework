@@ -39,7 +39,7 @@ export default defineConfig({
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       'X-Test-Run-Id': process.env.GIT_SHA || `local-${Date.now()}`,
-      'X-Framework': 'testonaut-gl',
+      'X-Framework': 'pw-testforge-gls',
     },
     ignoreHTTPSErrors: true,
     actionTimeout: Number(process.env.API_TIMEOUT) || 30_000,

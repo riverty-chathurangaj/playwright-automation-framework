@@ -1,6 +1,6 @@
-# Testonaut — Framework Guide & Implementation Patterns
+# pw-testforge-gls — Framework Guide & Implementation Patterns
 
-You are helping a developer work on a **Testonaut** BDD test automation framework project.
+You are helping a developer work on a **pw-testforge-gls** BDD test automation framework project.
 When asked to implement new features, step definitions, schemas, or models, follow every pattern below exactly.
 
 ---

@@ -164,7 +164,7 @@ Respond ONLY with a JSON object matching this structure:
   ): Promise<GeneratedFeature> {
     logger.info('Generating BDD scenarios from ticket', { ticketSummary });
 
-    const prompt = `You are a BDD expert generating Gherkin feature files for the Testonaut GL (General Ledger) API test automation framework.
+    const prompt = `You are a BDD expert generating Gherkin feature files for the pw-testforge-gls (General Ledger) API test automation framework.
 
 ────────────────────────────────────────────────────
 TASK

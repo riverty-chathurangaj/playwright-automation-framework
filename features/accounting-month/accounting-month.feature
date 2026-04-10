@@ -20,6 +20,7 @@ Feature: Close Accounting Month
       | 67198    |
     Then I send the open accounting month request to the API
     And I get the response code of OK
+    And the response should match schema "accounting-month-response"
     And the response field "message" should equal "Accounting month opened."
     And the response should confirm the accounting month parameters
 
@@ -104,6 +105,7 @@ Feature: Close Accounting Month
       | 67198    |
     Then I send the open accounting month request to the API
     And I get the response code of BadRequest
+    And the response should match schema "accounting-month-response"
     And the error should indicate "You can only open/reopen the current or previous accounting month"
 
   @accounting-month
@@ -115,6 +117,7 @@ Feature: Close Accounting Month
       | 67198    | 2100 | 12    |
     Then I send the open accounting month request to the API
     And I get the response code of BadRequest
+    And the response should match schema "accounting-month-response"
     And the error should indicate "You can only open/reopen the current or previous accounting month"
 
   @accounting-month
@@ -210,6 +213,7 @@ Feature: Close Accounting Month
       | 67198    |
     Then I send the close accounting month request to the API
     And I get the response code of OK
+    And the response should match schema "accounting-month-response"
     And the response field "message" should equal "Accounting month closed."
     And the response should confirm the accounting month parameters
 
@@ -254,6 +258,7 @@ Feature: Close Accounting Month
       | 67198    |
     Then I send the close accounting month request to the API
     And I get the response code of NotFound
+    And the response should match schema "accounting-month-response"
     And I see the error message "Accounting month is already closed."
     And the response should confirm the accounting month parameters
 
@@ -268,6 +273,7 @@ Feature: Close Accounting Month
       | 67198    | 2100 | 12    |
     Then I send the close accounting month request to the API
     And I get the response code of BadRequest
+    And the response should match schema "accounting-month-response"
     And the error should indicate "Cannot close a future accounting month"
 
   @accounting-month

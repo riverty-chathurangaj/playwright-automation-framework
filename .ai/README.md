@@ -1,6 +1,6 @@
 # .ai — Developer Tooling Layer
 
-This folder contains reference documentation and configuration for the AI features built into the Testonaut GL framework. **Nothing here runs during `npm test`.**
+This folder contains reference documentation and configuration for the AI features built into the pw-testforge-gls framework. **Nothing here runs during `npm test`.**
 
 ---
 

@@ -71,7 +71,7 @@ export class RabbitClient {
   }
 
   async createTestQueue(exchange: string, routingKey: string, options: QueueOptions = {}): Promise<string> {
-    const queueName = `testonaut-gl-${exchange}-${routingKey}-${Date.now()}`.replace(/\./g, '-');
+    const queueName = `pw-testforge-gls-${exchange}-${routingKey}-${Date.now()}`.replace(/\./g, '-');
 
     const exchangeType = options.exchangeType ?? 'topic';
     if (exchangeType !== false) {

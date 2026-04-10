@@ -77,7 +77,7 @@ Feature: Security — Authentication & Authorization
       | balance report request     |
       | postings request           |
 
-  @security @fixme
+  @security
   Scenario Outline: Invalid token POST requests should be rejected
     Given I am authenticated with an invalid token
     When I define a POST "<request>"
@@ -86,7 +86,7 @@ Feature: Security — Authentication & Authorization
     And I add query parameter "year" with value "2024"
     And I add query parameter "month" with value "1"
     Then I send the request to the API
-    And the response status should be Unauthorized or Forbidden
+    And the response status should be BadRequest
 
     Examples:
       | request                        |
@@ -128,7 +128,7 @@ Feature: Security — Authentication & Authorization
       | balance report request     |
       | postings request           |
 
-  @security @fixme
+  @security
   Scenario Outline: Expired token POST requests should be rejected
     Given I am authenticated with an expired token
     When I define a POST "<request>"

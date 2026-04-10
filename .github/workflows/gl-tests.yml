@@ -1,4 +1,4 @@
-name: GL API Test Suite — Testonaut GL
+name: GL API Test Suite — pw-testforge-gls
 
 on:
   pull_request:

@@ -17,7 +17,7 @@ export const logger = winston.createLogger({
   level: config.logLevel,
   defaultMeta: {
     env: config.env,
-    framework: 'testonaut-gl',
+    framework: 'pw-testforge-gls',
   },
   format: combine(
     errors({ stack: true }),
