@@ -42,7 +42,7 @@ export class ApiClient {
       this.context = await request.newContext({
         baseURL: this.baseUrl,
         extraHTTPHeaders: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'application/json',
           'X-Test-Run-Id': config.gitSha,
           'X-Framework': 'pw-testforge-gls',
@@ -61,10 +61,7 @@ export class ApiClient {
     }
   }
 
-  private async buildHeaders(
-    options?: RequestOptions,
-    role?: string,
-  ): Promise<Record<string, string>> {
+  private async buildHeaders(options?: RequestOptions, role?: string): Promise<Record<string, string>> {
     const headers: Record<string, string> = {};
 
     if (!options?.skipAuth) {
@@ -167,19 +164,27 @@ export class ApiClient {
   async sendRaw(
     method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     endpoint: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     body: any,
     options?: RequestOptions,
     role?: string,
   ): Promise<ApiResponse> {
-    return this.executeRequest(method.toLowerCase() as 'get' | 'post' | 'put' | 'patch' | 'delete', endpoint, {
-      ...options,
-      body,
-    }, role);
+    return this.executeRequest(
+      method.toLowerCase() as 'get' | 'post' | 'put' | 'patch' | 'delete',
+      endpoint,
+      {
+        ...options,
+        body,
+      },
+      role,
+    );
   }
 
   setAuthRole(role: string): void {
     this.authManager.setCurrentRole(role);
+  }
+
+  setStaticAuthToken(token: string, role: string = 'default'): void {
+    this.authManager.setStaticToken(token, role);
   }
 
   clearAuth(): void {

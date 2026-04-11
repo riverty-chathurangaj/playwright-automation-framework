@@ -72,10 +72,8 @@ export function buildBookClientDepositMessage(
     correlationId: null,
     conversationId,
     initiatorId: null,
-    sourceAddress:
-      'rabbitmqs://rabbitmq-general-dev.riverty.io/shared/generalledgers_GeneralLedgerP_bus_yryyyybouip3iwkabdxgxhuxd3?temporary=true',
-    destinationAddress:
-      'rabbitmqs://rabbitmq-general-dev.riverty.io/shared/GeneralLedger:BookClientDeposit',
+    sourceAddress: 'rabbitmqs://general-ledger/shared/generalledgers_GeneralLedgerP_bus?temporary=true',
+    destinationAddress: 'rabbitmqs://general-ledger/shared/GeneralLedger:BookClientDeposit',
     responseAddress: null,
     faultAddress: null,
     messageType: ['urn:message:GeneralLedger:BookClientDeposit'],
@@ -99,8 +97,7 @@ export function buildBookClientDepositMessage(
       callLogId: 31086350,
     },
     host: {
-      machineName:
-        'generalledger-service-postingservice-bubblecontext-79cf47db845n',
+      machineName: 'generalledger-service-postingservice-bubblecontext-79cf47db845n',
       processName: 'GeneralLedger.PostingService.BubbleContext',
       processId: 1,
       assembly: 'GeneralLedger.PostingService.BubbleContext',
@@ -111,4 +108,3 @@ export function buildBookClientDepositMessage(
     },
   };
 }
-

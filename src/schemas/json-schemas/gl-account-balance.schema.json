@@ -3,11 +3,11 @@
   "title": "GLAccountBalance",
   "type": "object",
   "properties": {
-    "account":       { "type": ["string", "null"] },
-    "accountName":   { "type": ["string", "null"] },
-    "inBalance":     { "type": "number" },
+    "account": { "type": ["string", "null"] },
+    "accountName": { "type": ["string", "null"] },
+    "inBalance": { "type": "number" },
     "balanceChange": { "type": "number" },
-    "outBalance":    { "type": "number" }
+    "outBalance": { "type": "number" }
   },
   "required": ["inBalance", "balanceChange", "outBalance"],
   "additionalProperties": true

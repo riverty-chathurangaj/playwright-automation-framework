@@ -2,7 +2,6 @@ import { faker } from '@faker-js/faker';
 
 // GL-domain-specific fake data generators
 export class DataGenerator {
-
   // --- Account Code ---
   static accountCode(digits: number = 4): string {
     return faker.string.numeric({ length: digits, allowLeadingZeros: false });
@@ -71,11 +70,11 @@ export class DataGenerator {
 
   static invalidDate(): string {
     return faker.helpers.arrayElement([
-      '31-13-2025',     // invalid month
-      '2025-02-29',     // not a leap year
-      'not-a-date',     // string
-      '2025-00-01',     // month zero
-      '2025-01-00',     // day zero
+      '31-13-2025', // invalid month
+      '2025-02-29', // not a leap year
+      'not-a-date', // string
+      '2025-00-01', // month zero
+      '2025-01-00', // day zero
     ]);
   }
 

@@ -38,11 +38,7 @@
     "knexfile.ts",
     ".ai/**/*.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "reports"
-  ],
+  "exclude": ["node_modules", "dist", "reports"],
   "ts-node": {
     "transpileOnly": true,
     "files": true,

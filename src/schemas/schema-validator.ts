@@ -57,6 +57,12 @@ export interface FieldConstraint {
 }
 
 export class SchemaValidator {
+  private static sharedState: {
+    ajv: Ajv;
+    validators: Map<string, ValidateFunction>;
+    contracts: Map<string, Contract>;
+  } | null = null;
+
   private ajv: Ajv;
   private validators: Map<string, ValidateFunction> = new Map();
   private contracts: Map<string, Contract> = new Map();
@@ -64,20 +70,37 @@ export class SchemaValidator {
   private contractDir: string;
 
   constructor() {
-    this.ajv = new Ajv({ allErrors: true, strict: false });
-    addFormats(this.ajv);
-
     this.schemaDir = path.resolve(process.cwd(), 'src/schemas/json-schemas');
     this.contractDir = path.resolve(process.cwd(), 'src/schemas/contracts');
 
-    this.loadSchemas();
-    this.loadContracts();
+    if (!SchemaValidator.sharedState) {
+      const ajv = new Ajv({ allErrors: true, strict: false });
+      addFormats(ajv);
+
+      SchemaValidator.sharedState = {
+        ajv,
+        validators: new Map(),
+        contracts: new Map(),
+      };
+    }
+
+    this.ajv = SchemaValidator.sharedState.ajv;
+    this.validators = SchemaValidator.sharedState.validators;
+    this.contracts = SchemaValidator.sharedState.contracts;
+
+    if (this.validators.size === 0) {
+      this.loadSchemas();
+    }
+
+    if (this.contracts.size === 0) {
+      this.loadContracts();
+    }
   }
 
   private loadSchemas(): void {
     if (!fs.existsSync(this.schemaDir)) return;
 
-    const files = fs.readdirSync(this.schemaDir).filter(f => f.endsWith('.schema.json'));
+    const files = fs.readdirSync(this.schemaDir).filter((f) => f.endsWith('.schema.json'));
     for (const file of files) {
       try {
         const schemaPath = path.join(this.schemaDir, file);
@@ -95,7 +118,7 @@ export class SchemaValidator {
   private loadContracts(): void {
     if (!fs.existsSync(this.contractDir)) return;
 
-    const files = fs.readdirSync(this.contractDir).filter(f => f.endsWith('.contract.json'));
+    const files = fs.readdirSync(this.contractDir).filter((f) => f.endsWith('.contract.json'));
     for (const file of files) {
       try {
         const contractPath = path.join(this.contractDir, file);
@@ -117,13 +140,15 @@ export class SchemaValidator {
     const valid = validate(data) as boolean;
     return {
       valid,
-      errors: valid ? undefined : validate.errors?.map(e => ({
-        path: e.instancePath || '(root)',
-        message: e.message,
-        keyword: e.keyword,
-        params: e.params as Record<string, unknown>,
-        allowedValues: (e.params as Record<string, unknown>)?.allowedValues as unknown[] | undefined,
-      })),
+      errors: valid
+        ? undefined
+        : validate.errors?.map((e) => ({
+            path: e.instancePath || '(root)',
+            message: e.message,
+            keyword: e.keyword,
+            params: e.params as Record<string, unknown>,
+            allowedValues: (e.params as Record<string, unknown>)?.allowedValues as unknown[] | undefined,
+          })),
     };
   }
 
@@ -141,7 +166,7 @@ export class SchemaValidator {
 
     const schemaResult = this.validate(spec.schema, response);
 
-    const missingFields = spec.requiredFields.filter(field => {
+    const missingFields = spec.requiredFields.filter((field) => {
       const value = this.getNestedValue(response, field);
       return value === undefined || value === null;
     });
@@ -164,7 +189,9 @@ export class SchemaValidator {
       if (constraint.precision !== undefined && typeof value === 'number') {
         const decimals = (value.toString().split('.')[1] || '').length;
         if (decimals > constraint.precision) {
-          typeErrors.push(`Field "${field}" exceeds precision ${constraint.precision} (has ${decimals} decimal places)`);
+          typeErrors.push(
+            `Field "${field}" exceeds precision ${constraint.precision} (has ${decimals} decimal places)`,
+          );
         }
       }
     }
@@ -186,7 +213,7 @@ export class SchemaValidator {
   }
 
   addSchema(schema: Record<string, unknown>, id?: string): void {
-    const schemaId = id || schema.$id as string;
+    const schemaId = id || (schema.$id as string);
     this.ajv.addSchema(schema, schemaId);
     this.validators.set(schemaId, this.ajv.compile(schema));
   }
@@ -196,8 +223,8 @@ export class SchemaValidator {
   }
 
   private findContract(name: string): Contract {
-    const contract = this.contracts.get(name) ||
-      [...this.contracts.values()].find(c => c.contractName.includes(name));
+    const contract =
+      this.contracts.get(name) || [...this.contracts.values()].find((c) => c.contractName.includes(name));
 
     if (!contract) {
       throw new Error(`Contract not found: "${name}". Available: ${[...this.contracts.keys()].join(', ')}`);

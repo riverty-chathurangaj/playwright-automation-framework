@@ -17,7 +17,7 @@ export class MessageValidator {
     const schemaDir = path.resolve(process.cwd(), 'src/messaging/message-schemas');
     if (!fs.existsSync(schemaDir)) return;
 
-    const files = fs.readdirSync(schemaDir).filter(f => f.endsWith('.schema.json'));
+    const files = fs.readdirSync(schemaDir).filter((f) => f.endsWith('.schema.json'));
     for (const file of files) {
       try {
         const schema = JSON.parse(fs.readFileSync(path.join(schemaDir, file), 'utf-8'));
@@ -58,12 +58,16 @@ export class MessageValidator {
   }
 
   validateUniqueIds(messages: CollectedMessage[], idField: string): boolean {
-    const ids = messages.map(m => Comparator.getNestedValue(m.content as Record<string, unknown>, idField));
+    const ids = messages.map((m) => Comparator.getNestedValue(m.content as Record<string, unknown>, idField));
     const unique = new Set(ids);
     return unique.size === messages.length;
   }
 
-  validateCorrelation(message: CollectedMessage, apiResponseField: string, apiResponse: Record<string, unknown>): boolean {
+  validateCorrelation(
+    message: CollectedMessage,
+    apiResponseField: string,
+    apiResponse: Record<string, unknown>,
+  ): boolean {
     const apiValue = Comparator.getNestedValue(apiResponse, apiResponseField);
     const msgValue = message.correlationId || this.getField(message, 'correlationId');
     return msgValue === apiValue;
@@ -76,7 +80,7 @@ export class MessageValidator {
   getDLQDeathCount(message: CollectedMessage): number {
     const xDeath = message.headers['x-death'];
     if (Array.isArray(xDeath) && xDeath.length > 0) {
-      return (xDeath[0] as Record<string, unknown>).count as number || 0;
+      return ((xDeath[0] as Record<string, unknown>).count as number) || 0;
     }
     return 0;
   }

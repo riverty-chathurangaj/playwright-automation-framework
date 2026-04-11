@@ -51,13 +51,13 @@ Step definitions in `src/steps/**/*.ts` are auto-discovered via `playwright.conf
 
 ## Non-Negotiable Coding Rules
 
-| Rule | Correct | Wrong |
-|---|---|---|
-| Step imports | `import { When } from '../../fixtures'` | `from 'playwright-bdd'` or `from '@cucumber/cucumber'` |
-| Mutate response | `Object.assign(currentResponse, result)` | `currentResponse = result` |
-| Body cast | `body as unknown as MyType[]` | `body as MyType[]` |
-| HTTP status in `.feature` | `I get the response code of OK` | `the response code should be 200` |
-| Nullable in JSON schema | `"type": ["string", "null"]` | `"nullable": true` |
+| Rule                      | Correct                                  | Wrong                                                  |
+| ------------------------- | ---------------------------------------- | ------------------------------------------------------ |
+| Step imports              | `import { When } from '../../fixtures'`  | `from 'playwright-bdd'` or `from '@cucumber/cucumber'` |
+| Mutate response           | `Object.assign(currentResponse, result)` | `currentResponse = result`                             |
+| Body cast                 | `body as unknown as MyType[]`            | `body as MyType[]`                                     |
+| HTTP status in `.feature` | `I get the response code of OK`          | `the response code should be 200`                      |
+| Nullable in JSON schema   | `"type": ["string", "null"]`             | `"nullable": true`                                     |
 
 ---
 
@@ -76,13 +76,13 @@ Also add the domain tag to `playwright.config.ts` projects array.
 ## Domain Step File Structure
 
 ```typescript
-import { When, Then } from '../../fixtures';   // ← always from fixtures
+import { When, Then } from '../../fixtures'; // ← always from fixtures
 import { registerTemplates, resolveEndpoint } from '@utils/request-templates';
 
 // Call at module load — keys registered globally, resolved by common "I define a GET/POST" steps
 // ⚠️  Template names must be unique across all domains — duplicates overwrite silently
 registerTemplates({
-  'clients request': '/{instanceId}/clients',   // {placeholder} resolved via store overrides
+  'clients request': '/{instanceId}/clients', // {placeholder} resolved via store overrides
   'client departments request': '/{instanceId}/clients/departments',
 });
 
@@ -92,17 +92,18 @@ registerTemplates({
 //   When('I set {string} to {string}', ...)
 
 // Each domain gets its own named send step — never one generic "send" step
-Then('I send the client request to the API', async function (
-  { apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: ClientFixtures,
-) {
-  const { endpoint } = currentRequest;
-  if (!endpoint) throw new Error('No request defined.');
-  const resolvedEndpoint = `${apiBase}${resolveEndpoint(endpoint, retrieve, { instanceId })}`;
-  Object.assign(
-    currentResponse,
-    await apiClient.get(resolvedEndpoint, { queryParams: currentRequest.queryParams }, activeRole.value),
-  );
-});
+Then(
+  'I send the client request to the API',
+  async function ({ apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: ClientFixtures) {
+    const { endpoint } = currentRequest;
+    if (!endpoint) throw new Error('No request defined.');
+    const resolvedEndpoint = `${apiBase}${resolveEndpoint(endpoint, retrieve, { instanceId })}`;
+    Object.assign(
+      currentResponse,
+      await apiClient.get(resolvedEndpoint, { queryParams: currentRequest.queryParams }, activeRole.value),
+    );
+  },
+);
 ```
 
 Reference: `src/steps/clients/clients.steps.ts`, `src/utils/request-templates.ts`
@@ -278,6 +279,7 @@ When I send {int} concurrent POST requests to {string} for account {string}
 ```
 
 Array validation pattern (two steps, separate concerns):
+
 ```gherkin
 And the response should be an array of clients     ← domain step: non-empty + type check
 And each item in the response array should match schema "client"   ← common step: schema contract
@@ -289,17 +291,17 @@ And each item in the response array should match schema "client"   ← common st
 
 All fixtures + `{ Given, When, Then }` are exported from a single file. Key fixtures:
 
-| Fixture | Notes |
-|---|---|
-| `apiClient` | Playwright `APIRequestContext` wrapper with OAuth2 token cache |
-| `currentRequest` | Mutable: set `.method`, `.endpoint`, `.queryParams` directly |
-| `currentResponse` | Mutable only via `Object.assign` |
-| `activeRole` | Mutable wrapper: `activeRole.value = 'a valid client'` |
-| `instanceId` | Read-only from `.env`; override via `store('instanceIdOverride', n)` |
-| `store` / `retrieve` | Per-test key-value state backed by `testData` |
-| `schemaValidator` | Ajv instance; loads all `src/schemas/json-schemas/*.schema.json` at startup |
-| `rabbitClient`, `dbClient` | Lazy — only initialised when referenced by a test |
-| `_afterTestHook` | Auto-fixture; attaches `Request/Response` JSON on failure; runs AI analysis if `AI_ENABLED=true` |
+| Fixture                    | Notes                                                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| `apiClient`                | Playwright `APIRequestContext` wrapper with OAuth2 token cache                                   |
+| `currentRequest`           | Mutable: set `.method`, `.endpoint`, `.queryParams` directly                                     |
+| `currentResponse`          | Mutable only via `Object.assign`                                                                 |
+| `activeRole`               | Mutable wrapper: `activeRole.value = 'a valid client'`                                           |
+| `instanceId`               | Read-only from `.env`; override via `store('instanceIdOverride', n)`                             |
+| `store` / `retrieve`       | Per-test key-value state backed by `testData`                                                    |
+| `schemaValidator`          | Ajv instance; loads all `src/schemas/json-schemas/*.schema.json` at startup                      |
+| `rabbitClient`, `dbClient` | Lazy — only initialised when referenced by a test                                                |
+| `_afterTestHook`           | Auto-fixture; attaches `Request/Response` JSON on failure; runs AI analysis if `AI_ENABLED=true` |
 
 ---
 
@@ -319,7 +321,7 @@ The framework connects to **Azure SQL Database** via Microsoft Entra ID password
 // CORRECT — in db-client.ts buildConnectionConfig()
 return { server: cfg.host, database: cfg.name, type: 'azure-active-directory-default', options: { encrypt: true } };
 // WRONG — knex strips nested authentication
-return { authentication: { type: 'azure-active-directory-default' } };  // ❌
+return { authentication: { type: 'azure-active-directory-default' } }; // ❌
 ```
 
 **Large tables:** `Data.Transaction` is large — always pass a `CreatedDate` filter to avoid query timeouts.
@@ -331,6 +333,7 @@ Reference: `src/database/db-client.ts`, `src/core/config.ts` (`database.authType
 ## Messaging → DB Verification Pattern
 
 After publishing a RabbitMQ message and confirming consumption, verify database transactions:
+
 1. `lastPublishedMessage` is stored by common message steps
 2. Extract `InstanceId`, `Reference`, `sentTime` from the stored message
 3. Poll `Data.Transaction` by `Reference + InstanceId + CreatedDate` cutoff, waiting until rows matching the exact `±Amount` appear in `AmountNotRounded`
@@ -350,9 +353,9 @@ When I publish the message to "general ledger posting service"
 Given I am listening on the "general ledger posting service error" exchange
 ```
 
-| Label | Exchange |
-|---|---|
-| `general ledger posting service` | `finance.general-ledger-posting-service` |
+| Label                                  | Exchange                                       |
+| -------------------------------------- | ---------------------------------------------- |
+| `general ledger posting service`       | `finance.general-ledger-posting-service`       |
 | `general ledger posting service error` | `finance.general-ledger-posting-service_error` |
 
 New exchanges must be added to `src/messaging/exchanges.ts` — never use raw exchange strings in feature files.
@@ -376,11 +379,11 @@ Each factory file exports **two TypeScript interfaces** and a builder function:
 ```typescript
 // ── 1. MassTransit outer envelope ────────────────────────────────────────────
 export interface BookClientDepositMessage {
-  messageId: string;           // UUID
+  messageId: string; // UUID
   conversationId: string;
-  messageType: string[];       // ['urn:message:GeneralLedger:BookClientDeposit']
-  message: BookClientDepositPayload;  // ← GL domain payload
-  sentTime: string;            // ISO timestamp — used as CreatedDate cutoff in DB polling
+  messageType: string[]; // ['urn:message:GeneralLedger:BookClientDeposit']
+  message: BookClientDepositPayload; // ← GL domain payload
+  sentTime: string; // ISO timestamp — used as CreatedDate cutoff in DB polling
   headers: Record<string, unknown>;
   host: Record<string, unknown>;
   // null fields: requestId, correlationId, initiatorId, responseAddress, faultAddress, expirationTime
@@ -391,7 +394,7 @@ export interface BookClientDepositPayload {
   InstanceId: number;
   ClientId: number;
   Source: string;
-  Amount: number;              // randomized via DataGenerator.amount() — NEVER a string
+  Amount: number; // randomized via DataGenerator.amount() — NEVER a string
   CreatedByUser: string;
   SettledDate: string;
   Reference: string;
@@ -402,7 +405,9 @@ export interface BookClientDepositPayload {
 export function buildBookClientDepositMessage(
   payloadOverrides: Partial<BookClientDepositPayload> = {},
   messageId: string = randomUUID(),
-): BookClientDepositMessage { /* ... */ }
+): BookClientDepositMessage {
+  /* ... */
+}
 ```
 
 **Rule:** `src/models/responses/` is for HTTP response interfaces only. Message interfaces (envelope + payload) are always co-located in their factory file.
@@ -428,17 +433,17 @@ There is **no runtime JSON schema for outbound messages** — TypeScript interfa
 
 `tsconfig.json` defines these path aliases — use them in all `src/` files:
 
-| Alias | Resolves to |
-|---|---|
-| `@core/*` | `src/core/*` |
-| `@utils/*` | `src/utils/*` |
-| `@models/*` | `src/models/*` |
-| `@schemas/*` | `src/schemas/*` |
+| Alias          | Resolves to       |
+| -------------- | ----------------- |
+| `@core/*`      | `src/core/*`      |
+| `@utils/*`     | `src/utils/*`     |
+| `@models/*`    | `src/models/*`    |
+| `@schemas/*`   | `src/schemas/*`   |
 | `@messaging/*` | `src/messaging/*` |
-| `@database/*` | `src/database/*` |
-| `@steps/*` | `src/steps/*` |
-| `@support/*` | `src/support/*` |
-| `@fixtures/*` | `src/fixtures/*` |
+| `@database/*`  | `src/database/*`  |
+| `@steps/*`     | `src/steps/*`     |
+| `@support/*`   | `src/support/*`   |
+| `@fixtures/*`  | `src/fixtures/*`  |
 
 Step files may also use relative `../../fixtures` — both are valid, but `@core/config` etc. are preferred in non-step files.
 
@@ -482,29 +487,29 @@ All variables loaded by `config.ts` have sensible defaults — none are strictly
 
 Defined as Playwright projects in `playwright.config.ts` with `grep: /@<tag>\b/` and `grepInvert: /@manual/`.
 
-| Project | Tag | npm script |
-|---|---|---|
-| `clients` | `@clients` | `npm run test:clients` |
-| `accounts` | `@accounts` | `npm run test:accounts` |
-| `balance` | `@balance` | `npm run test:balance` |
-| `transactions` | `@transactions` | `npm run test:transactions` |
-| `instances` | `@instances` | `npx playwright test --project=instances` |
-| `accounting-month` | `@accounting-month` | `npm run test:accounting-month` |
-| `postings` | `@postings` | `npx playwright test --project=postings` |
-| `messaging` | `@messaging` | `npm run test:messaging` |
-| `security` | `@security` | `npm run test:security` |
-| `report` | `@report` | `npx playwright test --project=report` |
+| Project            | Tag                 | npm script                                |
+| ------------------ | ------------------- | ----------------------------------------- |
+| `clients`          | `@clients`          | `npm run test:clients`                    |
+| `accounts`         | `@accounts`         | `npm run test:accounts`                   |
+| `balance`          | `@balance`          | `npm run test:balance`                    |
+| `transactions`     | `@transactions`     | `npm run test:transactions`               |
+| `instances`        | `@instances`        | `npx playwright test --project=instances` |
+| `accounting-month` | `@accounting-month` | `npm run test:accounting-month`           |
+| `postings`         | `@postings`         | `npx playwright test --project=postings`  |
+| `messaging`        | `@messaging`        | `npm run test:messaging`                  |
+| `security`         | `@security`         | `npm run test:security`                   |
+| `report`           | `@report`           | `npx playwright test --project=report`    |
 
 ### Cross-cutting tags (filtered via `--grep` at CLI)
 
 These are NOT Playwright projects — they apply across all domain projects.
 
-| Tag | npm script | Purpose |
-|---|---|---|
-| `@smoke` | `npm run test:smoke` | Fast sanity checks |
-| `@regression` | `npm run test:regression` | Full coverage |
-| `@negative` | `npm run test:negative` | Error paths |
-| `@schema` | `npm run test:schema` | Contract/schema validation |
+| Tag           | npm script                | Purpose                    |
+| ------------- | ------------------------- | -------------------------- |
+| `@smoke`      | `npm run test:smoke`      | Fast sanity checks         |
+| `@regression` | `npm run test:regression` | Full coverage              |
+| `@negative`   | `npm run test:negative`   | Error paths                |
+| `@schema`     | `npm run test:schema`     | Contract/schema validation |
 
 ### Special tags
 

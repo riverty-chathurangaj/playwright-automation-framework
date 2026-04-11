@@ -6,7 +6,6 @@
  * we can assign ANY value to ANY field without compile-time restrictions.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Payload = Record<string, any>;
 
 export type CorruptionType =
@@ -49,28 +48,50 @@ export class PayloadMutator {
 
   private static getCorruptionValue(corruption: CorruptionType): unknown {
     switch (corruption) {
-      case 'string-in-numeric':         return 'not-a-number';
-      case 'overflow':                  return Number.MAX_SAFE_INTEGER + 1;
-      case 'negative-amount':           return -99999.99;
-      case 'null':                      return null;
-      case 'missing':                   return undefined; // handled by setNestedField
-      case 'empty-string':              return '';
-      case 'exceed-max-length':         return 'x'.repeat(10_000);
-      case 'sql-injection':             return "'; DROP TABLE gl_accounts; --";
-      case 'special-chars':             return '<>&\'"\\{}[]|`^~';
-      case 'wrong-type-array':          return [1, 'two', 3];
-      case 'wrong-type-object':         return { unexpected: true, nested: { value: 42 } };
-      case 'unicode':                   return '日本語テスト 한국어 中文 العربية';
-      case 'whitespace-only':           return '   \t\n   ';
-      case 'boolean':                   return true;
-      case 'zero':                      return 0;
-      case 'negative-integer':          return -1;
-      case 'float-precision-overflow':  return 1.123456789012345678;
-      case 'invalid-uuid':              return 'not-a-valid-uuid-format';
-      case 'invalid-date':              return '31-13-2025'; // invalid month
-      case 'invalid-currency':          return 'INVALID';
-      case 'xss-payload':               return '<script>alert("xss")</script>';
-      case 'crlf-injection':            return "value\r\nX-Injected: header";
+      case 'string-in-numeric':
+        return 'not-a-number';
+      case 'overflow':
+        return Number.MAX_SAFE_INTEGER + 1;
+      case 'negative-amount':
+        return -99999.99;
+      case 'null':
+        return null;
+      case 'missing':
+        return undefined; // handled by setNestedField
+      case 'empty-string':
+        return '';
+      case 'exceed-max-length':
+        return 'x'.repeat(10_000);
+      case 'sql-injection':
+        return "'; DROP TABLE gl_accounts; --";
+      case 'special-chars':
+        return '<>&\'"\\{}[]|`^~';
+      case 'wrong-type-array':
+        return [1, 'two', 3];
+      case 'wrong-type-object':
+        return { unexpected: true, nested: { value: 42 } };
+      case 'unicode':
+        return '日本語テスト 한국어 中文 العربية';
+      case 'whitespace-only':
+        return '   \t\n   ';
+      case 'boolean':
+        return true;
+      case 'zero':
+        return 0;
+      case 'negative-integer':
+        return -1;
+      case 'float-precision-overflow':
+        return 1.123456789012345678;
+      case 'invalid-uuid':
+        return 'not-a-valid-uuid-format';
+      case 'invalid-date':
+        return '31-13-2025'; // invalid month
+      case 'invalid-currency':
+        return 'INVALID';
+      case 'xss-payload':
+        return '<script>alert("xss")</script>';
+      case 'crlf-injection':
+        return 'value\r\nX-Injected: header';
       default:
         throw new Error(`Unknown corruption type: ${corruption}`);
     }
@@ -110,16 +131,29 @@ export class PayloadMutator {
   }
 
   // Generate all corruption variants for a field — used for exhaustive negative testing
-  static generateAllCorruptions(payload: Payload, field: string): Array<{ corruption: CorruptionType; payload: Payload }> {
+  static generateAllCorruptions(
+    payload: Payload,
+    field: string,
+  ): Array<{ corruption: CorruptionType; payload: Payload }> {
     const corruptions: CorruptionType[] = [
-      'null', 'missing', 'empty-string', 'whitespace-only',
-      'string-in-numeric', 'overflow', 'negative-amount',
-      'exceed-max-length', 'sql-injection', 'special-chars',
-      'wrong-type-array', 'wrong-type-object', 'unicode',
-      'xss-payload', 'crlf-injection',
+      'null',
+      'missing',
+      'empty-string',
+      'whitespace-only',
+      'string-in-numeric',
+      'overflow',
+      'negative-amount',
+      'exceed-max-length',
+      'sql-injection',
+      'special-chars',
+      'wrong-type-array',
+      'wrong-type-object',
+      'unicode',
+      'xss-payload',
+      'crlf-injection',
     ];
 
-    return corruptions.map(corruption => ({
+    return corruptions.map((corruption) => ({
       corruption,
       payload: PayloadMutator.corruptField(payload, field, corruption),
     }));

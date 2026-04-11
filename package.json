@@ -12,25 +12,27 @@
     "test": "npm run bdd:gen && playwright test",
     "test:ui": "npm run bdd:gen && playwright test --ui",
     "test:smoke": "npm run bdd:gen && playwright test --grep \"@smoke\"",
-    "test:regression": "npm run bdd:gen && playwright test --grep \"@regression\"",
-    "test:negative": "npm run bdd:gen && playwright test --grep \"@negative\"",
-    "test:schema": "npm run bdd:gen && playwright test --grep \"@schema\"",
     "test:security": "npm run bdd:gen && playwright test --project=security",
     "test:transactions": "npm run bdd:gen && playwright test --project=transactions",
     "test:messaging": "npm run bdd:gen && playwright test --project=messaging",
     "test:accounts": "npm run bdd:gen && playwright test --project=accounts",
     "test:clients": "npm run bdd:gen && playwright test --project=clients",
     "test:balance": "npm run bdd:gen && playwright test --project=balance",
+    "test:instances": "npm run bdd:gen && playwright test --project=instances",
     "test:accounting-month": "npm run bdd:gen && playwright test --project=accounting-month",
+    "test:postings": "npm run bdd:gen && playwright test --project=postings",
     "test:feature": "npm run bdd:gen && playwright test --grep",
     "report:generate": "allure generate reports/allure-results --clean -o reports/allure-report",
     "report:open": "allure open reports/allure-report",
     "report:serve": "allure serve reports/allure-results",
     "report": "npm run report:generate && npm run report:open",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "type-check": "tsc --noEmit",
-    "clean": "rimraf reports dist .features-gen"
+    "clean": "rimraf reports dist .features-gen",
+    "prepare": "husky"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",
@@ -64,9 +66,21 @@
     "allure-commandline": "^2.30.0",
     "allure-playwright": "^3.6.0",
     "eslint": "^9.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.2",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.5.4"
+  },
+  "lint-staged": {
+    "*.{js,cjs,mjs,ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,md,yml,yaml,html}": [
+      "prettier --write"
+    ]
   }
 }

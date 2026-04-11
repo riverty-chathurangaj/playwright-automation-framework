@@ -4,8 +4,8 @@
   "title": "GLClientDepartment",
   "type": "object",
   "properties": {
-    "recno":       { "type": "integer" },
-    "name":        { "type": "string" },
+    "recno": { "type": "integer" },
+    "name": { "type": "string" },
     "description": { "type": ["string", "null"] }
   },
   "additionalProperties": false

@@ -2,7 +2,8 @@ import { Given, When, Then } from '../../fixtures';
 import { DataTable } from 'playwright-bdd';
 import { expect } from 'chai';
 import { config } from '../../core/config';
-import { registerTemplates, resolveEndpoint } from '../../utils/request-templates';
+import { registerTemplates } from '../../utils/request-templates';
+import { applyRequestParametersFromTable, sendDefinedRequest } from '../../utils/domain-step-helpers';
 import type { ApiClient } from '../../core/api-client';
 import type { CurrentRequest, CurrentResponse } from '../../fixtures';
 
@@ -27,27 +28,21 @@ type AccountingMonthFixtures = {
 
 // ── 2. Request building ──────────────────────────────────────────────────────
 
-When('I set accounting month request parameters:', function (
-  { currentRequest, store }: Pick<AccountingMonthFixtures, 'currentRequest' | 'store'>,
-  dataTable: DataTable,
-) {
-  const row = dataTable.hashes()[0];
-  const queryParams: Record<string, string | number | boolean> = {};
-
-  for (const [key, value] of Object.entries(row)) {
-    if (key === 'instanceId') {
-      store('instanceIdOverride', Number(value));
-    } else if (!isNaN(Number(value)) && value !== '') {
-      queryParams[key] = Number(value);
-    } else {
-      queryParams[key] = value;
-    }
-  }
-
-  if (Object.keys(queryParams).length > 0) {
-    currentRequest.queryParams = { ...currentRequest.queryParams, ...queryParams };
-  }
-});
+When(
+  'I set accounting month request parameters:',
+  function (
+    { currentRequest, store }: Pick<AccountingMonthFixtures, 'currentRequest' | 'store'>,
+    dataTable: DataTable,
+  ) {
+    applyRequestParametersFromTable({
+      currentRequest,
+      dataTable,
+      store,
+      overrideKeys: ['instanceId'],
+      parseBooleans: false,
+    });
+  },
+);
 
 // Helper: compute year/month offset from "now" in UTC to avoid timezone drift
 function getUtcYearMonth(monthOffset: number): { year: number; month: number } {
@@ -67,101 +62,118 @@ function resolvePeriodOffset(period: string): number {
 
 // ── Setup steps (ensure state, fire-and-forget — no assertions) ──────────────
 
-Given('the {word} accounting month is closed for instance {string} and client {string}', async function (
-  { apiClient, activeRole }: Pick<AccountingMonthFixtures, 'apiClient' | 'activeRole'>,
-  period: string, instanceId: string, clientId: string,
-) {
-  const { year, month } = getUtcYearMonth(resolvePeriodOffset(period));
-  const endpoint = `${apiBase}/${instanceId}/AccountingMonth/Close`;
-  await apiClient.post(endpoint, { queryParams: { clientId: Number(clientId), year, month } }, activeRole.value);
-});
+Given(
+  'the {word} accounting month is closed for instance {string} and client {string}',
+  async function (
+    { apiClient, activeRole }: Pick<AccountingMonthFixtures, 'apiClient' | 'activeRole'>,
+    period: string,
+    instanceId: string,
+    clientId: string,
+  ) {
+    const { year, month } = getUtcYearMonth(resolvePeriodOffset(period));
+    const endpoint = `${apiBase}/${instanceId}/AccountingMonth/Close`;
+    await apiClient.post(endpoint, { queryParams: { clientId: Number(clientId), year, month } }, activeRole.value);
+  },
+);
 
-Given('the {word} accounting month is open for instance {string} and client {string}', async function (
-  { apiClient, activeRole }: Pick<AccountingMonthFixtures, 'apiClient' | 'activeRole'>,
-  period: string, instanceId: string, clientId: string,
-) {
-  const { year, month } = getUtcYearMonth(resolvePeriodOffset(period));
-  const endpoint = `${apiBase}/${instanceId}/AccountingMonth/Open`;
-  await apiClient.post(endpoint, { queryParams: { clientId: Number(clientId), year, month } }, activeRole.value);
-});
+Given(
+  'the {word} accounting month is open for instance {string} and client {string}',
+  async function (
+    { apiClient, activeRole }: Pick<AccountingMonthFixtures, 'apiClient' | 'activeRole'>,
+    period: string,
+    instanceId: string,
+    clientId: string,
+  ) {
+    const { year, month } = getUtcYearMonth(resolvePeriodOffset(period));
+    const endpoint = `${apiBase}/${instanceId}/AccountingMonth/Open`;
+    await apiClient.post(endpoint, { queryParams: { clientId: Number(clientId), year, month } }, activeRole.value);
+  },
+);
 
-When('I set accounting month to current month', function (
-  { currentRequest }: Pick<AccountingMonthFixtures, 'currentRequest'>,
-) {
-  const { year, month } = getUtcYearMonth(0);
-  currentRequest.queryParams = { ...currentRequest.queryParams, year, month };
-});
+When(
+  'I set accounting month to current month',
+  function ({ currentRequest }: Pick<AccountingMonthFixtures, 'currentRequest'>) {
+    const { year, month } = getUtcYearMonth(0);
+    currentRequest.queryParams = { ...currentRequest.queryParams, year, month };
+  },
+);
 
-When('I set accounting month to previous month', function (
-  { currentRequest }: Pick<AccountingMonthFixtures, 'currentRequest'>,
-) {
-  const { year, month } = getUtcYearMonth(-1);
-  currentRequest.queryParams = { ...currentRequest.queryParams, year, month };
-});
+When(
+  'I set accounting month to previous month',
+  function ({ currentRequest }: Pick<AccountingMonthFixtures, 'currentRequest'>) {
+    const { year, month } = getUtcYearMonth(-1);
+    currentRequest.queryParams = { ...currentRequest.queryParams, year, month };
+  },
+);
 
-When('I set accounting month to {int} months ago', function (
-  { currentRequest }: Pick<AccountingMonthFixtures, 'currentRequest'>,
-  monthsAgo: number,
-) {
-  const { year, month } = getUtcYearMonth(-monthsAgo);
-  currentRequest.queryParams = { ...currentRequest.queryParams, year, month };
-});
+When(
+  'I set accounting month to {int} months ago',
+  function ({ currentRequest }: Pick<AccountingMonthFixtures, 'currentRequest'>, monthsAgo: number) {
+    const { year, month } = getUtcYearMonth(-monthsAgo);
+    currentRequest.queryParams = { ...currentRequest.queryParams, year, month };
+  },
+);
 
 // ── 3. Send steps ────────────────────────────────────────────────────────────
 
-Then('I send the close accounting month request to the API', async function (
-  { apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: AccountingMonthFixtures,
-) {
-  const { method, endpoint } = currentRequest;
-
-  if (!method || !endpoint) {
-    throw new Error('No request defined. Use a "When I define a POST..." step first.');
-  }
-
-  const resolvedEndpoint = `${apiBase}${resolveEndpoint(endpoint, retrieve, { instanceId })}`;
-
-  Object.assign(
+Then(
+  'I send the close accounting month request to the API',
+  async function ({
+    apiClient,
+    currentRequest,
     currentResponse,
-    await apiClient.post(resolvedEndpoint, { queryParams: currentRequest.queryParams }, activeRole.value),
-  );
-});
+    activeRole,
+    instanceId,
+    retrieve,
+  }: AccountingMonthFixtures) {
+    await sendDefinedRequest(
+      { apiClient, currentRequest, currentResponse, activeRole, retrieve },
+      { apiBase, requestMethod: 'post', defaults: { instanceId } },
+    );
+  },
+);
 
-Then('I send the open accounting month request to the API', async function (
-  { apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: AccountingMonthFixtures,
-) {
-  const { method, endpoint } = currentRequest;
-
-  if (!method || !endpoint) {
-    throw new Error('No request defined. Use a "When I define a POST..." step first.');
-  }
-
-  const resolvedEndpoint = `${apiBase}${resolveEndpoint(endpoint, retrieve, { instanceId })}`;
-
-  Object.assign(
+Then(
+  'I send the open accounting month request to the API',
+  async function ({
+    apiClient,
+    currentRequest,
     currentResponse,
-    await apiClient.post(resolvedEndpoint, { queryParams: currentRequest.queryParams }, activeRole.value),
-  );
-});
+    activeRole,
+    instanceId,
+    retrieve,
+  }: AccountingMonthFixtures) {
+    await sendDefinedRequest(
+      { apiClient, currentRequest, currentResponse, activeRole, retrieve },
+      { apiBase, requestMethod: 'post', defaults: { instanceId } },
+    );
+  },
+);
 
 // ── 4. Response verification ─────────────────────────────────────────────────
 
-Then('the response should confirm the accounting month parameters', function (
-  { currentResponse, currentRequest, retrieve, instanceId }: Pick<AccountingMonthFixtures, 'currentResponse' | 'currentRequest' | 'retrieve' | 'instanceId'>,
-) {
-  const body = currentResponse.body as unknown as Record<string, unknown>;
-  const effectiveInstanceId = retrieve<number>('instanceIdOverride') ?? instanceId;
-  const queryParams = currentRequest.queryParams ?? {};
+Then(
+  'the response should confirm the accounting month parameters',
+  function ({
+    currentResponse,
+    currentRequest,
+    retrieve,
+    instanceId,
+  }: Pick<AccountingMonthFixtures, 'currentResponse' | 'currentRequest' | 'retrieve' | 'instanceId'>) {
+    const body = currentResponse.body as unknown as Record<string, unknown>;
+    const effectiveInstanceId = retrieve<number>('instanceIdOverride') ?? instanceId;
+    const queryParams = currentRequest.queryParams ?? {};
 
-  expect(body.instanceId, 'Response instanceId should match request').to.equal(effectiveInstanceId);
+    expect(body.instanceId, 'Response instanceId should match request').to.equal(effectiveInstanceId);
 
-  if (queryParams.clientId !== undefined) {
-    expect(body.clientId, 'Response clientId should match request').to.equal(Number(queryParams.clientId));
-  }
-  if (queryParams.year !== undefined) {
-    expect(body.year, 'Response year should match request').to.equal(Number(queryParams.year));
-  }
-  if (queryParams.month !== undefined) {
-    expect(body.month, 'Response month should match request').to.equal(Number(queryParams.month));
-  }
-});
-
+    if (queryParams.clientId !== undefined) {
+      expect(body.clientId, 'Response clientId should match request').to.equal(Number(queryParams.clientId));
+    }
+    if (queryParams.year !== undefined) {
+      expect(body.year, 'Response year should match request').to.equal(Number(queryParams.year));
+    }
+    if (queryParams.month !== undefined) {
+      expect(body.month, 'Response month should match request').to.equal(Number(queryParams.month));
+    }
+  },
+);

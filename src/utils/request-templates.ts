@@ -18,9 +18,7 @@ export function registerTemplates(domainTemplates: Record<string, string>): void
 export function getTemplate(name: string): string {
   const template = templates[name];
   if (!template) {
-    throw new Error(
-      `Unknown request name "${name}". Known templates: ${Object.keys(templates).join(', ')}`,
-    );
+    throw new Error(`Unknown request name "${name}". Known templates: ${Object.keys(templates).join(', ')}`);
   }
   return template;
 }
@@ -38,11 +36,8 @@ export function resolveEndpoint(
     const override = retrieve<string | number | undefined>(`${key}Override`);
     const value = override ?? defaults[key];
     if (value === undefined) {
-      throw new Error(
-        `No value for template placeholder "${match}". Set it with: And I set "${key}" to "<value>"`,
-      );
+      throw new Error(`No value for template placeholder "${match}". Set it with: And I set "${key}" to "<value>"`);
     }
     return String(value);
   });
 }
-

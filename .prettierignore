@@ -1,0 +1,14 @@
+node_modules/
+.git/
+.agents/
+.ai/
+.claude/
+.husky/_/
+.features-gen/
+reports/
+test-results/
+dist/
+coverage/
+allure-results/
+package-lock.json
+GL-API-Test-Automation-Framework-Architecture.html

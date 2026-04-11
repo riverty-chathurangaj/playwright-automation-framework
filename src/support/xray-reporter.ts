@@ -4,22 +4,55 @@ import * as path from 'path';
 import { config } from '../core/config';
 import { logger } from '../core/logger';
 
-interface CucumberStep {
-  keyword: string;
-  name: string;
-  result: { status: string; duration?: number; error_message?: string };
+interface PlaywrightStep {
+  title: string;
+  duration?: number;
+  error?: { message?: string; stack?: string };
+  steps?: PlaywrightStep[];
 }
 
-interface CucumberElement {
-  name: string;
-  tags: Array<{ name: string }>;
-  steps: CucumberStep[];
-  type: string;
+interface PlaywrightResult {
+  status?: string;
+  duration?: number;
+  retry?: number;
+  error?: { message?: string; stack?: string };
+  errors?: Array<{ message?: string; stack?: string }>;
+  steps?: PlaywrightStep[];
 }
 
-interface CucumberFeature {
-  name: string;
-  elements: CucumberElement[];
+interface PlaywrightTest {
+  projectName?: string;
+  results?: PlaywrightResult[];
+  status?: string;
+}
+
+interface PlaywrightSpec {
+  title: string;
+  tags?: string[];
+  tests?: PlaywrightTest[];
+}
+
+interface PlaywrightSuite {
+  title: string;
+  specs?: PlaywrightSpec[];
+  suites?: PlaywrightSuite[];
+}
+
+interface PlaywrightJsonReport {
+  suites?: PlaywrightSuite[];
+}
+
+interface XrayStepResult {
+  status: 'PASSED' | 'FAILED' | 'SKIPPED';
+  comment: string;
+  actualResult: string;
+}
+
+interface XrayTestResult {
+  testKey: string;
+  status: 'PASSED' | 'FAILED' | 'SKIPPED';
+  comment: string;
+  steps: XrayStepResult[];
 }
 
 export class XrayReporter {
@@ -46,62 +79,137 @@ export class XrayReporter {
     return this.xrayToken;
   }
 
-  extractXrayKey(tags: Array<{ name: string }>): string | undefined {
-    const tag = tags.find(t => t.name.match(/^@XRAY-/));
-    return tag?.name.replace('@XRAY-', '');
+  extractXrayKey(tags: string[] = []): string | undefined {
+    const tag = tags.find((value) => /^@?XRAY-/.test(value));
+    return tag?.replace(/^@?XRAY-/, '');
   }
 
-  mapStatus(scenario: CucumberElement): string {
-    const allPassed = scenario.steps.every(s => s.result.status === 'passed');
-    const anyFailed = scenario.steps.some(s => s.result.status === 'failed');
-    const anySkipped = scenario.steps.some(s => s.result.status === 'skipped');
+  private mapStatus(status?: string): 'PASSED' | 'FAILED' | 'SKIPPED' {
+    switch (status) {
+      case 'passed':
+        return 'PASSED';
+      case 'skipped':
+        return 'SKIPPED';
+      default:
+        return 'FAILED';
+    }
+  }
 
-    if (allPassed) return 'PASSED';
-    if (anyFailed) return 'FAILED';
-    if (anySkipped) return 'SKIPPED';
-    return 'TODO';
+  private getLatestResult(test: PlaywrightTest): PlaywrightResult | undefined {
+    const results = test.results ?? [];
+    if (results.length === 0) {
+      return undefined;
+    }
+    return results[results.length - 1];
+  }
+
+  private flattenSteps(steps: PlaywrightStep[] = []): PlaywrightStep[] {
+    const flattened: PlaywrightStep[] = [];
+
+    for (const step of steps) {
+      if (step.steps?.length) {
+        flattened.push(...this.flattenSteps(step.steps));
+        continue;
+      }
+
+      flattened.push(step);
+    }
+
+    return flattened;
+  }
+
+  private buildComment(spec: PlaywrightSpec, test: PlaywrightTest): string {
+    const latest = this.getLatestResult(test);
+    const errorMessages = [
+      ...(latest?.errors ?? []).map((error) => error.message || error.stack || '').filter(Boolean),
+      latest?.error?.message || latest?.error?.stack || '',
+    ].filter(Boolean);
+
+    if (errorMessages.length === 0) {
+      return `${spec.title}${test.projectName ? ` [${test.projectName}]` : ''}`;
+    }
+
+    return `${spec.title}${test.projectName ? ` [${test.projectName}]` : ''}\n${errorMessages.join('\n')}`;
+  }
+
+  private buildSteps(test: PlaywrightTest): XrayStepResult[] {
+    const latest = this.getLatestResult(test);
+    const flattenedSteps = this.flattenSteps(latest?.steps);
+
+    if (flattenedSteps.length === 0) {
+      return [
+        {
+          status: this.mapStatus(test.status ?? latest?.status),
+          comment: latest?.error?.message || '',
+          actualResult: latest?.duration !== undefined ? `${Math.round(latest.duration)}ms` : '',
+        },
+      ];
+    }
+
+    return flattenedSteps.map((step) => ({
+      status: this.mapStatus(step.error ? 'failed' : latest?.status),
+      comment: step.error?.message || step.error?.stack || '',
+      actualResult: step.duration !== undefined ? `${Math.round(step.duration)}ms` : '',
+    }));
+  }
+
+  private collectTests(suites: PlaywrightSuite[] = []): XrayTestResult[] {
+    const collected: XrayTestResult[] = [];
+
+    const walk = (suite: PlaywrightSuite): void => {
+      for (const spec of suite.specs ?? []) {
+        const testKey = this.extractXrayKey(spec.tags);
+        if (!testKey) {
+          continue;
+        }
+
+        for (const test of spec.tests ?? []) {
+          const latest = this.getLatestResult(test);
+          const status = this.mapStatus(test.status ?? latest?.status);
+
+          collected.push({
+            testKey,
+            status,
+            comment: this.buildComment(spec, test),
+            steps: this.buildSteps(test),
+          });
+        }
+      }
+
+      for (const child of suite.suites ?? []) {
+        walk(child);
+      }
+    };
+
+    for (const suite of suites) {
+      walk(suite);
+    }
+
+    return collected;
   }
 
   async publishResults(reportPath?: string): Promise<void> {
-    const cucumberReportPath = reportPath || path.resolve(process.cwd(), 'reports/cucumber-report.json');
+    const playwrightReportPath = reportPath || path.resolve(process.cwd(), 'reports/playwright-report.json');
 
-    if (!fs.existsSync(cucumberReportPath)) {
-      logger.warn('Cucumber report not found — skipping Xray publish', { path: cucumberReportPath });
+    if (!fs.existsSync(playwrightReportPath)) {
+      logger.warn('Playwright report not found — skipping Xray publish', { path: playwrightReportPath });
       return;
     }
 
-    const cucumberReport: CucumberFeature[] = JSON.parse(fs.readFileSync(cucumberReportPath, 'utf-8'));
-    const token = await this.authenticate();
-
-    const tests = cucumberReport.flatMap(feature =>
-      feature.elements
-        .filter(el => el.type === 'scenario')
-        .map(scenario => {
-          const testKey = this.extractXrayKey(scenario.tags);
-          return {
-            testKey,
-            status: this.mapStatus(scenario),
-            comment: '',
-            steps: scenario.steps.map(step => ({
-              status: step.result.status === 'passed' ? 'PASSED' : step.result.status === 'failed' ? 'FAILED' : 'SKIPPED',
-              comment: step.result.error_message || '',
-              actualResult: step.result.duration ? `${Math.round(step.result.duration / 1_000_000)}ms` : '',
-            })),
-          };
-        })
-        .filter(t => t.testKey), // Only include scenarios with @XRAY- tag
-    );
+    const playwrightReport: PlaywrightJsonReport = JSON.parse(fs.readFileSync(playwrightReportPath, 'utf-8'));
+    const tests = this.collectTests(playwrightReport.suites);
 
     if (tests.length === 0) {
-      logger.info('No XRAY-tagged scenarios found — skipping Xray publish');
+      logger.info('No XRAY-tagged scenarios found in Playwright report — skipping Xray publish');
       return;
     }
 
+    const token = await this.authenticate();
     const payload = {
       testExecutionKey: config.xray.executionKey || undefined,
       info: {
         summary: `GL API Tests - ${config.env} - ${new Date().toISOString().split('T')[0]}`,
-        description: `Automated BDD execution via pw-testforge-gls | Tags: ${process.env.CUCUMBER_TAGS || 'all'} | Build: ${config.gitSha}`,
+        description: `Automated Playwright BDD execution via pw-testforge-gls | Filter: ${process.env.PLAYWRIGHT_GREP || 'all'} | Build: ${config.gitSha}`,
         startDate: this.executionStartTime,
         finishDate: new Date().toISOString(),
         testEnvironments: [config.env],
@@ -111,16 +219,12 @@ export class XrayReporter {
     };
 
     try {
-      const response = await axios.post(
-        `${config.xray.baseUrl}/api/v2/import/execution/cucumber`,
-        payload,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+      const response = await axios.post(`${config.xray.baseUrl}/api/v2/import/execution/cucumber`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-      );
+      });
 
       logger.info('Results published to Xray', {
         executionKey: response.data?.key,
@@ -133,12 +237,15 @@ export class XrayReporter {
   }
 }
 
-// CLI entrypoint: ts-node src/support/xray-reporter.ts publish
 if (require.main === module) {
   const action = process.argv[2];
   if (action === 'publish') {
-    new XrayReporter().publishResults()
+    new XrayReporter()
+      .publishResults()
       .then(() => logger.info('Xray publish complete'))
-      .catch(err => { logger.error('Xray publish failed', { err }); process.exit(1); });
+      .catch((err) => {
+        logger.error('Xray publish failed', { err });
+        process.exit(1);
+      });
   }
 }

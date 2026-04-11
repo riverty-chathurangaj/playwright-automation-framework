@@ -5,8 +5,8 @@
   "description": "GL Service API error response. Note: API serialises with PascalCase keys despite swagger showing camelCase.",
   "type": "object",
   "properties": {
-    "Type":       { "type": ["string", "null"] },
-    "Message":    { "type": ["string", "null"] },
+    "Type": { "type": ["string", "null"] },
+    "Message": { "type": ["string", "null"] },
     "StackTrace": { "type": ["string", "null"] }
   },
   "additionalProperties": true

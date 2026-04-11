@@ -9,10 +9,7 @@ dotenv.config();
 
 const outputDir = defineBddConfig({
   features: 'features/**/*.feature',
-  steps: [
-    'src/steps/**/*.ts',
-    'src/fixtures/index.ts',
-  ],
+  steps: ['src/steps/**/*.ts', 'src/fixtures/index.ts'],
   outputDir: '.features-gen',
 });
 
@@ -36,20 +33,20 @@ export default defineConfig({
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:5000',
     extraHTTPHeaders: {
-      'Accept': 'application/json',
+      Accept: 'application/json',
       'Content-Type': 'application/json',
       'X-Test-Run-Id': process.env.GIT_SHA || `local-${Date.now()}`,
       'X-Framework': 'pw-testforge-gls',
     },
     ignoreHTTPSErrors: true,
     actionTimeout: Number(process.env.API_TIMEOUT) || 30_000,
-    trace: 'on'
+    trace: 'on',
   },
 
   // ─── Projects mirror Cucumber profiles ────────────────────────
 
   // Domain projects only — each feature has exactly one domain tag, so no overlap.
-  // Cross-cutting tags (@smoke, @regression, etc.) are filtered via --grep at CLI level.
+  // Additional filters such as @smoke are applied via --grep at CLI level.
   projects: [
     {
       name: 'clients',

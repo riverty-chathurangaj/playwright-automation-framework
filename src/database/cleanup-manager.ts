@@ -42,15 +42,8 @@ export class CleanupManager {
     }
   }
 
-  async cleanupByPrefix(
-    dbClient: DatabaseClient,
-    table: string,
-    column: string,
-    prefix: string,
-  ): Promise<number> {
-    const result = await dbClient.knex(table)
-      .where(column, 'like', `${prefix}%`)
-      .delete();
+  async cleanupByPrefix(dbClient: DatabaseClient, table: string, column: string, prefix: string): Promise<number> {
+    const result = await dbClient.knex(table).where(column, 'like', `${prefix}%`).delete();
 
     logger.debug('Cleaned up by prefix', { table, column, prefix, deleted: result });
     return result;

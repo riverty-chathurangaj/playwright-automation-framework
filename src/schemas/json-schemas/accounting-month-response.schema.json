@@ -5,11 +5,11 @@
   "description": "Unified response for open/close accounting month — returned for both success (200) and structured error (400/404) responses.",
   "type": "object",
   "properties": {
-    "message":    { "type": "string" },
+    "message": { "type": "string" },
     "instanceId": { "type": "integer" },
-    "clientId":   { "type": "integer" },
-    "year":       { "type": "integer" },
-    "month":      { "type": "integer" }
+    "clientId": { "type": "integer" },
+    "year": { "type": "integer" },
+    "month": { "type": "integer" }
   },
   "required": ["message", "instanceId", "clientId", "year", "month"],
   "additionalProperties": false

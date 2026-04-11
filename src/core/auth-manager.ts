@@ -36,7 +36,7 @@ export class AuthManager {
       throw new Error(`Token endpoint returned HTTP ${response.status}: ${errorBody}`);
     }
 
-    const data = await response.json() as { access_token?: string; expires_in?: number };
+    const data = (await response.json()) as { access_token?: string; expires_in?: number };
 
     if (!data.access_token) {
       throw new Error('No access_token found in token endpoint response');

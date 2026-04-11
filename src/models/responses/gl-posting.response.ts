@@ -7,4 +7,3 @@ export interface GLPostingResponse {
   description: string | null;
   reno_AccountPlan: number;
 }
-

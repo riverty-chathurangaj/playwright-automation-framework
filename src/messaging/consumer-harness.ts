@@ -21,7 +21,11 @@ export class ConsumerHarness {
 
   constructor(private rabbitClient: RabbitClient) {}
 
-  async startListening(exchange: string, routingKey: string, options: import('./rabbit-client').QueueOptions = {}): Promise<string> {
+  async startListening(
+    exchange: string,
+    routingKey: string,
+    options: import('./rabbit-client').QueueOptions = {},
+  ): Promise<string> {
     const queueName = await this.rabbitClient.createTestQueue(exchange, routingKey, options);
     this.activeQueues.push(queueName);
 
@@ -110,7 +114,7 @@ export class ConsumerHarness {
           `Message wait timeout (${timeout}ms): expected ${count} message(s) but received ${this.collectedMessages.length}`,
         );
       }
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise((r) => setTimeout(r, 100));
     }
 
     return [...this.collectedMessages];
@@ -122,10 +126,10 @@ export class ConsumerHarness {
   }
 
   async assertNoMessages(waitMs: number = 3000): Promise<void> {
-    await new Promise(r => setTimeout(r, waitMs));
+    await new Promise((r) => setTimeout(r, waitMs));
     if (this.collectedMessages.length > 0) {
       throw new Error(
-        `Expected no messages but received ${this.collectedMessages.length}: ${JSON.stringify(this.collectedMessages.map(m => m.routingKey))}`,
+        `Expected no messages but received ${this.collectedMessages.length}: ${JSON.stringify(this.collectedMessages.map((m) => m.routingKey))}`,
       );
     }
   }
@@ -147,7 +151,7 @@ export class ConsumerHarness {
   }
 
   findMessageByField(fieldPath: string, value: unknown): CollectedMessage | undefined {
-    return this.collectedMessages.find(msg => {
+    return this.collectedMessages.find((msg) => {
       const parts = fieldPath.split('.');
       let current: unknown = msg.content;
       for (const part of parts) {

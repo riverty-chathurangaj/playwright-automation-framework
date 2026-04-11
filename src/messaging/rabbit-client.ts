@@ -29,14 +29,16 @@ export class RabbitClient {
       const parsed = new URL(url.replace(/^amqps?:\/\//, 'http://'));
 
       this.manager = amqp.connect(
-        [{
-          hostname: parsed.hostname,
-          port: parseInt(parsed.port || '5672'),
-          username: decodeURIComponent(parsed.username) || 'guest',
-          password: decodeURIComponent(parsed.password) || 'guest',
-          vhost: config.rabbitmq.vhost,
-          heartbeat: config.rabbitmq.heartbeat,
-        }],
+        [
+          {
+            hostname: parsed.hostname,
+            port: parseInt(parsed.port || '5672'),
+            username: decodeURIComponent(parsed.username) || 'guest',
+            password: decodeURIComponent(parsed.password) || 'guest',
+            vhost: config.rabbitmq.vhost,
+            heartbeat: config.rabbitmq.heartbeat,
+          },
+        ],
         { reconnectTimeInSeconds: 5 },
       );
 
@@ -83,7 +85,7 @@ export class RabbitClient {
       durable: options.durable ?? false,
       autoDelete: options.autoDelete ?? true,
       arguments: {
-        'x-expires': options.ttlMs ?? 300_000,   // 5-minute TTL safety net
+        'x-expires': options.ttlMs ?? 300_000, // 5-minute TTL safety net
         'x-message-ttl': 600_000,
       },
     });

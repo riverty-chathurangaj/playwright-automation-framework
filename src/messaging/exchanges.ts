@@ -32,9 +32,7 @@ const EXCHANGES: Record<string, ExchangeEntry> = {
 export function resolveExchange(label: string): ExchangeEntry {
   const entry = EXCHANGES[label.toLowerCase()];
   if (!entry) {
-    throw new Error(
-      `Unknown exchange label "${label}". Known labels: ${Object.keys(EXCHANGES).join(', ')}`,
-    );
+    throw new Error(`Unknown exchange label "${label}". Known labels: ${Object.keys(EXCHANGES).join(', ')}`);
   }
   return entry;
 }

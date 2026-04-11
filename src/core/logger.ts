@@ -1,17 +1,12 @@
 import * as winston from 'winston';
-import * as path from 'path';
 import { config } from './config';
 
 const { combine, timestamp, printf, colorize, json, errors } = winston.format;
 
 const consoleFormat = printf(({ level, message, timestamp, ...meta }) => {
-  const metaStr = Object.keys(meta).length
-    ? `\n${JSON.stringify(meta, null, 2)}`
-    : '';
+  const metaStr = Object.keys(meta).length ? `\n${JSON.stringify(meta, null, 2)}` : '';
   return `${timestamp} [${level.toUpperCase()}] ${message}${metaStr}`;
 });
-
-const logDir = path.resolve(process.cwd(), config.reportDir, 'logs');
 
 export const logger = winston.createLogger({
   level: config.logLevel,
@@ -19,39 +14,21 @@ export const logger = winston.createLogger({
     env: config.env,
     framework: 'pw-testforge-gls',
   },
-  format: combine(
-    errors({ stack: true }),
-    timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
-    json(),
-  ),
+  format: combine(errors({ stack: true }), timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }), json()),
   transports: [
     new winston.transports.Console({
-      format: combine(
-        colorize(),
-        timestamp({ format: 'HH:mm:ss.SSS' }),
-        consoleFormat,
-      ),
+      format: combine(colorize(), timestamp({ format: 'HH:mm:ss.SSS' }), consoleFormat),
     }),
   ],
-  exceptionHandlers: [
-    new winston.transports.Console(),
-  ],
-  rejectionHandlers: [
-    new winston.transports.Console(),
-  ],
+  exceptionHandlers: [new winston.transports.Console()],
+  rejectionHandlers: [new winston.transports.Console()],
 });
 
 export function logRequest(method: string, url: string, body?: unknown): void {
   logger.http('API Request', { method: method.toUpperCase(), url, body });
 }
 
-export function logResponse(
-  method: string,
-  url: string,
-  status: number,
-  duration: number,
-  body?: unknown,
-): void {
+export function logResponse(method: string, url: string, status: number, duration: number, body?: unknown): void {
   const level = status >= 500 ? 'error' : status >= 400 ? 'warn' : 'http';
   logger.log(level, 'API Response', { method: method.toUpperCase(), url, status, duration, body });
 }

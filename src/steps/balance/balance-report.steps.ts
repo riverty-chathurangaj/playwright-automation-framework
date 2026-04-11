@@ -1,7 +1,8 @@
 import { When, Then } from '../../fixtures';
 import { DataTable } from 'playwright-bdd';
 import { config } from '../../core/config';
-import { registerTemplates, resolveEndpoint } from '../../utils/request-templates';
+import { registerTemplates } from '../../utils/request-templates';
+import { applyRequestParametersFromTable, sendDefinedRequest } from '../../utils/domain-step-helpers';
 import type { ApiClient } from '../../core/api-client';
 import type { CurrentRequest, CurrentResponse } from '../../fixtures';
 
@@ -25,44 +26,28 @@ type BalanceReportFixtures = {
 
 // ── 2. Request building ──────────────────────────────────────────────────────
 
-When('I set balance report request parameters:', function (
-  { currentRequest }: Pick<BalanceReportFixtures, 'currentRequest'>,
-  dataTable: DataTable,
-) {
-  const row = dataTable.hashes()[0];
-  const queryParams: Record<string, string | number | boolean> = {};
-
-  for (const [key, value] of Object.entries(row)) {
-    if (value === 'true' || value === 'false') {
-      queryParams[key] = value === 'true';
-    } else if (!isNaN(Number(value)) && value !== '') {
-      queryParams[key] = Number(value);
-    } else {
-      queryParams[key] = value;
-    }
-  }
-
-  if (Object.keys(queryParams).length > 0) {
-    currentRequest.queryParams = { ...currentRequest.queryParams, ...queryParams };
-  }
-});
+When(
+  'I set balance report request parameters:',
+  function ({ currentRequest }: Pick<BalanceReportFixtures, 'currentRequest'>, dataTable: DataTable) {
+    applyRequestParametersFromTable({ currentRequest, dataTable });
+  },
+);
 
 // ── 3. Send steps ────────────────────────────────────────────────────────────
 
-Then('I send the balance report request to the API', async function (
-  { apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: BalanceReportFixtures,
-) {
-  const { method, endpoint } = currentRequest;
-
-  if (!method || !endpoint) {
-    throw new Error('No request defined. Use a "When I define a GET..." step first.');
-  }
-
-  const resolvedEndpoint = `${apiBase}${resolveEndpoint(endpoint, retrieve, { instanceId })}`;
-
-  Object.assign(
+Then(
+  'I send the balance report request to the API',
+  async function ({
+    apiClient,
+    currentRequest,
     currentResponse,
-    await apiClient.get(resolvedEndpoint, { queryParams: currentRequest.queryParams }, activeRole.value),
-  );
-});
-
+    activeRole,
+    instanceId,
+    retrieve,
+  }: BalanceReportFixtures) {
+    await sendDefinedRequest(
+      { apiClient, currentRequest, currentResponse, activeRole, retrieve },
+      { apiBase, requestMethod: 'get', defaults: { instanceId } },
+    );
+  },
+);

@@ -120,10 +120,7 @@ export class DatabaseClient {
   }
 
   async getJournalEntriesForAccount(accountCode: string, limit: number = 50): Promise<Record<string, unknown>[]> {
-    return this.db('journal_entries')
-      .where({ account_code: accountCode })
-      .orderBy('created_at', 'desc')
-      .limit(limit);
+    return this.db('journal_entries').where({ account_code: accountCode }).orderBy('created_at', 'desc').limit(limit);
   }
 
   async journalEntryExists(journalId: string): Promise<boolean> {
@@ -137,10 +134,7 @@ export class DatabaseClient {
     logDb('AGGREGATE', 'journal_entries', { status: 'posted' });
     const result = await this.db('journal_entries')
       .where({ status: 'posted' })
-      .select(
-        this.db.raw('SUM(debit_amount) as total_debits'),
-        this.db.raw('SUM(credit_amount) as total_credits'),
-      )
+      .select(this.db.raw('SUM(debit_amount) as total_debits'), this.db.raw('SUM(credit_amount) as total_credits'))
       .first();
 
     return result as { total_debits: number; total_credits: number };
@@ -150,15 +144,11 @@ export class DatabaseClient {
 
   async getAuditTrail(entityType: string, entityId: string): Promise<Record<string, unknown>[]> {
     logDb('SELECT', 'audit_log', { entityType, entityId });
-    return this.db('audit_log')
-      .where({ entity_type: entityType, entity_id: entityId })
-      .orderBy('created_at', 'asc');
+    return this.db('audit_log').where({ entity_type: entityType, entity_id: entityId }).orderBy('created_at', 'asc');
   }
 
   async auditEntryExists(entityType: string, entityId: string, action: string): Promise<boolean> {
-    const result = await this.db('audit_log')
-      .where({ entity_type: entityType, entity_id: entityId, action })
-      .first();
+    const result = await this.db('audit_log').where({ entity_type: entityType, entity_id: entityId, action }).first();
     return result !== undefined;
   }
 
@@ -191,8 +181,7 @@ export class DatabaseClient {
     partitionId?: number,
   ): Promise<Record<string, unknown>[]> {
     logDb('SELECT', 'Data.Transaction', { instanceId, reference, partitionId });
-    const qb = this.db('Data.Transaction')
-      .where({ InstanceId: instanceId, Reference: reference });
+    const qb = this.db('Data.Transaction').where({ InstanceId: instanceId, Reference: reference });
 
     if (partitionId !== undefined) {
       qb.where('PartitionId', partitionId);
@@ -212,13 +201,14 @@ export class DatabaseClient {
     intervalMs: number = 2_000,
     createdAfter?: Date,
     partitionId?: number,
+    matchPredicate: (rows: Record<string, unknown>[]) => boolean = (rows) => rows.length > 0,
   ): Promise<Record<string, unknown>[]> {
     const start = Date.now();
     const cutoff = createdAfter ?? new Date(start - 5 * 60_000); // default: last 5 minutes
 
     while (Date.now() - start < timeoutMs) {
       const rows = await this.getTransactionsByReference(instanceId, reference, cutoff, partitionId);
-      if (rows.length > 0) {
+      if (matchPredicate(rows)) {
         logger.info('Transactions found in Data.Transaction', {
           instanceId,
           reference,
@@ -230,14 +220,15 @@ export class DatabaseClient {
       logger.debug('No transactions yet, polling...', {
         instanceId,
         reference,
+        count: rows.length,
         elapsedMs: Date.now() - start,
       });
-      await new Promise(r => setTimeout(r, intervalMs));
+      await new Promise((r) => setTimeout(r, intervalMs));
     }
 
     throw new Error(
       `Timed out after ${timeoutMs}ms waiting for transactions in Data.Transaction ` +
-      `(InstanceId=${instanceId}, Reference="${reference}")`,
+        `(InstanceId=${instanceId}, Reference="${reference}")`,
     );
   }
 
@@ -251,7 +242,9 @@ export class DatabaseClient {
 
   async deleteTestData(table: string, id: string, idColumn: string = 'id'): Promise<void> {
     logDb('DELETE', table, { id });
-    await this.db(table).where({ [idColumn]: id }).delete();
+    await this.db(table)
+      .where({ [idColumn]: id })
+      .delete();
   }
 
   get knex(): Knex {

@@ -4,7 +4,7 @@
   "title": "GLAccount",
   "type": "object",
   "properties": {
-    "account":     { "type": ["string", "null"] },
+    "account": { "type": ["string", "null"] },
     "description": { "type": ["string", "null"] }
   },
   "additionalProperties": true

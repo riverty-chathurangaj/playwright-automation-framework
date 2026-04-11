@@ -23,4 +23,3 @@ export interface GLTransactionResponse {
   count: number | null;
   ssoNumber: string | null;
 }
-

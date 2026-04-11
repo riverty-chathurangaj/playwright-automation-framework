@@ -46,10 +46,10 @@ export interface DepartmentResponse {
   "title": "Department",
   "type": "object",
   "properties": {
-    "id":          { "type": "integer" },
-    "name":        { "type": "string" },
+    "id": { "type": "integer" },
+    "name": { "type": "string" },
     "description": { "type": ["string", "null"] },
-    "isActive":    { "type": "boolean" }
+    "isActive": { "type": "boolean" }
   },
   "additionalProperties": false
 }
@@ -77,8 +77,8 @@ export interface DepartmentResponse {
 import { When, Then } from '../../fixtures';
 
 // WRONG
-import { When, Then } from '@cucumber/cucumber';  // ❌
-import { When, Then } from 'playwright-bdd';       // ❌
+import { When, Then } from '@cucumber/cucumber'; // ❌
+import { When, Then } from 'playwright-bdd'; // ❌
 ```
 
 ### Domain steps register endpoints via the central template registry
@@ -128,12 +128,12 @@ When('...', async function (this: any, arg) { this.currentResponse = ...; }); //
 
 ### Mutable state rules
 
-| Fixture | How to mutate |
-|---|---|
-| `currentRequest` | Set properties: `currentRequest.method = 'GET'` |
-| `currentResponse` | `Object.assign(currentResponse, apiResult)` — never reassign |
-| `activeRole` | `activeRole.value = 'a valid user'` |
-| `instanceId` (primitive) | `store('instanceIdOverride', Number(value))` |
+| Fixture                  | How to mutate                                                |
+| ------------------------ | ------------------------------------------------------------ |
+| `currentRequest`         | Set properties: `currentRequest.method = 'GET'`              |
+| `currentResponse`        | `Object.assign(currentResponse, apiResult)` — never reassign |
+| `activeRole`             | `activeRole.value = 'a valid user'`                          |
+| `instanceId` (primitive) | `store('instanceIdOverride', Number(value))`                 |
 
 **Never do `currentResponse = result`** — rebinds local variable only. Always use `Object.assign`.
 
@@ -155,7 +155,7 @@ const apiBase = `/${config.servicePath}`;
 
 // ── 1. Register templates (at module load time) ─────────────────────────────
 registerTemplates({
-  'orders request':      '/{instanceId}/orders',
+  'orders request': '/{instanceId}/orders',
   'order by id request': '/{instanceId}/orders/{orderId}',
 });
 
@@ -172,78 +172,84 @@ type OrderFixtures = {
 
 // ── 2. Request parameter steps ──────────────────────────────────────────────
 
-When('I set order request parameters:', function (
-  { currentRequest, store }: Pick<OrderFixtures, 'currentRequest' | 'store'>,
-  dataTable: DataTable,
-) {
-  const row = dataTable.hashes()[0];
-  const queryParams: Record<string, string | number | boolean> = {};
+When(
+  'I set order request parameters:',
+  function ({ currentRequest, store }: Pick<OrderFixtures, 'currentRequest' | 'store'>, dataTable: DataTable) {
+    const row = dataTable.hashes()[0];
+    const queryParams: Record<string, string | number | boolean> = {};
 
-  for (const [key, value] of Object.entries(row)) {
-    if (key === 'instanceId' || key === 'orderId') {
-      store(`${key}Override`, Number(value));
-    } else if (value === 'true' || value === 'false') {
-      queryParams[key] = value === 'true';
-    } else if (!isNaN(Number(value)) && value !== '') {
-      queryParams[key] = Number(value);
-    } else {
-      queryParams[key] = value;
+    for (const [key, value] of Object.entries(row)) {
+      if (key === 'instanceId' || key === 'orderId') {
+        store(`${key}Override`, Number(value));
+      } else if (value === 'true' || value === 'false') {
+        queryParams[key] = value === 'true';
+      } else if (!isNaN(Number(value)) && value !== '') {
+        queryParams[key] = Number(value);
+      } else {
+        queryParams[key] = value;
+      }
     }
-  }
 
-  if (Object.keys(queryParams).length > 0) {
-    currentRequest.queryParams = { ...currentRequest.queryParams, ...queryParams };
-  }
-});
+    if (Object.keys(queryParams).length > 0) {
+      currentRequest.queryParams = { ...currentRequest.queryParams, ...queryParams };
+    }
+  },
+);
 
 // ── 3. Send steps (one per request type) ────────────────────────────────────
 
-Then('I send the orders request to the API', async function (
-  { apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: OrderFixtures,
-) {
-  const { method, endpoint } = currentRequest;
-  if (!method || !endpoint) throw new Error('No request defined.');
-  const resolvedEndpoint = `${apiBase}${resolveEndpoint(endpoint, retrieve, { instanceId })}`;
-  Object.assign(
-    currentResponse,
-    await apiClient.get(resolvedEndpoint, { queryParams: currentRequest.queryParams }, activeRole.value),
-  );
-});
+Then(
+  'I send the orders request to the API',
+  async function ({ apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: OrderFixtures) {
+    const { method, endpoint } = currentRequest;
+    if (!method || !endpoint) throw new Error('No request defined.');
+    const resolvedEndpoint = `${apiBase}${resolveEndpoint(endpoint, retrieve, { instanceId })}`;
+    Object.assign(
+      currentResponse,
+      await apiClient.get(resolvedEndpoint, { queryParams: currentRequest.queryParams }, activeRole.value),
+    );
+  },
+);
 
-Then('I send the order by id request to the API', async function (
-  { apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: OrderFixtures,
-) {
-  const { method, endpoint } = currentRequest;
-  if (!method || !endpoint) throw new Error('No request defined.');
-  const resolvedEndpoint = `${apiBase}${resolveEndpoint(endpoint, retrieve, { instanceId })}`;
-  Object.assign(
-    currentResponse,
-    await apiClient.get(resolvedEndpoint, { queryParams: currentRequest.queryParams }, activeRole.value),
-  );
-});
+Then(
+  'I send the order by id request to the API',
+  async function ({ apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: OrderFixtures) {
+    const { method, endpoint } = currentRequest;
+    if (!method || !endpoint) throw new Error('No request defined.');
+    const resolvedEndpoint = `${apiBase}${resolveEndpoint(endpoint, retrieve, { instanceId })}`;
+    Object.assign(
+      currentResponse,
+      await apiClient.get(resolvedEndpoint, { queryParams: currentRequest.queryParams }, activeRole.value),
+    );
+  },
+);
 
 // ── 4. Response assertions ───────────────────────────────────────────────────
 
-Then('the response should be an array of orders', function (
-  { currentResponse, schemaValidator }: Pick<OrderFixtures, 'currentResponse' | 'schemaValidator'>,
-) {
-  const body = currentResponse.body as unknown as OrderResponse[];
-  expect(Array.isArray(body), 'Response body should be an array').to.be.true;
-  expect(body.length, 'Expected at least 1 order').to.be.at.least(1);
-  body.forEach((order, index) => {
-    const result = schemaValidator.validate('order', order);
-    expect(result.valid, `Schema failed at [${index}]:\n${result.errors?.map(e => `  [${e.path}] ${e.message}`).join('\n')}`).to.be.true;
-  });
-});
+Then(
+  'the response should be an array of orders',
+  function ({ currentResponse, schemaValidator }: Pick<OrderFixtures, 'currentResponse' | 'schemaValidator'>) {
+    const body = currentResponse.body as unknown as OrderResponse[];
+    expect(Array.isArray(body), 'Response body should be an array').to.be.true;
+    expect(body.length, 'Expected at least 1 order').to.be.at.least(1);
+    body.forEach((order, index) => {
+      const result = schemaValidator.validate('order', order);
+      expect(
+        result.valid,
+        `Schema failed at [${index}]:\n${result.errors?.map((e) => `  [${e.path}] ${e.message}`).join('\n')}`,
+      ).to.be.true;
+    });
+  },
+);
 
-Then('I store the orders count as {string}', function (
-  { currentResponse, store }: Pick<OrderFixtures, 'currentResponse' | 'store'>,
-  key: string,
-) {
-  const body = currentResponse.body as unknown as OrderResponse[];
-  expect(Array.isArray(body), 'Response body should be an array').to.be.true;
-  store(key, body.length);
-});
+Then(
+  'I store the orders count as {string}',
+  function ({ currentResponse, store }: Pick<OrderFixtures, 'currentResponse' | 'store'>, key: string) {
+    const body = currentResponse.body as unknown as OrderResponse[];
+    expect(Array.isArray(body), 'Response body should be an array').to.be.true;
+    store(key, body.length);
+  },
+);
 ```
 
 ### Key patterns in this example
@@ -331,18 +337,18 @@ Given I am authenticated as "m2m-service-account"  # ❌
 
 ```typescript
 type Fixtures = {
-  apiClient: ApiClient;               // Playwright HTTP client
-  currentRequest: CurrentRequest;     // { method, endpoint, body, headers, queryParams }
-  currentResponse: CurrentResponse;   // { status, body, headers, duration, correlationId }
-  testData: Record<string, unknown>;  // Generic test state store
-  activeRole: { value: string };      // Auth role wrapper
-  instanceId: number;                 // Default from .env; override via store()
-  schemaValidator: SchemaValidator;   // Ajv validator, loads *.schema.json on startup
+  apiClient: ApiClient; // Playwright HTTP client
+  currentRequest: CurrentRequest; // { method, endpoint, body, headers, queryParams }
+  currentResponse: CurrentResponse; // { status, body, headers, duration, correlationId }
+  testData: Record<string, unknown>; // Generic test state store
+  activeRole: { value: string }; // Auth role wrapper
+  instanceId: number; // Default from .env; override via store()
+  schemaValidator: SchemaValidator; // Ajv validator, loads *.schema.json on startup
   store: (key: string, value: unknown) => void;
   retrieve: <T>(key: string) => T;
   // Lazy: rabbitClient, consumerHarness, messagePublisher, dlqMonitor, messageValidator
   // Lazy: dbClient, snapshotManager, cleanupManager, queryBuilder
-  _afterTestHook: void;               // Auto: attaches req/resp on failure, optional AI analysis
+  _afterTestHook: void; // Auto: attaches req/resp on failure, optional AI analysis
 };
 ```
 
@@ -385,11 +391,11 @@ import { DataGenerator } from '../../../utils/data-generator';
 
 // ── 1. MassTransit outer envelope ────────────────────────────────────────────
 export interface CreateOrderMessage {
-  messageId: string;                  // UUID
+  messageId: string; // UUID
   conversationId: string;
-  messageType: string[];              // ['urn:message:MyService:CreateOrder']
-  message: CreateOrderPayload;        // ← domain payload
-  sentTime: string;                   // ISO timestamp — used as date cutoff in DB polling
+  messageType: string[]; // ['urn:message:MyService:CreateOrder']
+  message: CreateOrderPayload; // ← domain payload
+  sentTime: string; // ISO timestamp — used as date cutoff in DB polling
   headers: Record<string, unknown>;
   host: Record<string, unknown>;
   // null fields: requestId, correlationId, initiatorId, responseAddress, faultAddress, expirationTime
@@ -400,7 +406,7 @@ export interface CreateOrderPayload {
   InstanceId: number;
   OrderId: number;
   Source: string;
-  Amount: number;                     // randomized via DataGenerator.amount() — NEVER a string
+  Amount: number; // randomized via DataGenerator.amount() — NEVER a string
   CreatedByUser: string;
   Reference: string;
 }
@@ -427,7 +433,16 @@ export function buildCreateOrderMessage(
     message: payload,
     sentTime: new Date().toISOString(),
     headers: {},
-    host: { machineName: 'test-host', processName: 'test', processId: 0, assembly: '', assemblyVersion: '', frameworkVersion: '', massTransitVersion: '', operatingSystemVersion: '' },
+    host: {
+      machineName: 'test-host',
+      processName: 'test',
+      processId: 0,
+      assembly: '',
+      assemblyVersion: '',
+      frameworkVersion: '',
+      massTransitVersion: '',
+      operatingSystemVersion: '',
+    },
   };
 }
 ```
@@ -465,7 +480,7 @@ return {
 };
 
 // WRONG — knex strips nested authentication
-return { authentication: { type: 'azure-active-directory-default' } };  // ❌
+return { authentication: { type: 'azure-active-directory-default' } }; // ❌
 ```
 
 ### Messaging → DB Verification Pattern
@@ -478,6 +493,7 @@ And the records from the create order message should exist in the database
 ```
 
 The verification step:
+
 1. Reads `lastPublishedMessage` from the store (set by common message steps)
 2. Extracts key identifiers and timestamps from the message payload
 3. Polls the target table using a date cutoff (from `sentTime`) to filter out pre-existing records
@@ -502,9 +518,9 @@ async function pollForRecords(
   while (Date.now() - start < options.maxWaitMs) {
     const rows = await dbClient.query(filters, dateCutoff);
     // Check for specific field match — not just rows.length > 0
-    const matched = rows.filter(row => matchesCriteria(row, filters));
+    const matched = rows.filter((row) => matchesCriteria(row, filters));
     if (matched.length > 0) return matched;
-    await new Promise(resolve => setTimeout(resolve, options.intervalMs));
+    await new Promise((resolve) => setTimeout(resolve, options.intervalMs));
   }
   throw new Error(`Timed out waiting for records matching ${JSON.stringify(filters)}`);
 }
@@ -516,16 +532,16 @@ async function pollForRecords(
 
 The central template registry (`src/utils/request-templates.ts`) provides three functions:
 
-| Function | Purpose |
-|---|---|
-| `registerTemplates(map)` | Domain step files call this at module load time to register their endpoint templates |
-| `getTemplate(name)` | Common steps resolve a template by its friendly name (throws if unknown) |
+| Function                                        | Purpose                                                                                   |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `registerTemplates(map)`                        | Domain step files call this at module load time to register their endpoint templates      |
+| `getTemplate(name)`                             | Common steps resolve a template by its friendly name (throws if unknown)                  |
 | `resolveEndpoint(template, retrieve, defaults)` | Replaces `{placeholder}` tokens — checks store for `<key>Override` first, then `defaults` |
 
 ```typescript
 // In a domain step file (top level, not inside a step):
 registerTemplates({
-  'products request':      '/{instanceId}/products',
+  'products request': '/{instanceId}/products',
   'product by id request': '/{instanceId}/products/{productId}',
 });
 
@@ -534,6 +550,7 @@ const resolvedEndpoint = `${apiBase}${resolveEndpoint(endpoint, retrieve, { inst
 ```
 
 This architecture means:
+
 - Common `When I define a GET {string}` step can resolve **any** domain template by name
 - Domain files only need to register templates and define their own send steps
 - Template placeholders like `{instanceId}` are resolved via the store (set by `When I set "instanceId" to "1001"`)

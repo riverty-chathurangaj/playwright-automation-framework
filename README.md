@@ -1,286 +1,192 @@
-# pw-testforge-gls — GL Service API Test Automation Framework
+# pw-testforge-gls
 
-An intelligent, AI-powered BDD test automation framework for financial API quality assurance.
+BDD API automation framework for the General Ledger service.
 
-**Stack:** TypeScript 5.x · Playwright · playwright-bdd · RabbitMQ (amqplib) · SQL (Knex.js) · Claude AI
-
----
+The framework uses Playwright's `APIRequestContext` for HTTP testing, `playwright-bdd` for Gherkin-to-test generation, Ajv for JSON schema validation, RabbitMQ helpers for event flows, and Knex for database verification.
 
 ## Quick Start
 
+1. Install dependencies.
+2. Copy `.env.example` to `.env.local` and fill in your local secrets.
+3. Pick an environment with `TEST_ENV` and run a test command.
+
 ```bash
-# 1. Install dependencies
 npm install
+TEST_ENV=dev npm run test:smoke
+```
 
-# 2. Configure environment
-cp .env.example .env
-# Edit .env with your environment values
+PowerShell example:
 
-# 3. Generate BDD spec files (required before first run)
-npm run bdd:gen
-
-# 4. Run smoke tests
+```powershell
+$env:TEST_ENV = 'dev'
 npm run test:smoke
-
-# 5. Run full regression
-npm run test:regression
 ```
 
-> **Why `bdd:gen`?** playwright-bdd compiles `.feature` files into Playwright `.spec.js` test files in `.features-gen/`. Run it once after changing any `.feature` file or step definitions.
+If you change any `.feature` files, run `npm run bdd:gen` before using bare `npx playwright test`. All `npm run test:*` scripts already do this for you.
 
----
+## Formatting and Hooks
 
-## Test Execution
+Husky is enabled through the `prepare` script and installs a `pre-commit` hook after `npm install`.
 
-| Command | Description |
-|---|---|
-| `npm test` | Generate + run all tests (default project) |
-| `npm run test:ui` | Open Playwright UI runner (interactive, filterable) |
-| `npm run test:smoke` | Smoke tests only (`@smoke`) |
-| `npm run test:regression` | Full regression (`@regression`) |
-| `npm run test:negative` | Negative validation tests (`@negative`) |
-| `npm run test:schema` | Schema validation tests (`@schema`) |
-| `npm run test:security` | Security / auth edge cases (`@security`) |
-| `npm run test:transactions` | Transaction scenarios (`@transactions`) |
-| `npm run test:messaging` | RabbitMQ message tests (`@messaging`) |
-| `npm run test:accounts` | GL Accounts tests (`@accounts`) |
-| `npm run test:clients` | Clients controller tests (`@clients`) |
-| `npm run test:balance` | Balance query tests (`@balance`) |
-| `npm run test:feature` | Run tests matching a tag or title (append `--grep @tag`) |
-| `npm run bdd:gen` | Regenerate spec files from feature files only |
+- `npm run format` formats the repository with Prettier
+- `npm run format:check` checks formatting without changing files
+- the `pre-commit` hook runs `lint-staged`, which formats staged supported files with Prettier and runs `eslint --fix` on staged JavaScript and TypeScript files
 
-### Tag-based execution
+## Environment Model
+
+Runtime config is selected by `TEST_ENV`.
+
+- Shared non-secret defaults live in `config/environments/<env>.env`
+- Developer-specific secrets and overrides live in `.env.local`
+- CI secrets come from Azure DevOps variable groups
+- Legacy root `.env` is still supported as a temporary migration fallback
+
+Supported environments right now:
+
+- `dev`
+- `test`
+- `pt`
+
+The loader applies values in this order:
+
+1. Code defaults
+2. Legacy root `.env` fallback if present
+3. `config/environments/<TEST_ENV>.env`
+4. `.env.local`
+5. Process environment variables from CI
+
+That means Azure DevOps variables always win, and local `.env.local` wins over the checked-in environment overlays.
+
+## Local Configuration
+
+Start by copying the template:
 
 ```bash
-# Run by tag (after bdd:gen)
-npx playwright test --grep "@smoke"
-npx playwright test --grep "@regression" --grep-invert "@messaging"
-npx playwright test --grep "@XRAY-GL-101"
-
-# Run with environment
-BASE_URL=https://staging.api.example.com npm run test:smoke
-
-# Run a specific feature by name
-npx playwright test --grep "GL Account"
+cp .env.example .env.local
 ```
 
-### Playwright UI runner
+Then set the secrets you need locally, such as:
 
-```bash
-npm run test:ui
+- `AUTH_CLIENT_ID`
+- `AUTH_CLIENT_SECRET`
+- `DB_HOST`
+- `DB_USER`
+- `DB_PASSWORD`
+- `RABBITMQ_URL`
+
+You can also override any non-secret value locally in `.env.local`, but the default expectation is that shared non-secret values come from `config/environments/dev.env`, `config/environments/test.env`, or `config/environments/pt.env`.
+
+## Test Commands
+
+### Core commands
+
+| Command                              | Purpose                                               |
+| ------------------------------------ | ----------------------------------------------------- |
+| `npm test`                           | Generate BDD specs and run all automated tests        |
+| `npm run test:smoke`                 | Run scenarios tagged `@smoke`                         |
+| `npm run test:feature -- "@clients"` | Run tests by grep pattern, tag, or title              |
+| `npm run test:ui`                    | Open the Playwright UI runner                         |
+| `npm run bdd:gen`                    | Regenerate `.features-gen` from `.feature` files only |
+| `npm run lint`                       | Run ESLint on the TypeScript source                   |
+| `npm run type-check`                 | Run TypeScript in `--noEmit` mode                     |
+| `npm run clean`                      | Remove generated output and reports                   |
+
+### Project commands
+
+Each feature belongs to a Playwright project keyed off a domain tag.
+
+| Project            | Command                         |
+| ------------------ | ------------------------------- |
+| `clients`          | `npm run test:clients`          |
+| `accounts`         | `npm run test:accounts`         |
+| `balance`          | `npm run test:balance`          |
+| `transactions`     | `npm run test:transactions`     |
+| `instances`        | `npm run test:instances`        |
+| `accounting-month` | `npm run test:accounting-month` |
+| `postings`         | `npm run test:postings`         |
+| `messaging`        | `npm run test:messaging`        |
+| `security`         | `npm run test:security`         |
+
+### Reporting commands
+
+| Command                   | Purpose                                                   |
+| ------------------------- | --------------------------------------------------------- |
+| `npm run report:generate` | Build an Allure HTML report from `reports/allure-results` |
+| `npm run report:open`     | Open the generated Allure report                          |
+| `npm run report:serve`    | Serve Allure directly from raw results                    |
+| `npm run report`          | Generate and open the Allure report                       |
+
+## Azure DevOps
+
+Azure DevOps is now the primary CI path for environment-aware execution.
+
+Use `azure-pipelines.yml` with one variable group per environment:
+
+- `gl-tests-dev`
+- `gl-tests-test`
+- `gl-tests-pt`
+
+Current pipeline behavior:
+
+- PR validation runs smoke tests against `dev`
+- Manual runs allow selecting `dev`, `test`, or `pt` and a Playwright grep pattern
+- Nightly regression runs the full suite against `pt`
+
+The existing GitHub Actions workflow remains in the repo as a temporary fallback during migration, but Azure DevOps is the primary documented runner.
+
+## Tag Model
+
+- Domain tags such as `@clients`, `@accounts`, and `@messaging` map directly to Playwright projects.
+- `@smoke` is the main additive execution tag currently wired into npm scripts.
+- `@manual` is excluded from automated project runs.
+- `@fixme` is converted by `playwright-bdd` into a skipped test.
+- Messaging features also use sub-domain tags such as `@book-client-deposit`.
+
+The older cross-cutting profiles `@regression`, `@negative`, and `@schema` are not currently populated in the checked-in feature set, so they are not exposed as npm run profiles.
+
+## How It Works
+
+```text
+features/<domain>/*.feature
+        -> npm run bdd:gen
+.features-gen/**/*.spec.ts
+        -> playwright test
 ```
 
-Opens a browser-based UI where you can filter by tag, project, or test name, see live results, and view Playwright traces — no separate tooling needed.
+- `src/fixtures/index.ts` is the shared fixture entry point for `Given`, `When`, and `Then`.
+- `src/steps/common/` contains reusable request, auth, schema, database, and messaging steps.
+- `src/steps/<domain>/` contains domain-specific request templates and assertions.
+- `src/schemas/json-schemas/` stores API response schemas.
+- `src/messaging/` contains RabbitMQ helpers, validators, and exchange mappings.
+- `src/database/` contains the Knex-based database client and query helpers.
 
----
+Do not edit files under `.features-gen`; they are generated output.
 
-## Project Structure
+## Reporting and Artifacts
 
-```
-pw-testforge-gls/
-├── .ai/
-│   └── prompts/                # AI prompt templates (scenario gen, failure analysis, etc.)
-├── .claude/
-│   └── commands/
-│       └── framework-guide.md  # Claude slash command: patterns & implementation guide
-├── src/
-│   ├── core/                   # Foundation: API client, auth, config, logger, retry
-│   ├── fixtures/
-│   │   └── index.ts            # All Playwright fixtures + Given/When/Then exports
-│   ├── messaging/              # RabbitMQ: client, consumer harness, DLQ monitor, publisher
-│   ├── database/               # Knex.js: DB client, query builder, snapshot/cleanup managers
-│   │   └── queries/            # Domain query helpers (gl-accounts, journal-entries, etc.)
-│   ├── schemas/
-│   │   └── json-schemas/       # Ajv JSON Schema Draft-07 definitions per endpoint
-│   ├── models/
-│   │   └── responses/          # TypeScript interfaces for API response types
-│   ├── steps/                  # Playwright-BDD step definitions (common + domain)
-│   │   ├── common/             # Reusable: api, auth, schema, contract, database, message
-│   │   └── clients/            # Domain-specific: clients controller steps
-│   ├── support/                # Global setup/teardown, Xray reporter, AI enricher
-│   └── utils/                  # PayloadMutator, DataGenerator, Comparator, HttpStatus
-├── features/
-│   ├── messaging/              # RabbitMQ event tests + DLQ
-│   ├── security/               # Auth, token, and security edge cases
-│   ├── balance/                # Trial balance and client balance queries
-│   ├── transactions/           # Journal entry transaction tests
-│   ├── accounts/               # GL Accounts CRUD
-│   └── clients/                # Clients controller
-├── .features-gen/              # Auto-generated Playwright spec files (gitignored)
-├── reports/                    # Generated reports (gitignored)
-├── playwright.config.ts        # Playwright + playwright-bdd configuration
-├── knexfile.ts                 # Database connection configuration
-└── .env.example                # Environment variable template
-```
-
----
-
-## Architecture Overview
-
-```
-Feature Files (Gherkin)
-        ↓
-playwright-bdd (bddgen compiles to .spec.js)
-        ↓
-Step Definitions (TypeScript — fixture destructuring pattern)
-        ↓
-src/fixtures/index.ts  (Playwright fixtures — lazy init per test)
-        ↓
-┌──────────────┬─────────────────┬──────────────┬─────────────┐
-│  API Client  │ Schema/Contract │  AMQP Client │  DB Client  │
-│ (Playwright  │ Validator (Ajv) │  (amqplib)   │  (Knex.js)  │
-│  Request ctx)│                 │              │             │
-└──────────────┴─────────────────┴──────────────┴─────────────┘
-        ↓
-┌─────────────────┬────────────────┬──────────────────────────┐
-│  GL Service API │   RabbitMQ     │      SQL Database        │
-│  (.NET HTTP)    │  Message Broker│   (SQL Server/PG/MySQL)  │
-└─────────────────┴────────────────┴──────────────────────────┘
-```
-
-### Fixture Architecture (`src/fixtures/index.ts`)
-
-The central file replacing the old Cucumber `World` class. All fixtures (API, messaging, database) are defined here and are **lazy** — RabbitMQ and database connections only open if a test step actually requests `rabbitClient` or `dbClient`.
-
-```typescript
-// All step files import from here — not from @playwright/test
-import { Given, When, Then } from '../../fixtures';
-
-// Steps use fixture destructuring — never "this"
-When('I send a GET request to {string}', async function (
-  { apiClient, currentRequest, currentResponse, activeRole, instanceId },
-  path: string
-) {
-  Object.assign(currentResponse, await apiClient.get(url, {}, activeRole.value));
-});
-```
-
----
-
-## Key Features
-
-### Playwright Tracing
-
-`trace: 'on'` is set in `playwright.config.ts`. The `ApiClient` uses the Playwright-managed `request` fixture context, so **every HTTP request is captured in a trace ZIP** automatically. View traces with:
-
-```bash
-npx playwright show-trace path/to/trace.zip
-```
-
-### Negative Testing
-
-`PayloadMutator` sends any value to any field — bypassing TypeScript's type system for full negative coverage:
-
-```typescript
-PayloadMutator.corruptField(payload, 'debitAmount', 'string-in-numeric')
-PayloadMutator.corruptField(payload, 'accountCode', 'sql-injection')
-PayloadMutator.removeField(payload, 'currency')
-```
-
-### Schema Validation
-
-Every endpoint response validated against JSON Schema Draft-07:
-
-```gherkin
-Then the response should match schema "journal-entry"
-And the response should satisfy contract "journal-entries"
-```
-
-### Message Testing
-
-Full RabbitMQ event lifecycle testing with consumer harness:
-
-```gherkin
-Given I am listening on exchange "gl.events" with routing key "journal.posted"
-When I send a valid POST request to "/api/v1/journal-entries"
-Then I should receive 1 message within 10 seconds
-And the message should match schema "journal-posted-event"
-```
-
-### Database Assertions
-
-Direct DB validation after API operations:
-
-```gherkin
-Given I capture a database snapshot of account "1001"
-When I send a valid POST request to "/api/v1/journal-entries"
-Then a journal entry row should exist in the database
-And the account "1001" balance should have changed by 5000.00
-```
-
-### AI Integration
-
-Set `AI_ENABLED=true` and configure one provider to activate:
-- Anthropic: `AI_PROVIDER=anthropic` + `ANTHROPIC_API_KEY`
-- OpenAI: `AI_PROVIDER=openai` + `OPENAI_API_KEY`
-- Automatic failure analysis on test failures (attached to Playwright report)
-- AI prompts for scenario generation, test data synthesis, schema analysis in `.ai/prompts/`
-
----
-
-## Reporting
-
-After a test run:
-
-```bash
-# Generate and open Allure dashboard
-npm run report:generate
-npm run report:open
-
-# Serve live from allure-results (no generate step needed)
-npm run report:serve
-```
-
-| Report | Location |
-|---|---|
-| Playwright JSON | `reports/playwright-report.json` |
-| Allure results (raw) | `reports/allure-results/` |
-| Allure HTML dashboard | `reports/allure-report/` |
-| Playwright trace ZIPs | `.features-gen/` test output dir |
-
----
+- Playwright JSON report: `reports/playwright-report.json`
+- Allure raw results: `reports/allure-results/`
+- Allure HTML report: `reports/allure-report/`
+- Generated specs: `.features-gen/`
+- Playwright traces: `test-results/`
 
 ## Environment Variables
 
-See `.env.example` for the complete reference. Key variables:
+The framework still uses the same env var names; only the source model changed.
 
-| Variable | Description |
-|---|---|
-| `BASE_URL` | GL Service API base URL |
-| `TEST_ENV` | dev / staging / uat / prod |
-| `RABBITMQ_URL` | amqp://user:pass@host:5672 |
-| `DB_CLIENT` | mssql / pg / mysql2 |
-| `AI_ENABLED` | true to activate AI failure analysis |
-| `AI_PROVIDER` | anthropic (default) or openai |
-| `ANTHROPIC_API_KEY` | Required when `AI_PROVIDER=anthropic` |
-| `OPENAI_API_KEY` | Required when `AI_PROVIDER=openai` |
-| `XRAY_CLIENT_ID` | For Xray result publishing |
-| `GIT_SHA` | Injected by CI; used in `X-Test-Run-Id` header |
+| Area      | Variables                                                                                                               |
+| --------- | ----------------------------------------------------------------------------------------------------------------------- |
+| API       | `BASE_URL`, `SERVICE_PATH`, `INSTANCE_ID`, `API_VERSION`, `API_TIMEOUT`, `TEST_ENV`                                     |
+| Auth      | `AUTH_BASE_URL`, `AUTH_CLIENT_ID`, `AUTH_CLIENT_SECRET`, `AUTH_AUDIENCE`                                                |
+| RabbitMQ  | `RABBITMQ_URL`, `RABBITMQ_EXCHANGE`, `RABBITMQ_DLQ`, `RABBITMQ_VHOST`, `RABBITMQ_HEARTBEAT`, `MESSAGE_WAIT_TIMEOUT`     |
+| Database  | `DB_CLIENT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_SCHEMA`, `DB_QUERY_TIMEOUT`, `DB_AUTH_TYPE`, `DB_USER`, `DB_PASSWORD` |
+| AI        | `AI_ENABLED`, `AI_PROVIDER`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENAI_ENDPOINT`, `OPENAI_API_VERSION`, `AI_MODEL` |
+| Reporting | `REPORT_DIR`, `GIT_SHA`, `LOG_LEVEL`                                                                                    |
 
----
+For Azure SQL passwordless authentication, set `DB_AUTH_TYPE=azure-active-directory-default` and authenticate with Azure before running tests.
 
-## Implementation Roadmap
+## Current State
 
-| Phase | Status | Description |
-|---|---|---|
-| 1 — Foundation | ✅ Complete | Core API client, auth, Playwright setup |
-| 2 — BDD Expansion | ✅ Complete | Full positive + negative test coverage |
-| 3 — Schema & Contract | ✅ Complete | Ajv validation, drift detection |
-| 4 — RabbitMQ Messaging | ✅ Complete | AMQP client, consumer harness, DLQ |
-| 5 — Database Validation | ✅ Complete | Knex.js client, snapshots, integrity |
-| 6 — E2E & Xray | ✅ Complete | Cross-layer flows, Xray integration |
-| 7 — AI Integration | ✅ Complete | Failure analysis, scenario generation |
-| 8 — Optimization | 🔄 In Progress | Parallel execution, performance tuning |
-
-### BDD Runtime Migration (March 2026)
-
-Migrated from `@cucumber/cucumber` to `playwright-bdd`:
-- `world.ts` + `hooks.ts` replaced by `src/fixtures/index.ts`
-- All step files updated to fixture destructuring pattern (`{ apiClient, currentResponse }` instead of `this`)
-- `cucumber.js` config replaced by `playwright.config.ts`
-- `bddgen` generates `.spec.js` files in `.features-gen/` before each test run
-- Playwright tracing (`trace: 'on'`) now captures all HTTP requests via managed `request` context
-
----
-
-*pw-testforge-gls — Version 1.0 · March 2026 · Riverty Group GmbH · Quality Engineering*
+- Day-to-day execution is Playwright plus Allure.
+- `npm run lint` and `npm run type-check` are both usable framework health checks.
+- `docker` is intentionally not wired yet; the config loader is generic so it can be added later with a new env overlay and variable group.

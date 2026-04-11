@@ -40,14 +40,11 @@ export class RetryHandler {
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  async execute<T>(
-    operation: () => Promise<T>,
-    options?: RetryOptions<T>,
-  ): Promise<T> {
-    const { maxRetries, initialDelayMs } = { ...this.options, ...options };
+  async execute<T>(operation: () => Promise<T>, options?: RetryOptions<T>): Promise<T> {
+    const { maxRetries } = { ...this.options, ...options };
     const shouldRetry = options?.retryOn;
     const onRetry = options?.onRetry;
 

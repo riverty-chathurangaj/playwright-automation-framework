@@ -4,12 +4,12 @@
   "title": "Instance",
   "type": "object",
   "properties": {
-    "id":             { "type": "integer" },
-    "name":           { "type": ["string", "null"] },
+    "id": { "type": "integer" },
+    "name": { "type": ["string", "null"] },
     "sourceSystemId": { "type": ["integer", "null"] },
-    "countryCode":    { "type": ["string", "null"] },
-    "countryId":      { "type": ["integer", "null"] },
-    "isActive":       { "type": "boolean" }
+    "countryCode": { "type": ["string", "null"] },
+    "countryId": { "type": ["integer", "null"] },
+    "isActive": { "type": "boolean" }
   },
   "required": ["id", "isActive"],
   "additionalProperties": true

@@ -4,7 +4,8 @@
 > the .NET test automation suite (`GeneralLedger.TestAutomationSuite`), and
 > observed API behaviour during test execution.
 >
-> **Base URL:** `https://api-dev.internal.riverty.dev/gl-service`
+> **Base URL:** Environment-specific — resolved at runtime from `TEST_ENV`
+> and `config/environments/<env>.env`
 > **Auth:** OAuth2 Client Credentials — Bearer token required on all endpoints
 
 ---
@@ -36,14 +37,14 @@ internal exception (HTTP 500) rather than returning 400 — this is a known bug.
 All endpoints require a Bearer token obtained via OAuth2 Client Credentials:
 
 ```http
-POST https://identity-test.horizonafs.io/oauth/token
+POST https://<identity-host>/oauth/token
 Content-Type: application/json
 
 {
   "grant_type": "client_credentials",
   "client_id": "<CLIENT_ID>",
   "client_secret": "<CLIENT_SECRET>",
-  "audience": "https://api-test.horizonafs.io"
+  "audience": "https://<api-audience>"
 }
 ```
 
@@ -71,6 +72,7 @@ corresponds to a Riverty legal entity in a specific country.
 Returns a list of all GL instances registered in the system.
 
 **Response shape:**
+
 ```json
 [
   {
@@ -84,14 +86,14 @@ Returns a list of all GL instances registered in the system.
 ]
 ```
 
-| Field | Type | Description |
-|---|---|---|
-| `id` | integer | Instance ID — used as path parameter in all other endpoints |
-| `name` | string\|null | Human-readable name of the instance/entity |
-| `sourceSystemId` | integer\|null | ID of the upstream source system feeding this instance |
-| `countryCode` | string\|null | ISO country code (e.g. `NO`, `SE`, `DE`) |
-| `countryId` | integer\|null | Internal country identifier |
-| `isActive` | boolean | Whether the instance is currently active |
+| Field            | Type          | Description                                                 |
+| ---------------- | ------------- | ----------------------------------------------------------- |
+| `id`             | integer       | Instance ID — used as path parameter in all other endpoints |
+| `name`           | string\|null  | Human-readable name of the instance/entity                  |
+| `sourceSystemId` | integer\|null | ID of the upstream source system feeding this instance      |
+| `countryCode`    | string\|null  | ISO country code (e.g. `NO`, `SE`, `DE`)                    |
+| `countryId`      | integer\|null | Internal country identifier                                 |
+| `isActive`       | boolean       | Whether the instance is currently active                    |
 
 **Observed behaviour:** Returns 401 without a token, 403 with an invalid token,
 200 or 403 with a valid M2M token (permissions depend on the client's scopes).
@@ -139,11 +141,12 @@ Returns the full list of GL accounts for the instance.
 
 **Query parameters:**
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `orderBy` | string | No | Sort field (e.g. `account`) |
+| Parameter | Type   | Required | Description                 |
+| --------- | ------ | -------- | --------------------------- |
+| `orderBy` | string | No       | Sort field (e.g. `account`) |
 
 **Response shape:**
+
 ```json
 [
   {
@@ -153,12 +156,13 @@ Returns the full list of GL accounts for the instance.
 ]
 ```
 
-| Field | Type | Description |
-|---|---|---|
-| `account` | string\|null | Account code / chart of accounts number |
-| `description` | string\|null | Human-readable account description |
+| Field         | Type         | Description                             |
+| ------------- | ------------ | --------------------------------------- |
+| `account`     | string\|null | Account code / chart of accounts number |
+| `description` | string\|null | Human-readable account description      |
 
 **Notes:**
+
 - Returns a flat list — no hierarchy or balance information here
 - The account codes observed in real data follow numeric conventions
   (e.g. `1000`, `1500`, `2100`)
@@ -175,12 +179,13 @@ accounts associated with a given posting rule.
 
 **Path parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `instanceId` | integer | Instance ID |
-| `postingId` | integer | ID of the posting rule to filter by |
+| Parameter    | Type    | Description                         |
+| ------------ | ------- | ----------------------------------- |
+| `instanceId` | integer | Instance ID                         |
+| `postingId`  | integer | ID of the posting rule to filter by |
 
 **Notes:**
+
 - Returns 404 (`"Posting not found for Id {postingId}"`) if no posting with
   that ID exists for the instance
 - To find valid posting IDs, first call `GET /{instanceId}/postings`
@@ -190,8 +195,8 @@ accounts associated with a given posting rule.
 ### 3. Balance
 
 The balance endpoints aggregate financial positions across GL accounts. They
-answer questions like: *"What was the opening balance, how much changed, and
-what is the closing balance for these accounts in this period?"*
+answer questions like: _"What was the opening balance, how much changed, and
+what is the closing balance for these accounts in this period?"_
 
 #### `GET /gl-service/{instanceId}/balance`
 
@@ -199,39 +204,41 @@ Returns aggregated account balances for the instance, with optional filters.
 
 **Query parameters:**
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `accountfrom` | string | No | Start of account code range (inclusive) |
-| `accountto` | string | No | End of account code range (inclusive) |
-| `orgnoClient` | string | No | Filter to a specific client organisation number |
-| `accountingYearMonthFrom` | integer | No | Start period in `YYYYMM` format (e.g. `202501`) |
-| `accountingYearMonthTo` | integer | No | End period in `YYYYMM` format |
-| `balancedateFrom` | datetime | No | Start date for balance date filter |
-| `balancedateTo` | datetime | No | End date for balance date filter |
-| `clientId` | integer | No | Internal client ID filter |
+| Parameter                 | Type     | Required | Description                                     |
+| ------------------------- | -------- | -------- | ----------------------------------------------- |
+| `accountfrom`             | string   | No       | Start of account code range (inclusive)         |
+| `accountto`               | string   | No       | End of account code range (inclusive)           |
+| `orgnoClient`             | string   | No       | Filter to a specific client organisation number |
+| `accountingYearMonthFrom` | integer  | No       | Start period in `YYYYMM` format (e.g. `202501`) |
+| `accountingYearMonthTo`   | integer  | No       | End period in `YYYYMM` format                   |
+| `balancedateFrom`         | datetime | No       | Start date for balance date filter              |
+| `balancedateTo`           | datetime | No       | End date for balance date filter                |
+| `clientId`                | integer  | No       | Internal client ID filter                       |
 
 **Response shape:**
+
 ```json
 [
   {
     "account": "1500",
     "accountName": "Trade Receivables",
-    "inBalance": 150000.00,
-    "balanceChange": -25000.00,
-    "outBalance": 125000.00
+    "inBalance": 150000.0,
+    "balanceChange": -25000.0,
+    "outBalance": 125000.0
   }
 ]
 ```
 
-| Field | Type | Description |
-|---|---|---|
-| `account` | string\|null | Account code |
-| `accountName` | string\|null | Account description |
-| `inBalance` | number | Opening balance for the period (double precision) |
-| `balanceChange` | number | Net change during the period (positive = credit, negative = debit or vice versa depending on account type) |
-| `outBalance` | number | Closing balance (`inBalance + balanceChange`) |
+| Field           | Type         | Description                                                                                                |
+| --------------- | ------------ | ---------------------------------------------------------------------------------------------------------- |
+| `account`       | string\|null | Account code                                                                                               |
+| `accountName`   | string\|null | Account description                                                                                        |
+| `inBalance`     | number       | Opening balance for the period (double precision)                                                          |
+| `balanceChange` | number       | Net change during the period (positive = credit, negative = debit or vice versa depending on account type) |
+| `outBalance`    | number       | Closing balance (`inBalance + balanceChange`)                                                              |
 
 **Notes:**
+
 - All three balance fields are always present — never null
 - With no filters, returns all accounts with any movement
 - With `accountingYearMonthFrom` only, returns from that period to present
@@ -252,6 +259,7 @@ daily breakdown.
 **Query parameters:** Same as `/balance`
 
 **Response shape:**
+
 ```json
 [
   {
@@ -259,9 +267,9 @@ daily breakdown.
     "accountName": "Trade Receivables",
     "orgnoClient": "20183010-01",
     "clientName": "Acme AS",
-    "inBalance": 15000.00,
-    "balanceChange": -2500.00,
-    "outBalance": 12500.00,
+    "inBalance": 15000.0,
+    "balanceChange": -2500.0,
+    "outBalance": 12500.0,
     "date": "2025-01-31T00:00:00Z",
     "accountingYearMonth": 202501,
     "ssoNumber": "SSO-001"
@@ -269,20 +277,21 @@ daily breakdown.
 ]
 ```
 
-| Field | Type | Description |
-|---|---|---|
-| `account` | string\|null | Account code |
-| `accountName` | string\|null | Account description |
-| `orgnoClient` | string\|null | Client's organisation number |
-| `clientName` | string\|null | Client's name |
-| `inBalance` | number | Opening balance |
-| `balanceChange` | number | Net change |
-| `outBalance` | number | Closing balance |
-| `date` | string (datetime) | Balance date |
-| `accountingYearMonth` | integer\|null | Accounting period in `YYYYMM` format |
-| `ssoNumber` | string\|null | SSO reference number |
+| Field                 | Type              | Description                          |
+| --------------------- | ----------------- | ------------------------------------ |
+| `account`             | string\|null      | Account code                         |
+| `accountName`         | string\|null      | Account description                  |
+| `orgnoClient`         | string\|null      | Client's organisation number         |
+| `clientName`          | string\|null      | Client's name                        |
+| `inBalance`           | number            | Opening balance                      |
+| `balanceChange`       | number            | Net change                           |
+| `outBalance`          | number            | Closing balance                      |
+| `date`                | string (datetime) | Balance date                         |
+| `accountingYearMonth` | integer\|null     | Accounting period in `YYYYMM` format |
+| `ssoNumber`           | string\|null      | SSO reference number                 |
 
 **Notes:**
+
 - More granular than `/balance` — one row per account per client per date
 - Useful for per-client financial reporting
 
@@ -295,12 +304,12 @@ accounts and accounting periods. Purpose-built for client-facing balance views.
 
 **Query parameters:**
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `clientId` | integer | No | Internal client ID |
-| `account` | string[] | No | Array of account codes to include |
-| `accountingYearMonth` | integer | No | Specific period in `YYYYMM` |
-| `isSettlementPartner` | boolean | No | Filter for settlement partner clients (default: false) |
+| Parameter             | Type     | Required | Description                                            |
+| --------------------- | -------- | -------- | ------------------------------------------------------ |
+| `clientId`            | integer  | No       | Internal client ID                                     |
+| `account`             | string[] | No       | Array of account codes to include                      |
+| `accountingYearMonth` | integer  | No       | Specific period in `YYYYMM`                            |
+| `isSettlementPartner` | boolean  | No       | Filter for settlement partner clients (default: false) |
 
 ---
 
@@ -310,6 +319,7 @@ Triggers a reconciliation job for the instance. This is an asynchronous
 administrative operation that recalculates and reconciles balance figures.
 
 **Notes:**
+
 - No request body required
 - Likely returns immediately while the job runs in the background
 
@@ -329,31 +339,32 @@ reporting and audit.
 
 **Query parameters:**
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `accountingYearMonthFrom` | integer | **Yes*** | Start period `YYYYMM` |
-| `accountingYearMonthTo` | integer | **Yes*** | End period `YYYYMM` |
-| `noOfRows` | integer | No | Maximum rows to return (default: 1000) |
-| `accountFrom` | string | No | Start of account code range |
-| `accountTo` | string | No | End of account code range |
-| `orgnoClient` | string | No | Filter by client organisation number |
-| `department` | string | No | Filter by department |
-| `insFrom` | datetime | No | Filter by insertion timestamp (from) |
-| `insTo` | datetime | No | Filter by insertion timestamp (to) |
-| `voucherDateFrom` | datetime | No | Filter by voucher date (from) |
-| `voucherDateTo` | datetime | No | Filter by voucher date (to) |
-| `bundleNoFrom` | number | No | Filter by bundle number range (from) |
-| `bundleNoTo` | number | No | Filter by bundle number range (to) |
-| `postingNo` | integer | No | Filter by posting type number |
-| `customerNo` | string | No | Filter by customer number |
-| `bookingId` | integer (int64) | No | Filter by specific booking ID |
-| `clientId` | integer | No | Internal client ID filter |
-| `orderBy` | string | No | Sort order |
+| Parameter                 | Type            | Required  | Description                            |
+| ------------------------- | --------------- | --------- | -------------------------------------- |
+| `accountingYearMonthFrom` | integer         | **Yes\*** | Start period `YYYYMM`                  |
+| `accountingYearMonthTo`   | integer         | **Yes\*** | End period `YYYYMM`                    |
+| `noOfRows`                | integer         | No        | Maximum rows to return (default: 1000) |
+| `accountFrom`             | string          | No        | Start of account code range            |
+| `accountTo`               | string          | No        | End of account code range              |
+| `orgnoClient`             | string          | No        | Filter by client organisation number   |
+| `department`              | string          | No        | Filter by department                   |
+| `insFrom`                 | datetime        | No        | Filter by insertion timestamp (from)   |
+| `insTo`                   | datetime        | No        | Filter by insertion timestamp (to)     |
+| `voucherDateFrom`         | datetime        | No        | Filter by voucher date (from)          |
+| `voucherDateTo`           | datetime        | No        | Filter by voucher date (to)            |
+| `bundleNoFrom`            | number          | No        | Filter by bundle number range (from)   |
+| `bundleNoTo`              | number          | No        | Filter by bundle number range (to)     |
+| `postingNo`               | integer         | No        | Filter by posting type number          |
+| `customerNo`              | string          | No        | Filter by customer number              |
+| `bookingId`               | integer (int64) | No        | Filter by specific booking ID          |
+| `clientId`                | integer         | No        | Internal client ID filter              |
+| `orderBy`                 | string          | No        | Sort order                             |
 
-> *Required in practice — the .NET test suite always provides both. Without
+> \*Required in practice — the .NET test suite always provides both. Without
 > them the query may return too many rows or time out.
 
 **Response shape:**
+
 ```json
 [
   {
@@ -369,7 +380,7 @@ reporting and audit.
     "postingName": "Payment received",
     "glAccount": "1500",
     "glAccountName": "Trade Receivables",
-    "amount": -1500.00,
+    "amount": -1500.0,
     "customerNo": "CUST-001",
     "invoiceNo": "INV-2024-001",
     "paymentDate": "2024-07-14T00:00:00Z",
@@ -383,32 +394,33 @@ reporting and audit.
 ]
 ```
 
-| Field | Type | Description |
-|---|---|---|
-| `voucherNo` | integer (int64) | Unique voucher number — the document ID |
-| `clientOrgNo` | string\|null | Client organisation number (e.g. `20183010-01`) |
-| `clientName` | string\|null | Client name |
-| `bundleNo` | number | Bundle number — groups related transactions |
-| `registrationDate` | datetime | When the transaction was recorded in the system |
-| `registrationBy` | string\|null | User/system that registered the transaction |
-| `voucherDate` | datetime | The accounting date of the transaction |
-| `accountingYearMonth` | integer | Period in `YYYYMM` format |
-| `postingNo` | integer | Posting rule number that generated this entry |
-| `postingName` | string\|null | Name of the posting rule |
-| `glAccount` | string\|null | GL account code |
-| `glAccountName` | string\|null | GL account description |
-| `amount` | number | Transaction amount (negative = debit from account, positive = credit) |
-| `customerNo` | string\|null | Customer reference number |
-| `invoiceNo` | string\|null | Invoice reference |
-| `paymentDate` | datetime\|null | Date payment was received/made |
-| `settlementDate` | datetime\|null | Date the transaction was settled |
-| `reference` | string\|null | Free-text reference |
-| `bankAccount` | string\|null | Bank account reference |
-| `eventVariantId` | integer\|null | ID of the business event variant that triggered this entry |
-| `count` | integer\|null | Item count (context-dependent) |
-| `ssoNumber` | string\|null | SSO (Single Sign-On or Settlement) reference |
+| Field                 | Type            | Description                                                           |
+| --------------------- | --------------- | --------------------------------------------------------------------- |
+| `voucherNo`           | integer (int64) | Unique voucher number — the document ID                               |
+| `clientOrgNo`         | string\|null    | Client organisation number (e.g. `20183010-01`)                       |
+| `clientName`          | string\|null    | Client name                                                           |
+| `bundleNo`            | number          | Bundle number — groups related transactions                           |
+| `registrationDate`    | datetime        | When the transaction was recorded in the system                       |
+| `registrationBy`      | string\|null    | User/system that registered the transaction                           |
+| `voucherDate`         | datetime        | The accounting date of the transaction                                |
+| `accountingYearMonth` | integer         | Period in `YYYYMM` format                                             |
+| `postingNo`           | integer         | Posting rule number that generated this entry                         |
+| `postingName`         | string\|null    | Name of the posting rule                                              |
+| `glAccount`           | string\|null    | GL account code                                                       |
+| `glAccountName`       | string\|null    | GL account description                                                |
+| `amount`              | number          | Transaction amount (negative = debit from account, positive = credit) |
+| `customerNo`          | string\|null    | Customer reference number                                             |
+| `invoiceNo`           | string\|null    | Invoice reference                                                     |
+| `paymentDate`         | datetime\|null  | Date payment was received/made                                        |
+| `settlementDate`      | datetime\|null  | Date the transaction was settled                                      |
+| `reference`           | string\|null    | Free-text reference                                                   |
+| `bankAccount`         | string\|null    | Bank account reference                                                |
+| `eventVariantId`      | integer\|null   | ID of the business event variant that triggered this entry            |
+| `count`               | integer\|null   | Item count (context-dependent)                                        |
+| `ssoNumber`           | string\|null    | SSO (Single Sign-On or Settlement) reference                          |
 
 **Key observations from test data:**
+
 - `clientOrgNo` uses a `{number}-{suffix}` format in real data (e.g. `20183010-01`),
   not plain integers — filtering by `orgnoClient=2022` returns no results on real data
 - `noOfRows` is a hard limit — if fewer records exist than the limit, fewer are returned;
@@ -426,10 +438,10 @@ Returns a single transaction by its ID.
 
 **Path parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `instanceId` | string | Instance identifier |
-| `id` | integer | Transaction ID |
+| Parameter    | Type    | Description         |
+| ------------ | ------- | ------------------- |
+| `instanceId` | string  | Instance identifier |
+| `id`         | integer | Transaction ID      |
 
 ---
 
@@ -442,12 +454,13 @@ instance.
 
 **Query parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `orderBy` | string | Sort field |
+| Parameter  | Type    | Description                      |
+| ---------- | ------- | -------------------------------- |
+| `orderBy`  | string  | Sort field                       |
 | `isActive` | boolean | Filter by active/inactive status |
 
 **Response shape:**
+
 ```json
 [
   {
@@ -458,11 +471,11 @@ instance.
 ]
 ```
 
-| Field | Type | Description |
-|---|---|---|
-| `orgno` | string\|null | Organisation number — corresponds to `clientOrgNo` in transactions |
-| `globalId` | integer\|null | Global client identifier across instances |
-| `name` | string\|null | Client name |
+| Field      | Type          | Description                                                        |
+| ---------- | ------------- | ------------------------------------------------------------------ |
+| `orgno`    | string\|null  | Organisation number — corresponds to `clientOrgNo` in transactions |
+| `globalId` | integer\|null | Global client identifier across instances                          |
+| `name`     | string\|null  | Client name                                                        |
 
 ---
 
@@ -488,6 +501,7 @@ Returns the list of posting definitions for the instance.
 **Query parameters:** `orderBy` (optional)
 
 **Response shape:**
+
 ```json
 [
   {
@@ -501,16 +515,17 @@ Returns the list of posting definitions for the instance.
 ]
 ```
 
-| Field | Type | Description |
-|---|---|---|
-| `id` | integer | Internal record ID |
-| `postingId` | integer | Posting rule identifier — referenced in transactions as `postingNo` |
-| `number` | integer\|null | Display number |
-| `name` | string\|null | Rule name |
-| `description` | string\|null | Detailed description |
-| `reno_AccountPlan` | integer | Account plan (chart of accounts version) this rule belongs to |
+| Field              | Type          | Description                                                         |
+| ------------------ | ------------- | ------------------------------------------------------------------- |
+| `id`               | integer       | Internal record ID                                                  |
+| `postingId`        | integer       | Posting rule identifier — referenced in transactions as `postingNo` |
+| `number`           | integer\|null | Display number                                                      |
+| `name`             | string\|null  | Rule name                                                           |
+| `description`      | string\|null  | Detailed description                                                |
+| `reno_AccountPlan` | integer       | Account plan (chart of accounts version) this rule belongs to       |
 
 **Notes:**
+
 - `postingNo` on a transaction corresponds to `postingId` here — use this endpoint
   to look up what a posting number means
 - Valid `postingId` values are needed for the `GET /accounts/{postingId}` endpoint
@@ -530,6 +545,7 @@ Returns all event definitions for a given account plan.
 **Path parameters:** `instanceId`, `accountPlanId` (integer)
 
 **Response shape:**
+
 ```json
 [
   {
@@ -549,14 +565,14 @@ Returns all event definitions for a given account plan.
 ]
 ```
 
-| Field | Type | Description |
-|---|---|---|
-| `eventId` | integer | Unique event identifier |
-| `eventName` | string\|null | Name of the business event |
-| `eventRules` | array | Conditional rules that apply different postings based on the event data |
-| `eventRules[].defaultCombination` | boolean | Whether this rule is the fallback when no conditions match |
-| `eventRules[].ruleExpression` | string\|null | Boolean condition evaluated against the event payload |
-| `eventRules[].postings` | string[] | List of posting codes to apply when this rule matches |
+| Field                             | Type         | Description                                                             |
+| --------------------------------- | ------------ | ----------------------------------------------------------------------- |
+| `eventId`                         | integer      | Unique event identifier                                                 |
+| `eventName`                       | string\|null | Name of the business event                                              |
+| `eventRules`                      | array        | Conditional rules that apply different postings based on the event data |
+| `eventRules[].defaultCombination` | boolean      | Whether this rule is the fallback when no conditions match              |
+| `eventRules[].ruleExpression`     | string\|null | Boolean condition evaluated against the event payload                   |
+| `eventRules[].postings`           | string[]     | List of posting codes to apply when this rule matches                   |
 
 ---
 
@@ -578,6 +594,7 @@ Returns a specific posting rule, including the account assignments and
 amount calculation factors.
 
 **Response shape:**
+
 ```json
 {
   "instanceId": 2022,
@@ -597,13 +614,13 @@ amount calculation factors.
 }
 ```
 
-| Field | Type | Description |
-|---|---|---|
-| `postingRules[].account` | string\|null | GL account to post to |
-| `postingRules[].selectAmount` | string\|null | Which amount field from the event to use |
-| `postingRules[].factor` | integer\|null | Multiplier (e.g. `-1` inverts sign) |
-| `postingRules[].percentFactor` | integer\|null | Percentage to apply |
-| `postingRules[].amountType` | enum (1, 2, 3) | How the amount is calculated |
+| Field                          | Type           | Description                              |
+| ------------------------------ | -------------- | ---------------------------------------- |
+| `postingRules[].account`       | string\|null   | GL account to post to                    |
+| `postingRules[].selectAmount`  | string\|null   | Which amount field from the event to use |
+| `postingRules[].factor`        | integer\|null  | Multiplier (e.g. `-1` inverts sign)      |
+| `postingRules[].percentFactor` | integer\|null  | Percentage to apply                      |
+| `postingRules[].amountType`    | enum (1, 2, 3) | How the amount is calculated             |
 
 ---
 
@@ -629,6 +646,7 @@ operation that prevents new postings for the closed period and triggers
 period-end calculations.
 
 **Notes:**
+
 - Irreversible administrative action — should only be called at period-end
 - No request body required
 
@@ -647,21 +665,22 @@ complete accounting document with header and line items.
 
 **Query parameters (extensive):**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `clientId` | integer | Filter by client |
-| `orgnoClient` | string | Filter by client org number |
-| `ssoNumber` | string | Filter by SSO number |
-| `groupReferences` | string | Filter by group reference |
-| `status` | string | Filter by status |
-| `companyCode` | string | SAP company code |
-| `businessTransactionType` | string | SAP transaction type |
-| `accountingDocumentType` | string | SAP document type |
-| `postingDateFrom/To` | datetime | Posting date range |
-| `documentDateFrom/To` | datetime | Document date range |
-| `createdDateFrom/To` | datetime | Creation date range |
+| Parameter                 | Type     | Description                 |
+| ------------------------- | -------- | --------------------------- |
+| `clientId`                | integer  | Filter by client            |
+| `orgnoClient`             | string   | Filter by client org number |
+| `ssoNumber`               | string   | Filter by SSO number        |
+| `groupReferences`         | string   | Filter by group reference   |
+| `status`                  | string   | Filter by status            |
+| `companyCode`             | string   | SAP company code            |
+| `businessTransactionType` | string   | SAP transaction type        |
+| `accountingDocumentType`  | string   | SAP document type           |
+| `postingDateFrom/To`      | datetime | Posting date range          |
+| `documentDateFrom/To`     | datetime | Document date range         |
+| `createdDateFrom/To`      | datetime | Creation date range         |
 
 **Response fields include:**
+
 - `id`, `clientId`, `groupReferences`, `status`
 - `accountingDocument`, `companyCode`, `accountingDocumentType`
 - `businessTransactionType`, `originalReferenceDocumentType`
@@ -679,6 +698,7 @@ Returns SAP bookings (line items within a journal entry). A booking is a
 single debit or credit line in an accounting document.
 
 **Query parameters:**
+
 - `id` — specific booking ID
 - `journalEntryId` — all bookings for a journal entry
 
@@ -776,29 +796,29 @@ configuration issues in infrastructure.
 
 ## Known API Behaviour & Bugs
 
-| Endpoint | Observed Behaviour | Expected Behaviour |
-|---|---|---|
-| Any `/{instanceId}/...` with invalid instanceId | Returns `500 Internal Server Error` (EF Core exception) | Should return `400 Bad Request` |
-| `/balance` with unknown instanceId | Returns `200` with empty array | Should return `400 Bad Request` |
-| Token without `audience` field | IdP returns encrypted JWE | N/A — client must always include audience |
-| Invalid token | Envoy returns `403 Forbidden` | HTTP standard would be `401 Unauthorized` |
+| Endpoint                                        | Observed Behaviour                                      | Expected Behaviour                        |
+| ----------------------------------------------- | ------------------------------------------------------- | ----------------------------------------- |
+| Any `/{instanceId}/...` with invalid instanceId | Returns `500 Internal Server Error` (EF Core exception) | Should return `400 Bad Request`           |
+| `/balance` with unknown instanceId              | Returns `200` with empty array                          | Should return `400 Bad Request`           |
+| Token without `audience` field                  | IdP returns encrypted JWE                               | N/A — client must always include audience |
+| Invalid token                                   | Envoy returns `403 Forbidden`                           | HTTP standard would be `401 Unauthorized` |
 
 ---
 
 ## Test Coverage Summary
 
-| Endpoint | Smoke | Regression | Schema | Negative |
-|---|---|---|---|---|
-| `GET /instances` | ✓ | — | — | — |
-| `GET /{instanceId}/accounts` | ✓ | ✓ | ✓ | ✓ |
-| `GET /{instanceId}/accounts/{postingId}` | — | — | — | ✓ |
-| `GET /{instanceId}/balance` | ✓ | ✓ | ✓ | ✓ |
-| `GET /{instanceId}/balance/listing` | ✓ | ✓ | ✓ | — |
-| `GET /{instanceId}/balance/ClientBalance` | ✓ | ✓ | — | — |
-| `GET /{instanceId}/transactions` | — | ✓ (×9 instances) | ✓ | — |
-| Security (auth/no-auth) | ✓ | ✓ | — | — |
+| Endpoint                                  | Smoke | Regression       | Schema | Negative |
+| ----------------------------------------- | ----- | ---------------- | ------ | -------- |
+| `GET /instances`                          | ✓     | —                | —      | —        |
+| `GET /{instanceId}/accounts`              | ✓     | ✓                | ✓      | ✓        |
+| `GET /{instanceId}/accounts/{postingId}`  | —     | —                | —      | ✓        |
+| `GET /{instanceId}/balance`               | ✓     | ✓                | ✓      | ✓        |
+| `GET /{instanceId}/balance/listing`       | ✓     | ✓                | ✓      | —        |
+| `GET /{instanceId}/balance/ClientBalance` | ✓     | ✓                | —      | —        |
+| `GET /{instanceId}/transactions`          | —     | ✓ (×9 instances) | ✓      | —        |
+| Security (auth/no-auth)                   | ✓     | ✓                | —      | —        |
 
 ---
 
-*Generated from: Swagger spec v1, .NET TestAutomationSuite, and live API observation.*
-*Last updated: 2026-03-12*
+_Generated from: Swagger spec v1, .NET TestAutomationSuite, and live API observation._
+_Last updated: 2026-03-12_

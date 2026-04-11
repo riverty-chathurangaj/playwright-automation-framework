@@ -14,16 +14,16 @@ When asked to implement new features, step definitions, schemas, or models, foll
 
 ## Project Stack
 
-| Concern | Library |
-|---|---|
-| HTTP requests | Playwright `APIRequestContext` (NOT browser) |
-| BDD runner | playwright-bdd 8.x (generates `.spec.ts` from `.feature` files) |
-| BDD config | `playwright.config.ts` via `defineBddConfig()` |
-| Fixtures / state | `src/fixtures/index.ts` — replaces Cucumber `World` |
-| Assertions | Chai 5.x (`expect(...).to.be.true`, `.to.equal`, `.to.be.at.least`) |
-| Schema validation | Ajv 8.x + `ajv-formats`, JSON Schema Draft-07 |
-| Type safety | TypeScript 5.x strict mode |
-| Logging | Winston (`src/core/logger.ts`) |
+| Concern           | Library                                                             |
+| ----------------- | ------------------------------------------------------------------- |
+| HTTP requests     | Playwright `APIRequestContext` (NOT browser)                        |
+| BDD runner        | playwright-bdd 8.x (generates `.spec.ts` from `.feature` files)     |
+| BDD config        | `playwright.config.ts` via `defineBddConfig()`                      |
+| Fixtures / state  | `src/fixtures/index.ts` — replaces Cucumber `World`                 |
+| Assertions        | Chai 5.x (`expect(...).to.be.true`, `.to.equal`, `.to.be.at.least`) |
+| Schema validation | Ajv 8.x + `ajv-formats`, JSON Schema Draft-07                       |
+| Type safety       | TypeScript 5.x strict mode                                          |
+| Logging           | Winston (`src/core/logger.ts`)                                      |
 
 ---
 
@@ -85,6 +85,7 @@ features/
 ## Available Common Steps (do NOT re-define in domain files)
 
 ### auth.steps.ts
+
 ```gherkin
 Given I am authenticated as {string}
 Given I am not authenticated
@@ -93,6 +94,7 @@ Given I am authenticated with an invalid token
 ```
 
 ### api.steps.ts — Request Building
+
 ```gherkin
 When I define a GET {string}
 When I define a POST {string}
@@ -113,6 +115,7 @@ When I send an invalid POST request to {string} with:
 ```
 
 ### api.steps.ts — Response Assertions
+
 ```gherkin
 Then I get the response code of {word}
 Then the response status should be {word}
@@ -139,6 +142,7 @@ Then the response time should be under {int} milliseconds
 ```
 
 ### schema.steps.ts
+
 ```gherkin
 Then the response should match schema {string}
 Then the response should NOT match schema {string}
@@ -150,6 +154,7 @@ Then I have the baseline schema snapshot for {string}
 ```
 
 ### contract.steps.ts
+
 ```gherkin
 Then the response should satisfy contract {string}
 Then the contract should be satisfied for {string} on {string}
@@ -157,6 +162,7 @@ Then the response schema should be valid against contract {string}
 ```
 
 ### message.steps.ts
+
 ```gherkin
 Given I am listening on {string}
 Given I am listening on the {string} exchange
@@ -188,6 +194,7 @@ Then after retries are exhausted the message should appear in the DLQ
 ```
 
 ### database.steps.ts
+
 ```gherkin
 Given account {string} exists in the database with balance {float}
 Given I capture a database snapshot of account {string}
@@ -233,23 +240,23 @@ Each feature file is tagged for selective execution. Tags fall into two categori
 
 **Domain tags** — one per API controller / functional area:
 
-| Tag | npm script | Purpose |
-|---|---|---|
+| Tag         | npm script              | Purpose                   |
+| ----------- | ----------------------- | ------------------------- |
 | `@<domain>` | `npm run test:<domain>` | Domain-specific endpoints |
 
 Each domain tag maps to a Playwright project in `playwright.config.ts` and an npm script in `package.json`.
 
 **Cross-cutting tags** — applied alongside domain tags for filtering:
 
-| Tag | npm script | Purpose |
-|---|---|---|
-| `@smoke` | `npm run test:smoke` | Fast sanity checks |
-| `@regression` | `npm run test:regression` | Full coverage |
-| `@negative` | `npm run test:negative` | Error paths |
-| `@schema` | `npm run test:schema` | Contract/schema validation |
-| `@security` | `npm run test:security` | Auth & permissions |
-| `@messaging` | `npm run test:messaging` | Async queue ops |
-| `@manual` | (excluded) | Manual testing only |
+| Tag           | npm script                | Purpose                    |
+| ------------- | ------------------------- | -------------------------- |
+| `@smoke`      | `npm run test:smoke`      | Fast sanity checks         |
+| `@regression` | `npm run test:regression` | Full coverage              |
+| `@negative`   | `npm run test:negative`   | Error paths                |
+| `@schema`     | `npm run test:schema`     | Contract/schema validation |
+| `@security`   | `npm run test:security`   | Auth & permissions         |
+| `@messaging`  | `npm run test:messaging`  | Async queue ops            |
+| `@manual`     | (excluded)                | Manual testing only        |
 
 Run a single feature by tag: `npm run test:feature -- "@orders"`
 
@@ -257,25 +264,25 @@ Run a single feature by tag: `npm run test:feature -- "@orders"`
 
 ## Common Mistakes
 
-| Mistake | Correct |
-|---|---|
-| `import { Given } from '@cucumber/cucumber'` | `import { Given } from '../../fixtures'` |
-| `this.currentResponse = result` | `Object.assign(currentResponse, result)` |
-| `currentResponse = result` (local rebind) | `Object.assign(currentResponse, result)` |
-| `body as MyResponse[]` (direct cast) | `body as unknown as MyResponse[]` |
-| Numeric codes in features (`200`, `404`) | Labels: `OK`, `NotFound` |
-| Re-defining a common step in a domain file | Check `src/steps/common/` first |
-| Using OpenAPI `nullable: true` in JSON schema | Use `["type", "null"]` (Draft-07) |
-| Trusting swagger without verifying against live API | Always run the endpoint and check actual response |
-| Forgetting `npm run bdd:gen` after feature changes | Run before any test run |
-| One generic "send" step for all request types | Each request type gets its own named send step |
-| Root-level array schema in `schemaValidator.validate()` | Object schema + `each item in the response array should match schema` |
-| Inline `REQUEST_TEMPLATES` const in domain step file | Use `registerTemplates()` from `@utils/request-templates` |
-| Nesting `authentication` in Knex mssql connection | Use `type: 'azure-active-directory-default'` at root level |
-| Polling DB returning on `rows.length > 0` | Poll until specific field match — old records may exist for same key |
-| Putting message interfaces in `src/models/responses/` | Co-locate in factory file: `src/models/test-data/factories/<message>.factory.ts` |
-| Raw exchange string in feature/step file | Register label in `src/messaging/exchanges.ts`, use `resolveExchange(label)` |
-| Runtime message validation using HTTP `SchemaValidator` | Use `MessageValidator` + schemas from `src/messaging/message-schemas/` |
+| Mistake                                                 | Correct                                                                          |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `import { Given } from '@cucumber/cucumber'`            | `import { Given } from '../../fixtures'`                                         |
+| `this.currentResponse = result`                         | `Object.assign(currentResponse, result)`                                         |
+| `currentResponse = result` (local rebind)               | `Object.assign(currentResponse, result)`                                         |
+| `body as MyResponse[]` (direct cast)                    | `body as unknown as MyResponse[]`                                                |
+| Numeric codes in features (`200`, `404`)                | Labels: `OK`, `NotFound`                                                         |
+| Re-defining a common step in a domain file              | Check `src/steps/common/` first                                                  |
+| Using OpenAPI `nullable: true` in JSON schema           | Use `["type", "null"]` (Draft-07)                                                |
+| Trusting swagger without verifying against live API     | Always run the endpoint and check actual response                                |
+| Forgetting `npm run bdd:gen` after feature changes      | Run before any test run                                                          |
+| One generic "send" step for all request types           | Each request type gets its own named send step                                   |
+| Root-level array schema in `schemaValidator.validate()` | Object schema + `each item in the response array should match schema`            |
+| Inline `REQUEST_TEMPLATES` const in domain step file    | Use `registerTemplates()` from `@utils/request-templates`                        |
+| Nesting `authentication` in Knex mssql connection       | Use `type: 'azure-active-directory-default'` at root level                       |
+| Polling DB returning on `rows.length > 0`               | Poll until specific field match — old records may exist for same key             |
+| Putting message interfaces in `src/models/responses/`   | Co-locate in factory file: `src/models/test-data/factories/<message>.factory.ts` |
+| Raw exchange string in feature/step file                | Register label in `src/messaging/exchanges.ts`, use `resolveExchange(label)`     |
+| Runtime message validation using HTTP `SchemaValidator` | Use `MessageValidator` + schemas from `src/messaging/message-schemas/`           |
 
 ---
 

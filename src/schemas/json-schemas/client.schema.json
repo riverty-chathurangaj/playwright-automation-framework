@@ -4,9 +4,9 @@
   "title": "GLClient",
   "type": "object",
   "properties": {
-    "orgno":    { "type": ["string", "null"] },
+    "orgno": { "type": ["string", "null"] },
     "globalId": { "type": ["integer", "null"] },
-    "name":     { "type": ["string", "null"] }
+    "name": { "type": ["string", "null"] }
   },
   "additionalProperties": false
 }

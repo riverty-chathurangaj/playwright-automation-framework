@@ -66,10 +66,7 @@ export class SnapshotManager {
     return this.snapshots.get(label);
   }
 
-  private detectChanges(
-    before: Record<string, unknown> | null,
-    after: Record<string, unknown> | null,
-  ): FieldChange[] {
+  private detectChanges(before: Record<string, unknown> | null, after: Record<string, unknown> | null): FieldChange[] {
     const changes: FieldChange[] = [];
 
     if (!before && !after) return changes;

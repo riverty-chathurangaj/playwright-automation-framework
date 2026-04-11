@@ -4,10 +4,10 @@
   "title": "ProblemDetails",
   "type": "object",
   "properties": {
-    "type":     { "type": ["string", "null"] },
-    "title":    { "type": ["string", "null"] },
-    "status":   { "type": ["integer", "null"] },
-    "detail":   { "type": ["string", "null"] },
+    "type": { "type": ["string", "null"] },
+    "title": { "type": ["string", "null"] },
+    "status": { "type": ["integer", "null"] },
+    "detail": { "type": ["string", "null"] },
     "instance": { "type": ["string", "null"] }
   },
   "additionalProperties": true

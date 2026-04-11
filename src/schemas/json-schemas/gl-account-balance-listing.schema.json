@@ -3,16 +3,16 @@
   "title": "GLAccountBalanceListingModel",
   "type": "object",
   "properties": {
-    "account":              { "type": ["string", "null"] },
-    "accountName":          { "type": ["string", "null"] },
-    "orgnoClient":          { "type": ["string", "null"] },
-    "clientName":           { "type": ["string", "null"] },
-    "inBalance":            { "type": "number" },
-    "balanceChange":        { "type": "number" },
-    "outBalance":           { "type": "number" },
-    "date":                 { "type": "string" },
-    "accountingYearMonth":  { "type": ["integer", "null"] },
-    "ssoNumber":            { "type": ["string", "null"] }
+    "account": { "type": ["string", "null"] },
+    "accountName": { "type": ["string", "null"] },
+    "orgnoClient": { "type": ["string", "null"] },
+    "clientName": { "type": ["string", "null"] },
+    "inBalance": { "type": "number" },
+    "balanceChange": { "type": "number" },
+    "outBalance": { "type": "number" },
+    "date": { "type": "string" },
+    "accountingYearMonth": { "type": ["integer", "null"] },
+    "ssoNumber": { "type": ["string", "null"] }
   },
   "required": ["inBalance", "balanceChange", "outBalance"],
   "additionalProperties": true

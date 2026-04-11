@@ -79,7 +79,6 @@ export type GLFixtures = {
 // ─── Extended test object ────────────────────────────────────────
 
 export const test = base.extend<GLFixtures>({
-
   // ── Core ──────────────────────────────────────────────────────
 
   apiClient: async ({ request }, use: (client: ApiClient) => Promise<void>) => {
@@ -210,7 +209,7 @@ export const test = base.extend<GLFixtures>({
       }
 
       // AI failure analysis (optional)
-      if (status === 'failed' && process.env.AI_ENABLED === 'true') {
+      if (status === 'failed' && config.ai.enabled) {
         try {
           const enricher = new AIEnricher();
           const analysis = await enricher.analyzeFailure({

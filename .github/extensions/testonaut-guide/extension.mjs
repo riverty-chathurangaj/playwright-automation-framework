@@ -2,18 +2,18 @@
 // Testonaut framework guide — returns patterns, common steps, and scaffolding
 // templates for the BDD test automation framework.
 
-import { joinSession } from "@github/copilot-sdk/extension";
+import { joinSession } from '@github/copilot-sdk/extension';
 
 // ── Common step definitions (verbatim from src/steps/common/) ────────────────
 
 const COMMON_STEPS = {
-  "auth.steps.ts": [
+  'auth.steps.ts': [
     'Given I am authenticated as {string}',
     'Given I am not authenticated',
     'Given I am authenticated with an expired token',
     'Given I am authenticated with an invalid token',
   ],
-  "api.steps.ts — Request Building": [
+  'api.steps.ts — Request Building': [
     'When I define a GET {string}',
     'When I define a POST {string}',
     'When I define a PUT {string}',
@@ -31,7 +31,7 @@ const COMMON_STEPS = {
     'When I send a valid POST request to {string} with:',
     'When I send an invalid POST request to {string} with:',
   ],
-  "api.steps.ts — Response Assertions": [
+  'api.steps.ts — Response Assertions': [
     'Then I get the response code of {word}',
     'Then the response status should be {word}',
     'Then the response status should be {word} or {word}',
@@ -55,7 +55,7 @@ const COMMON_STEPS = {
     'Then I see the error message {string}',
     'Then the response time should be under {int} milliseconds',
   ],
-  "schema.steps.ts": [
+  'schema.steps.ts': [
     'Then the response should match schema {string}',
     'Then the response should NOT match schema {string}',
     'Then each item in the response array should match schema {string}',
@@ -64,12 +64,12 @@ const COMMON_STEPS = {
     'Then no field types should have changed from the baseline',
     'Then I have the baseline schema snapshot for {string}',
   ],
-  "contract.steps.ts": [
+  'contract.steps.ts': [
     'Then the response should satisfy contract {string}',
     'Then the contract should be satisfied for {string} on {string}',
     'Then the response schema should be valid against contract {string}',
   ],
-  "message.steps.ts": [
+  'message.steps.ts': [
     'Given I am listening on {string}',
     'Given I am listening on the {string} exchange',
     'When I publish the message to {string}',
@@ -98,7 +98,7 @@ const COMMON_STEPS = {
     'Then the message should be retried {int} times',
     'Then after retries are exhausted the message should appear in the DLQ',
   ],
-  "database.steps.ts": [
+  'database.steps.ts': [
     'Given account {string} exists in the database with balance {float}',
     'Given I capture a database snapshot of account {string}',
     'Given I capture account {string} balance',
@@ -128,7 +128,10 @@ const COMMON_STEPS = {
 
 function scaffoldEndpoint(entity, domain) {
   const pascal = entity.charAt(0).toUpperCase() + entity.slice(1);
-  const kebab = entity.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '');
+  const kebab = entity
+    .replace(/([A-Z])/g, '-$1')
+    .toLowerCase()
+    .replace(/^-/, '');
 
   return `## 1. TypeScript Interface — src/models/responses/${kebab}.response.ts
 
@@ -259,7 +262,10 @@ Feature: ${pascal}s
 
 function scaffoldMessageType(messageName) {
   const pascal = messageName.charAt(0).toUpperCase() + messageName.slice(1);
-  const kebab = messageName.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '');
+  const kebab = messageName
+    .replace(/([A-Z])/g, '-$1')
+    .toLowerCase()
+    .replace(/^-/, '');
 
   return `## 1. Factory — src/models/test-data/factories/${kebab}.factory.ts
 
@@ -377,14 +383,14 @@ OK, Created, Accepted, NoContent, BadRequest, Unauthorized, Forbidden, NotFound,
 const session = await joinSession({
   tools: [
     {
-      name: "testonaut_common_steps",
+      name: 'testonaut_common_steps',
       description:
-        "Returns ALL common step definitions from src/steps/common/. Use before writing any step definition to avoid re-defining existing steps. Optionally filter by file name.",
+        'Returns ALL common step definitions from src/steps/common/. Use before writing any step definition to avoid re-defining existing steps. Optionally filter by file name.',
       parameters: {
-        type: "object",
+        type: 'object',
         properties: {
           file: {
-            type: "string",
+            type: 'string',
             description:
               'Filter by step file name, e.g. "auth", "api", "schema", "contract", "message", "database". Omit to return all.',
           },
@@ -393,62 +399,59 @@ const session = await joinSession({
       skipPermission: true,
       handler: async (args) => {
         const filter = args.file?.toLowerCase();
-        let result = "";
+        let result = '';
         for (const [file, steps] of Object.entries(COMMON_STEPS)) {
           if (filter && !file.toLowerCase().includes(filter)) continue;
           result += `### ${file}\n`;
           for (const step of steps) {
             result += `  ${step}\n`;
           }
-          result += "\n";
+          result += '\n';
         }
         return result.trim() || `No common steps found matching "${filter}".`;
       },
     },
     {
-      name: "testonaut_scaffold_endpoint",
+      name: 'testonaut_scaffold_endpoint',
       description:
-        "Generates scaffolding templates for a new API endpoint: TypeScript interface, JSON Schema, domain step file, feature file, and playwright.config.ts project entry. Returns the templates as text — you then create the files.",
+        'Generates scaffolding templates for a new API endpoint: TypeScript interface, JSON Schema, domain step file, feature file, and playwright.config.ts project entry. Returns the templates as text — you then create the files.',
       parameters: {
-        type: "object",
+        type: 'object',
         properties: {
           entity: {
-            type: "string",
-            description:
-              'The entity name in camelCase, e.g. "order", "clientDepartment", "product"',
+            type: 'string',
+            description: 'The entity name in camelCase, e.g. "order", "clientDepartment", "product"',
           },
           domain: {
-            type: "string",
-            description:
-              'The domain/folder name in kebab-case, e.g. "orders", "clients", "products"',
+            type: 'string',
+            description: 'The domain/folder name in kebab-case, e.g. "orders", "clients", "products"',
           },
         },
-        required: ["entity", "domain"],
+        required: ['entity', 'domain'],
       },
       handler: async (args) => scaffoldEndpoint(args.entity, args.domain),
     },
     {
-      name: "testonaut_scaffold_message",
+      name: 'testonaut_scaffold_message',
       description:
-        "Generates scaffolding templates for a new RabbitMQ message type: factory with envelope + payload interfaces, exchange registration, step file, and optional message schema.",
+        'Generates scaffolding templates for a new RabbitMQ message type: factory with envelope + payload interfaces, exchange registration, step file, and optional message schema.',
       parameters: {
-        type: "object",
+        type: 'object',
         properties: {
           messageName: {
-            type: "string",
-            description:
-              'The message name in camelCase, e.g. "bookClientDeposit", "processPayment"',
+            type: 'string',
+            description: 'The message name in camelCase, e.g. "bookClientDeposit", "processPayment"',
           },
         },
-        required: ["messageName"],
+        required: ['messageName'],
       },
       handler: async (args) => scaffoldMessageType(args.messageName),
     },
     {
-      name: "testonaut_rules",
+      name: 'testonaut_rules',
       description:
-        "Returns the critical rules, HTTP status labels, and fixture mutation rules for the Testonaut framework. Call this before implementing any feature to ensure compliance.",
-      parameters: { type: "object", properties: {} },
+        'Returns the critical rules, HTTP status labels, and fixture mutation rules for the Testonaut framework. Call this before implementing any feature to ensure compliance.',
+      parameters: { type: 'object', properties: {} },
       skipPermission: true,
       handler: async () => CRITICAL_RULES,
     },

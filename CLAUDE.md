@@ -26,6 +26,7 @@ This is a **Playwright BDD API test automation framework** for the GL (General L
 ## Messaging → DB verification pattern
 
 After publishing a RabbitMQ message and confirming consumption, verify the resulting database transactions:
+
 1. Store the message via `store('lastPublishedMessage', message)` (done by common message steps)
 2. Extract `InstanceId`, `Reference`, `sentTime`, and `Amount` from the stored message
 3. Poll `Data.Transaction` by `Reference + InstanceId + CreatedDate` cutoff, waiting until rows matching the exact `±Amount` appear in `AmountNotRounded`
@@ -47,21 +48,21 @@ buildBookClientDepositMessage(payloadOverrides?, messageId?)
 
 ## Key files
 
-| File | Purpose |
-|---|---|
-| `src/fixtures/index.ts` | All fixtures + `{ Given, When, Then }` exports |
-| `src/steps/common/` | Shared steps: auth, api, schema, contract, database, message |
-| `src/steps/<domain>/<domain>.steps.ts` | `registerTemplates()` + send step + assertions |
-| `src/utils/request-templates.ts` | Central template registry: `registerTemplates()`, `getTemplate()`, `resolveEndpoint()` |
-| `src/utils/http-status.ts` | Status label → code map: `resolveStatus('OK')` → `200` |
-| `src/schemas/json-schemas/*.schema.json` | JSON Schema Draft-07, `$id` = schema name |
-| `src/models/responses/*.response.ts` | TypeScript interfaces for response bodies |
-| `src/models/test-data/fixtures/swagger.json` | OpenAPI spec (starting point only — verify against actual API) |
-| `src/models/test-data/factories/*.factory.ts` | Message/payload builders with randomized data + overrides |
-| `src/database/db-client.ts` | Knex database client with Azure AD auth support |
-| `src/core/config.ts` | Config — all env vars with defaults (none strictly required) |
-| `src/core/auth-manager.ts` | OAuth2 client_credentials + token cache + static token injection |
-| `playwright.config.ts` | BDD wiring + project/tag mapping (10 domain projects) |
+| File                                          | Purpose                                                                                |
+| --------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `src/fixtures/index.ts`                       | All fixtures + `{ Given, When, Then }` exports                                         |
+| `src/steps/common/`                           | Shared steps: auth, api, schema, contract, database, message                           |
+| `src/steps/<domain>/<domain>.steps.ts`        | `registerTemplates()` + send step + assertions                                         |
+| `src/utils/request-templates.ts`              | Central template registry: `registerTemplates()`, `getTemplate()`, `resolveEndpoint()` |
+| `src/utils/http-status.ts`                    | Status label → code map: `resolveStatus('OK')` → `200`                                 |
+| `src/schemas/json-schemas/*.schema.json`      | JSON Schema Draft-07, `$id` = schema name                                              |
+| `src/models/responses/*.response.ts`          | TypeScript interfaces for response bodies                                              |
+| `src/models/test-data/fixtures/swagger.json`  | OpenAPI spec (starting point only — verify against actual API)                         |
+| `src/models/test-data/factories/*.factory.ts` | Message/payload builders with randomized data + overrides                              |
+| `src/database/db-client.ts`                   | Knex database client with Azure AD auth support                                        |
+| `src/core/config.ts`                          | Config — all env vars with defaults (none strictly required)                           |
+| `src/core/auth-manager.ts`                    | OAuth2 client_credentials + token cache + static token injection                       |
+| `playwright.config.ts`                        | BDD wiring + project/tag mapping (10 domain projects)                                  |
 
 ## For full implementation patterns
 

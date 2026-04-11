@@ -351,7 +351,10 @@ Respond ONLY with a JSON object — no markdown fences, no extra text:
     const text = await this.runPrompt(prompt);
 
     // Strip markdown fences if model wrapped response anyway
-    const cleaned = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+    const cleaned = text
+      .trim()
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/i, '');
     try {
       return JSON.parse(cleaned) as GeneratedFeature;
     } catch {
@@ -366,9 +369,7 @@ Respond ONLY with a JSON object — no markdown fences, no extra text:
 
 // CLI entrypoint
 if (require.main === module) {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const fs = require('fs') as typeof import('fs');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const path = require('path') as typeof import('path');
 
   const args = process.argv.slice(2);
@@ -388,24 +389,27 @@ if (require.main === module) {
     const patterns = getArg('--patterns');
 
     if (!ticket || !ac || !endpoint) {
-      console.error([
-        '',
-        'Usage: npm run ai:generate -- \\',
-        '  --ticket   "GL-123: Add balance filter by date range" \\',
-        '  --ac       "User can filter balance by fromDate and toDate" \\',
-        '  --endpoint "/{instanceId}/balance" \\',
-        '  [--domain  balance]                    # auto-save to features/<domain>/',
-        '  [--out     date-filter.feature]        # custom filename (default: derived from ticket)',
-        '  [--patterns "existing step patterns"]  # optional context for the AI',
-        '',
-      ].join('\n'));
+      console.error(
+        [
+          '',
+          'Usage: npm run ai:generate -- \\',
+          '  --ticket   "GL-123: Add balance filter by date range" \\',
+          '  --ac       "User can filter balance by fromDate and toDate" \\',
+          '  --endpoint "/{instanceId}/balance" \\',
+          '  [--domain  balance]                    # auto-save to features/<domain>/',
+          '  [--out     date-filter.feature]        # custom filename (default: derived from ticket)',
+          '  [--patterns "existing step patterns"]  # optional context for the AI',
+          '',
+        ].join('\n'),
+      );
       process.exit(1);
     }
 
     console.log('\n🤖 Generating BDD scenarios via AI...\n');
 
     const enricher = new AIEnricher();
-    enricher.generateScenariosFromTicket(ticket, ac, endpoint, patterns)
+    enricher
+      .generateScenariosFromTicket(ticket, ac, endpoint, patterns)
       .then((result) => {
         console.log('=== Coverage Analysis ===');
         console.log(result.coverageAnalysis);
@@ -413,8 +417,14 @@ if (require.main === module) {
         console.log(result.suggestedTags.join(', '));
 
         const featureFileName = outFile
-          ? (outFile.endsWith('.feature') ? outFile : `${outFile}.feature`)
-          : `${ticket.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 60)}.feature`;
+          ? outFile.endsWith('.feature')
+            ? outFile
+            : `${outFile}.feature`
+          : `${ticket
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-|-$/g, '')
+              .substring(0, 60)}.feature`;
 
         if (domain) {
           const outputPath = path.join('features', domain, featureFileName);
@@ -433,15 +443,17 @@ if (require.main === module) {
         process.exit(1);
       });
   } else {
-    console.log([
-      '',
-      'Testonaut AI CLI',
-      '================',
-      '',
-      '  generate   Generate BDD scenarios from a ticket',
-      '             npm run ai:generate -- --ticket "..." --ac "..." --endpoint "..."',
-      '',
-    ].join('\n'));
+    console.log(
+      [
+        '',
+        'Testonaut AI CLI',
+        '================',
+        '',
+        '  generate   Generate BDD scenarios from a ticket',
+        '             npm run ai:generate -- --ticket "..." --ac "..." --endpoint "..."',
+        '',
+      ].join('\n'),
+    );
   }
 }
 
@@ -460,11 +472,7 @@ const severityEmoji: Record<string, string> = {
 };
 
 function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 export function formatAnalysisHtml(analysis: FailureAnalysis): string {

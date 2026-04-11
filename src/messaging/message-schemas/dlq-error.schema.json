@@ -9,17 +9,17 @@
       "items": {
         "type": "object",
         "properties": {
-          "count":       { "type": "integer", "minimum": 1 },
-          "exchange":    { "type": "string" },
-          "queue":       { "type": "string" },
-          "reason":      { "type": "string", "enum": ["rejected", "expired", "maxlen", "delivery-limit"] },
+          "count": { "type": "integer", "minimum": 1 },
+          "exchange": { "type": "string" },
+          "queue": { "type": "string" },
+          "reason": { "type": "string", "enum": ["rejected", "expired", "maxlen", "delivery-limit"] },
           "routing-keys": { "type": "array", "items": { "type": "string" } },
-          "time":        { "type": "object" }
+          "time": { "type": "object" }
         }
       }
     },
-    "x-first-death-exchange":  { "type": "string" },
-    "x-first-death-queue":     { "type": "string" },
-    "x-first-death-reason":    { "type": "string" }
+    "x-first-death-exchange": { "type": "string" },
+    "x-first-death-queue": { "type": "string" },
+    "x-first-death-reason": { "type": "string" }
   }
 }

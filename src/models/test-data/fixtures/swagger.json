@@ -18,9 +18,7 @@
   "paths": {
     "/gl-service/{instanceId}/accounts": {
       "get": {
-        "tags": [
-          "Account"
-        ],
+        "tags": ["Account"],
         "parameters": [
           {
             "name": "instanceId",
@@ -112,18 +110,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-gl-transaction-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-gl-transaction-read:15"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/accounts/{postingId}": {
       "get": {
-        "tags": [
-          "Account"
-        ],
+        "tags": ["Account"],
         "parameters": [
           {
             "name": "instanceId",
@@ -217,18 +211,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-gl-transaction-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-gl-transaction-read:15"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/AccountingMonth/Close": {
       "post": {
-        "tags": [
-          "AccountingMonth"
-        ],
+        "tags": ["AccountingMonth"],
         "parameters": [
           {
             "name": "instanceId",
@@ -313,9 +303,7 @@
     },
     "/gl-service/{instanceId}/AccountingMonth/Open": {
       "post": {
-        "tags": [
-          "AccountingMonth"
-        ],
+        "tags": ["AccountingMonth"],
         "parameters": [
           {
             "name": "instanceId",
@@ -400,9 +388,7 @@
     },
     "/gl-service/{instanceId}/balance": {
       "get": {
-        "tags": [
-          "Balance"
-        ],
+        "tags": ["Balance"],
         "parameters": [
           {
             "name": "instanceId",
@@ -548,18 +534,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-gl-transaction-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-gl-transaction-read:15"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/balance/listing": {
       "get": {
-        "tags": [
-          "Balance"
-        ],
+        "tags": ["Balance"],
         "parameters": [
           {
             "name": "instanceId",
@@ -705,18 +687,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-gl-transaction-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-gl-transaction-read:15"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/balance/ReconciliationJob": {
       "post": {
-        "tags": [
-          "Balance"
-        ],
+        "tags": ["Balance"],
         "parameters": [
           {
             "name": "instanceId",
@@ -801,18 +779,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-write:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-write:39"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/balance/ClientBalance": {
       "get": {
-        "tags": [
-          "Balance"
-        ],
+        "tags": ["Balance"],
         "parameters": [
           {
             "name": "instanceId",
@@ -931,18 +905,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-gl-transaction-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-gl-transaction-read:15"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/clients": {
       "get": {
-        "tags": [
-          "Client"
-        ],
+        "tags": ["Client"],
         "parameters": [
           {
             "name": "instanceId",
@@ -1041,18 +1011,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-gl-transaction-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-gl-transaction-read:15"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/clients/departments": {
       "get": {
-        "tags": [
-          "Client"
-        ],
+        "tags": ["Client"],
         "parameters": [
           {
             "name": "instanceId",
@@ -1137,18 +1103,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-gl-transaction-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-gl-transaction-read:15"]
           }
         ]
       }
     },
     "/gl-service/data-sync/logs": {
       "get": {
-        "tags": [
-          "DataSync"
-        ],
+        "tags": ["DataSync"],
         "responses": {
           "200": {
             "description": "OK"
@@ -1156,18 +1118,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-read:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-read:39"]
           }
         ]
       }
     },
     "/gl-service/data-sync/logs/{entityName}": {
       "get": {
-        "tags": [
-          "DataSync"
-        ],
+        "tags": ["DataSync"],
         "parameters": [
           {
             "name": "entityName",
@@ -1185,18 +1143,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-read:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-read:39"]
           }
         ]
       }
     },
     "/gl-service/data-sync/logs/errors": {
       "get": {
-        "tags": [
-          "DataSync"
-        ],
+        "tags": ["DataSync"],
         "responses": {
           "200": {
             "description": "OK"
@@ -1204,18 +1158,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-read:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-read:39"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/generalledger/bundlenumber": {
       "get": {
-        "tags": [
-          "GeneralLedger"
-        ],
+        "tags": ["GeneralLedger"],
         "parameters": [
           {
             "name": "instanceId",
@@ -1315,18 +1265,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-gl-transaction-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-gl-transaction-read:15"]
           }
         ]
       }
     },
     "/gl-service/health/ping": {
       "get": {
-        "tags": [
-          "Health"
-        ],
+        "tags": ["Health"],
         "responses": {
           "200": {
             "description": "OK",
@@ -1351,18 +1297,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-read:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-read:39"]
           }
         ]
       }
     },
     "/gl-service/health/ping-mi": {
       "get": {
-        "tags": [
-          "Health"
-        ],
+        "tags": ["Health"],
         "responses": {
           "200": {
             "description": "OK",
@@ -1387,18 +1329,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-read:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-read:39"]
           }
         ]
       }
     },
     "/gl-service/health/ping-mi-getconnectionstrings": {
       "get": {
-        "tags": [
-          "Health"
-        ],
+        "tags": ["Health"],
         "responses": {
           "200": {
             "description": "OK",
@@ -1423,18 +1361,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-read:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-read:39"]
           }
         ]
       }
     },
     "/gl-service/instances": {
       "get": {
-        "tags": [
-          "Instance"
-        ],
+        "tags": ["Instance"],
         "parameters": [
           {
             "name": "mi",
@@ -1477,18 +1411,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-read:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-read:39"]
           }
         ]
       }
     },
     "/gl-service/instances/{id}": {
       "get": {
-        "tags": [
-          "Instance"
-        ],
+        "tags": ["Instance"],
         "parameters": [
           {
             "name": "id",
@@ -1524,18 +1454,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-read:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-read:39"]
           }
         ]
       }
     },
     "/gl-service/instances/source-system/{sourceSystemId}/id": {
       "get": {
-        "tags": [
-          "Instance"
-        ],
+        "tags": ["Instance"],
         "parameters": [
           {
             "name": "sourceSystemId",
@@ -1562,18 +1488,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-read:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-read:39"]
           }
         ]
       }
     },
     "/gl-service/instances/{id}/activate": {
       "put": {
-        "tags": [
-          "Instance"
-        ],
+        "tags": ["Instance"],
         "parameters": [
           {
             "name": "id",
@@ -1592,18 +1514,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-admin:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-admin:39"]
           }
         ]
       }
     },
     "/gl-service/instances/{id}/deactivate": {
       "put": {
-        "tags": [
-          "Instance"
-        ],
+        "tags": ["Instance"],
         "parameters": [
           {
             "name": "id",
@@ -1622,18 +1540,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-admin:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-admin:39"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/postings": {
       "get": {
-        "tags": [
-          "Posting"
-        ],
+        "tags": ["Posting"],
         "parameters": [
           {
             "name": "instanceId",
@@ -1725,18 +1639,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-gl-transaction-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-gl-transaction-read:15"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/BalanceReport": {
       "get": {
-        "tags": [
-          "Report"
-        ],
+        "tags": ["Report"],
         "parameters": [
           {
             "name": "instanceId",
@@ -1839,18 +1749,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-gl-transaction-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-gl-transaction-read:15"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/rules/{accountPlanId}/events": {
       "get": {
-        "tags": [
-          "Rules"
-        ],
+        "tags": ["Rules"],
         "parameters": [
           {
             "name": "instanceId",
@@ -1944,18 +1850,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-read:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-read:39"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/rules/{accountPlanId}/events/{eventId}": {
       "get": {
-        "tags": [
-          "Rules"
-        ],
+        "tags": ["Rules"],
         "parameters": [
           {
             "name": "instanceId",
@@ -2058,18 +1960,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-read:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-read:39"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/rules/postings": {
       "get": {
-        "tags": [
-          "Rules"
-        ],
+        "tags": ["Rules"],
         "parameters": [
           {
             "name": "instanceId",
@@ -2154,18 +2052,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-read:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-read:39"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/rules/postings/{postingId}": {
       "get": {
-        "tags": [
-          "Rules"
-        ],
+        "tags": ["Rules"],
         "parameters": [
           {
             "name": "instanceId",
@@ -2259,18 +2153,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_general-ledger-read:39"
-            ]
+            "Bearer": ["BorderPatrol_general-ledger-read:39"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/sap/journalentries": {
       "get": {
-        "tags": [
-          "Sap"
-        ],
+        "tags": ["Sap"],
         "parameters": [
           {
             "name": "instanceId",
@@ -2534,18 +2424,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-importexport-sap-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-importexport-sap-read:15"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/sap/bookings": {
       "get": {
-        "tags": [
-          "Sap"
-        ],
+        "tags": ["Sap"],
         "parameters": [
           {
             "name": "instanceId",
@@ -2646,18 +2532,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-importexport-sap-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-importexport-sap-read:15"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/sap/producttax": {
       "get": {
-        "tags": [
-          "Sap"
-        ],
+        "tags": ["Sap"],
         "parameters": [
           {
             "name": "instanceId",
@@ -2758,18 +2640,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-importexport-sap-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-importexport-sap-read:15"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/sap/transactions": {
       "get": {
-        "tags": [
-          "Sap"
-        ],
+        "tags": ["Sap"],
         "parameters": [
           {
             "name": "instanceId",
@@ -2861,18 +2739,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-importexport-sap-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-importexport-sap-read:15"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/transactions": {
       "get": {
-        "tags": [
-          "Transactions"
-        ],
+        "tags": ["Transactions"],
         "parameters": [
           {
             "name": "instanceId",
@@ -3096,18 +2970,14 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-gl-transaction-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-gl-transaction-read:15"]
           }
         ]
       }
     },
     "/gl-service/{instanceId}/transactions/{id}": {
       "get": {
-        "tags": [
-          "Transactions"
-        ],
+        "tags": ["Transactions"],
         "parameters": [
           {
             "name": "id",
@@ -3151,9 +3021,7 @@
         },
         "security": [
           {
-            "Bearer": [
-              "BorderPatrol_phoenix-gl-transaction-read:15"
-            ]
+            "Bearer": ["BorderPatrol_phoenix-gl-transaction-read:15"]
           }
         ]
       }
@@ -3162,11 +3030,7 @@
   "components": {
     "schemas": {
       "AmountType": {
-        "enum": [
-          1,
-          2,
-          3
-        ],
+        "enum": [1, 2, 3],
         "type": "integer",
         "format": "int32"
       },
@@ -3293,11 +3157,7 @@
         "additionalProperties": false
       },
       "BookingTransactions": {
-        "required": [
-          "account",
-          "orgnoClient",
-          "ssoNumber"
-        ],
+        "required": ["account", "orgnoClient", "ssoNumber"],
         "type": "object",
         "properties": {
           "id": {
@@ -3381,31 +3241,7 @@
         "additionalProperties": false
       },
       "BundleSeries": {
-        "enum": [
-          0,
-          10,
-          11,
-          12,
-          13,
-          14,
-          15,
-          16,
-          17,
-          18,
-          19,
-          20,
-          21,
-          22,
-          23,
-          24,
-          25,
-          26,
-          27,
-          28,
-          29,
-          30,
-          31
-        ],
+        "enum": [0, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31],
         "type": "integer",
         "format": "int32"
       },
@@ -3608,23 +3444,7 @@
         "additionalProperties": false
       },
       "GLInstance": {
-        "enum": [
-          1001,
-          1002,
-          1003,
-          1004,
-          1021,
-          1022,
-          1023,
-          2001,
-          2002,
-          2003,
-          2004,
-          2021,
-          2022,
-          2023,
-          2024
-        ],
+        "enum": [1001, 1002, 1003, 1004, 1021, 1022, 1023, 2001, 2002, 2003, 2004, 2021, 2022, 2023, 2024],
         "type": "integer",
         "format": "int32"
       },
@@ -3978,7 +3798,7 @@
             "nullable": true
           }
         },
-        "additionalProperties": { }
+        "additionalProperties": {}
       },
       "ProductTax": {
         "type": "object",
@@ -4093,7 +3913,7 @@
           "implicit": {
             "authorizationUrl": "https://identity-test.horizonafs.io/authorize",
             "tokenUrl": "https://identity-test.horizonafs.io/oauth/token",
-            "scopes": { }
+            "scopes": {}
           }
         }
       }
@@ -4101,7 +3921,7 @@
   },
   "security": [
     {
-      "Bearer": [ ]
+      "Bearer": []
     }
   ],
   "tags": [

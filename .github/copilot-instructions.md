@@ -6,16 +6,16 @@ You are helping a developer work on a **pw-testforge-gls** BDD test automation f
 
 ## Project Stack
 
-| Concern | Library |
-|---|---|
-| HTTP requests | Playwright `APIRequestContext` (NOT browser) |
-| BDD runner | playwright-bdd 8.x (generates `.spec.ts` from `.feature` files) |
-| BDD config | `playwright.config.ts` via `defineBddConfig()` |
-| Fixtures / state | `src/fixtures/index.ts` — replaces Cucumber `World` |
-| Assertions | Chai 5.x (`expect(...).to.be.true`, `.to.equal`, `.to.be.at.least`) |
-| Schema validation | Ajv 8.x + `ajv-formats`, JSON Schema Draft-07 |
-| Type safety | TypeScript 5.x strict mode |
-| Logging | Winston (`src/core/logger.ts`) |
+| Concern           | Library                                                             |
+| ----------------- | ------------------------------------------------------------------- |
+| HTTP requests     | Playwright `APIRequestContext` (NOT browser)                        |
+| BDD runner        | playwright-bdd 8.x (generates `.spec.ts` from `.feature` files)     |
+| BDD config        | `playwright.config.ts` via `defineBddConfig()`                      |
+| Fixtures / state  | `src/fixtures/index.ts` — replaces Cucumber `World`                 |
+| Assertions        | Chai 5.x (`expect(...).to.be.true`, `.to.equal`, `.to.be.at.least`) |
+| Schema validation | Ajv 8.x + `ajv-formats`, JSON Schema Draft-07                       |
+| Type safety       | TypeScript 5.x strict mode                                          |
+| Logging           | Winston (`src/core/logger.ts`)                                      |
 
 ---
 
@@ -115,8 +115,8 @@ export interface DepartmentResponse {
   "title": "Department",
   "type": "object",
   "properties": {
-    "id":          { "type": "integer" },
-    "name":        { "type": "string" },
+    "id": { "type": "integer" },
+    "name": { "type": "string" },
     "description": { "type": ["string", "null"] }
   },
   "additionalProperties": false
@@ -145,8 +145,8 @@ export interface DepartmentResponse {
 import { When, Then } from '../../fixtures';
 
 // WRONG
-import { When, Then } from '@cucumber/cucumber';  // ❌
-import { When, Then } from 'playwright-bdd';       // ❌
+import { When, Then } from '@cucumber/cucumber'; // ❌
+import { When, Then } from 'playwright-bdd'; // ❌
 ```
 
 ### Available common steps (do NOT re-define in domain files)
@@ -319,12 +319,12 @@ When('...', async function (this: any, arg) { this.currentResponse = ...; }); //
 
 ### Mutable state rules
 
-| Fixture | How to mutate |
-|---|---|
-| `currentRequest` | Set properties: `currentRequest.method = 'GET'` |
+| Fixture           | How to mutate                                                |
+| ----------------- | ------------------------------------------------------------ |
+| `currentRequest`  | Set properties: `currentRequest.method = 'GET'`              |
 | `currentResponse` | `Object.assign(currentResponse, apiResult)` — never reassign |
-| `activeRole` | `activeRole.value = 'a valid user'` |
-| primitive values | `store('keyOverride', Number(value))` |
+| `activeRole`      | `activeRole.value = 'a valid user'`                          |
+| primitive values  | `store('keyOverride', Number(value))`                        |
 
 **Never do `currentResponse = result`** — rebinds local variable only. Always use `Object.assign`.
 
@@ -362,31 +362,36 @@ type OrderFixtures = {
 };
 
 // ── 2. Domain-specific send step ─────────────────────────────────
-Then('I send the order request to the API', async function (
-  { apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: OrderFixtures,
-) {
-  const { method, endpoint } = currentRequest;
-  if (!method || !endpoint) throw new Error('No request defined.');
-  const effectiveId = retrieve<number>('instanceIdOverride') ?? instanceId;
-  const resolvedEndpoint = `${apiBase}${endpoint.replace('{instanceId}', String(effectiveId))}`;
-  Object.assign(
-    currentResponse,
-    await apiClient.get(resolvedEndpoint, { queryParams: currentRequest.queryParams }, activeRole.value),
-  );
-});
+Then(
+  'I send the order request to the API',
+  async function ({ apiClient, currentRequest, currentResponse, activeRole, instanceId, retrieve }: OrderFixtures) {
+    const { method, endpoint } = currentRequest;
+    if (!method || !endpoint) throw new Error('No request defined.');
+    const effectiveId = retrieve<number>('instanceIdOverride') ?? instanceId;
+    const resolvedEndpoint = `${apiBase}${endpoint.replace('{instanceId}', String(effectiveId))}`;
+    Object.assign(
+      currentResponse,
+      await apiClient.get(resolvedEndpoint, { queryParams: currentRequest.queryParams }, activeRole.value),
+    );
+  },
+);
 
 // ── 3. Domain-specific assertions ────────────────────────────────
-Then('the response should be an array of orders', function (
-  { currentResponse, schemaValidator }: Pick<OrderFixtures, 'currentResponse' | 'schemaValidator'>,
-) {
-  const body = currentResponse.body as unknown as OrderResponse[];
-  expect(Array.isArray(body), 'Response body should be an array').to.be.true;
-  expect(body.length, 'Expected at least 1 order').to.be.at.least(1);
-  body.forEach((item, index) => {
-    const result = schemaValidator.validate('order', item);
-    expect(result.valid, `Schema failed at [${index}]:\n${result.errors?.map(e => `  [${e.path}] ${e.message}`).join('\n')}`).to.be.true;
-  });
-});
+Then(
+  'the response should be an array of orders',
+  function ({ currentResponse, schemaValidator }: Pick<OrderFixtures, 'currentResponse' | 'schemaValidator'>) {
+    const body = currentResponse.body as unknown as OrderResponse[];
+    expect(Array.isArray(body), 'Response body should be an array').to.be.true;
+    expect(body.length, 'Expected at least 1 order').to.be.at.least(1);
+    body.forEach((item, index) => {
+      const result = schemaValidator.validate('order', item);
+      expect(
+        result.valid,
+        `Schema failed at [${index}]:\n${result.errors?.map((e) => `  [${e.path}] ${e.message}`).join('\n')}`,
+      ).to.be.true;
+    });
+  },
+);
 ```
 
 ---
@@ -460,13 +465,13 @@ Tags follow a **dual-layer** system:
 
 ```typescript
 type Fixtures = {
-  apiClient: ApiClient;               // Playwright HTTP client
-  currentRequest: CurrentRequest;     // { method, endpoint, body, headers, queryParams }
-  currentResponse: CurrentResponse;   // { status, body, headers, duration, correlationId }
-  testData: Record<string, unknown>;  // Generic test state store
-  activeRole: { value: string };      // Auth role wrapper
-  instanceId: number;                 // Default from .env; override via store()
-  schemaValidator: SchemaValidator;   // Ajv validator, loads *.schema.json on startup
+  apiClient: ApiClient; // Playwright HTTP client
+  currentRequest: CurrentRequest; // { method, endpoint, body, headers, queryParams }
+  currentResponse: CurrentResponse; // { status, body, headers, duration, correlationId }
+  testData: Record<string, unknown>; // Generic test state store
+  activeRole: { value: string }; // Auth role wrapper
+  instanceId: number; // Default from .env; override via store()
+  schemaValidator: SchemaValidator; // Ajv validator, loads *.schema.json on startup
   store: (key: string, value: unknown) => void;
   retrieve: <T>(key: string) => T;
   // Lazy (initialised only when needed):
@@ -479,7 +484,7 @@ type Fixtures = {
   snapshotManager: SnapshotManager;
   cleanupManager: CleanupManager;
   queryBuilder: QueryBuilder;
-  _afterTestHook: void;               // Auto: attaches req/resp on failure
+  _afterTestHook: void; // Auto: attaches req/resp on failure
 };
 ```
 
@@ -516,11 +521,11 @@ import { randomUUID } from 'crypto';
 
 // ── Outer envelope ──────────────────────────────────────────────
 export interface SomeActionMessage {
-  messageId: string;           // UUID
+  messageId: string; // UUID
   conversationId: string;
-  messageType: string[];       // ['urn:message:YourNamespace:SomeAction']
+  messageType: string[]; // ['urn:message:YourNamespace:SomeAction']
   message: SomeActionPayload;
-  sentTime: string;            // ISO timestamp
+  sentTime: string; // ISO timestamp
   headers: Record<string, unknown>;
   host: Record<string, unknown>;
 }
@@ -533,7 +538,9 @@ export interface SomeActionPayload {
 export function buildSomeActionMessage(
   payloadOverrides: Partial<SomeActionPayload> = {},
   messageId: string = randomUUID(),
-): SomeActionMessage { /* ... */ }
+): SomeActionMessage {
+  /* ... */
+}
 ```
 
 **Rule:** `src/models/responses/` is for HTTP response interfaces only. Message interfaces (envelope + payload) are always co-located in their factory file.
@@ -557,7 +564,7 @@ The framework supports database verification via Knex.js (`src/database/db-clien
 // CORRECT — in db-client.ts buildConnectionConfig()
 return { server: cfg.host, database: cfg.name, type: 'azure-active-directory-default', options: { encrypt: true } };
 // WRONG — knex strips nested authentication
-return { authentication: { type: 'azure-active-directory-default' } };  // ❌
+return { authentication: { type: 'azure-active-directory-default' } }; // ❌
 ```
 
 - **Large tables:** Always filter by date to avoid query timeouts.
@@ -569,49 +576,49 @@ return { authentication: { type: 'azure-active-directory-default' } };  // ❌
 
 All configuration is loaded via `src/core/config.ts`. Defaults exist for all values — no env var is strictly required.
 
-| Category | Variables |
-|---|---|
-| **Core** | `BASE_URL`, `SERVICE_PATH`, `INSTANCE_ID`, `API_VERSION`, `TEST_ENV`, `API_TIMEOUT` |
-| **Auth** | `AUTH_BASE_URL`, `AUTH_CLIENT_ID`, `AUTH_CLIENT_SECRET`, `AUTH_AUDIENCE` |
-| **RabbitMQ** | `RABBITMQ_URL`, `RABBITMQ_EXCHANGE`, `RABBITMQ_DLQ`, `RABBITMQ_VHOST`, `RABBITMQ_HEARTBEAT`, `MESSAGE_WAIT_TIMEOUT` |
+| Category     | Variables                                                                                                               |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| **Core**     | `BASE_URL`, `SERVICE_PATH`, `INSTANCE_ID`, `API_VERSION`, `TEST_ENV`, `API_TIMEOUT`                                     |
+| **Auth**     | `AUTH_BASE_URL`, `AUTH_CLIENT_ID`, `AUTH_CLIENT_SECRET`, `AUTH_AUDIENCE`                                                |
+| **RabbitMQ** | `RABBITMQ_URL`, `RABBITMQ_EXCHANGE`, `RABBITMQ_DLQ`, `RABBITMQ_VHOST`, `RABBITMQ_HEARTBEAT`, `MESSAGE_WAIT_TIMEOUT`     |
 | **Database** | `DB_CLIENT`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SCHEMA`, `DB_AUTH_TYPE`, `DB_QUERY_TIMEOUT` |
-| **AI** | `AI_ENABLED`, `AI_PROVIDER`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `AI_MODEL`, `AI_MAX_TOKENS` |
+| **AI**       | `AI_ENABLED`, `AI_PROVIDER`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `AI_MODEL`, `AI_MAX_TOKENS`                         |
 
 ---
 
 ## TypeScript Path Aliases
 
-| Alias | Resolves to |
-|---|---|
-| `@core/*` | `src/core/*` |
-| `@utils/*` | `src/utils/*` |
-| `@models/*` | `src/models/*` |
-| `@schemas/*` | `src/schemas/*` |
+| Alias          | Resolves to       |
+| -------------- | ----------------- |
+| `@core/*`      | `src/core/*`      |
+| `@utils/*`     | `src/utils/*`     |
+| `@models/*`    | `src/models/*`    |
+| `@schemas/*`   | `src/schemas/*`   |
 | `@messaging/*` | `src/messaging/*` |
-| `@database/*` | `src/database/*` |
-| `@steps/*` | `src/steps/*` |
-| `@support/*` | `src/support/*` |
-| `@fixtures/*` | `src/fixtures/*` |
+| `@database/*`  | `src/database/*`  |
+| `@steps/*`     | `src/steps/*`     |
+| `@support/*`   | `src/support/*`   |
+| `@fixtures/*`  | `src/fixtures/*`  |
 
 ---
 
 ## Common Mistakes
 
-| Mistake | Correct |
-|---|---|
-| `import { Given } from '@cucumber/cucumber'` | `import { Given } from '../../fixtures'` |
-| `this.currentResponse = result` | `Object.assign(currentResponse, result)` |
-| `currentResponse = result` (local rebind) | `Object.assign(currentResponse, result)` |
-| `body as MyType[]` | `body as unknown as MyType[]` |
-| Numeric codes in features (`200`, `404`) | Labels: `OK`, `NotFound` |
-| Re-defining a common step in a domain file | Check `src/steps/common/` first |
-| Using OpenAPI `nullable: true` in JSON schema | Use `["type", "null"]` (Draft-07) |
-| Trusting swagger without verifying against live API | Always run the endpoint and check actual response |
-| Forgetting `npm run bdd:gen` after feature changes | Run before any test run |
-| One generic "send" step for all request types | Each domain gets its own named send step |
-| Root-level array schema | Object schema + `each item in the response array should match schema` |
-| Nesting `authentication` in knex mssql connection | Use `type: 'azure-active-directory-default'` at root level |
-| Querying large tables without date filter | Always pass date cutoff |
-| Putting message interfaces in `src/models/responses/` | Co-locate in factory file: `src/models/test-data/factories/<message>.factory.ts` |
-| Raw exchange string in feature/step file | Register label in `src/messaging/exchanges.ts` |
-| Runtime message validation using HTTP `SchemaValidator` | Use `MessageValidator` + schemas from `src/messaging/message-schemas/` |
+| Mistake                                                 | Correct                                                                          |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `import { Given } from '@cucumber/cucumber'`            | `import { Given } from '../../fixtures'`                                         |
+| `this.currentResponse = result`                         | `Object.assign(currentResponse, result)`                                         |
+| `currentResponse = result` (local rebind)               | `Object.assign(currentResponse, result)`                                         |
+| `body as MyType[]`                                      | `body as unknown as MyType[]`                                                    |
+| Numeric codes in features (`200`, `404`)                | Labels: `OK`, `NotFound`                                                         |
+| Re-defining a common step in a domain file              | Check `src/steps/common/` first                                                  |
+| Using OpenAPI `nullable: true` in JSON schema           | Use `["type", "null"]` (Draft-07)                                                |
+| Trusting swagger without verifying against live API     | Always run the endpoint and check actual response                                |
+| Forgetting `npm run bdd:gen` after feature changes      | Run before any test run                                                          |
+| One generic "send" step for all request types           | Each domain gets its own named send step                                         |
+| Root-level array schema                                 | Object schema + `each item in the response array should match schema`            |
+| Nesting `authentication` in knex mssql connection       | Use `type: 'azure-active-directory-default'` at root level                       |
+| Querying large tables without date filter               | Always pass date cutoff                                                          |
+| Putting message interfaces in `src/models/responses/`   | Co-locate in factory file: `src/models/test-data/factories/<message>.factory.ts` |
+| Raw exchange string in feature/step file                | Register label in `src/messaging/exchanges.ts`                                   |
+| Runtime message validation using HTTP `SchemaValidator` | Use `MessageValidator` + schemas from `src/messaging/message-schemas/`           |

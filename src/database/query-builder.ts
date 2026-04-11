@@ -63,7 +63,10 @@ export class GLQueryBuilder {
     timestampColumn: string,
     withinSeconds: number = 60,
   ): Promise<boolean> {
-    const row = await this.db.knex(table).where({ [idColumn]: id }).first();
+    const row = await this.db
+      .knex(table)
+      .where({ [idColumn]: id })
+      .first();
     if (!row) return false;
 
     const timestamp = new Date(row[timestampColumn] as string);
@@ -79,7 +82,8 @@ export class GLQueryBuilder {
     withinSeconds: number = 30,
   ): Promise<Record<string, unknown>[]> {
     const cutoff = new Date(Date.now() - withinSeconds * 1000);
-    return this.db.knex('journal_entries')
+    return this.db
+      .knex('journal_entries')
       .where({ account_code: accountCode })
       .where('created_at', '>=', cutoff)
       .orderBy('created_at', 'asc')
@@ -88,7 +92,8 @@ export class GLQueryBuilder {
 
   // Check for duplicate IDs in a table
   async hasDuplicateIds(table: string, idColumn: string): Promise<boolean> {
-    const result = await this.db.knex(table)
+    const result = await this.db
+      .knex(table)
       .select(idColumn)
       .count(`${idColumn} as count`)
       .groupBy(idColumn)

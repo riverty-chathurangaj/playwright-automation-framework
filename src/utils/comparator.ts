@@ -40,7 +40,7 @@ export class Comparator {
   static getNestedValue(obj: Record<string, unknown>, path: string): unknown {
     // Normalise bracket notation → dots: "[0].field" → "0.field", "items[2].name" → "items.2.name"
     const normalised = path.replace(/\[(\d+)]/g, '.$1');
-    const parts = normalised.split('.').filter(p => p !== '');
+    const parts = normalised.split('.').filter((p) => p !== '');
     let current: unknown = obj;
 
     for (const part of parts) {
@@ -67,7 +67,10 @@ export class Comparator {
   }
 
   // Snapshot diff — compare before/after state
-  static snapshotDiff(before: Record<string, unknown>, after: Record<string, unknown>): {
+  static snapshotDiff(
+    before: Record<string, unknown>,
+    after: Record<string, unknown>,
+  ): {
     added: string[];
     removed: string[];
     changed: Array<{ field: string; from: unknown; to: unknown }>;
@@ -75,8 +78,8 @@ export class Comparator {
     const beforeKeys = new Set(Object.keys(before));
     const afterKeys = new Set(Object.keys(after));
 
-    const added = [...afterKeys].filter(k => !beforeKeys.has(k));
-    const removed = [...beforeKeys].filter(k => !afterKeys.has(k));
+    const added = [...afterKeys].filter((k) => !beforeKeys.has(k));
+    const removed = [...beforeKeys].filter((k) => !afterKeys.has(k));
     const changed: Array<{ field: string; from: unknown; to: unknown }> = [];
 
     for (const key of beforeKeys) {
@@ -108,18 +111,13 @@ export class Comparator {
       const aKeys = Object.keys(aObj);
       const bKeys = Object.keys(bObj);
       if (aKeys.length !== bKeys.length) return false;
-      return aKeys.every(key => Comparator.valuesEqual(aObj[key], bObj[key]));
+      return aKeys.every((key) => Comparator.valuesEqual(aObj[key], bObj[key]));
     }
 
     return false;
   }
 
-  private static collectDifferences(
-    actual: unknown,
-    expected: unknown,
-    path: string,
-    differences: Difference[],
-  ): void {
+  private static collectDifferences(actual: unknown, expected: unknown, path: string, differences: Difference[]): void {
     if (Comparator.valuesEqual(actual, expected)) return;
 
     if (typeof expected === 'object' && expected !== null && typeof actual === 'object' && actual !== null) {

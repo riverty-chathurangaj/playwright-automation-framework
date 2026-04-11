@@ -1,7 +1,6 @@
 import * as dotenv from 'dotenv';
+import * as fs from 'fs';
 import * as path from 'path';
-
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 export interface RabbitMQConfig {
   url: string;
@@ -24,7 +23,7 @@ export interface DatabaseConfig {
 }
 
 export interface AuthConfig {
-  baseUrl: string;       // Identity server base URL  (e.g. https://identity-test.horizonafs.io)
+  baseUrl: string; // Identity server base URL  (e.g. https://identity-test.horizonafs.io)
   clientId: string;
   clientSecret: string;
   audience: string;
@@ -67,16 +66,56 @@ export interface FrameworkConfig {
   gitSha: string;
 }
 
-function required(key: string): string {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(`Required environment variable "${key}" is not set. Check your .env file.`);
+type EnvMap = Record<string, string | undefined>;
+
+const DEFAULT_TEST_ENV = 'dev';
+
+function loadEnvFile(filePath: string): EnvMap {
+  if (!fs.existsSync(filePath)) {
+    return {};
   }
-  return value;
+
+  return dotenv.parse(fs.readFileSync(filePath));
 }
 
+function resolveSelectedEnvironment(): string {
+  if (process.env.TEST_ENV) {
+    return process.env.TEST_ENV;
+  }
+
+  const localOverrides = loadEnvFile(path.resolve(process.cwd(), '.env.local'));
+  if (localOverrides.TEST_ENV) {
+    return localOverrides.TEST_ENV;
+  }
+
+  const legacyRootEnv = loadEnvFile(path.resolve(process.cwd(), '.env'));
+  if (legacyRootEnv.TEST_ENV) {
+    return legacyRootEnv.TEST_ENV;
+  }
+
+  return DEFAULT_TEST_ENV;
+}
+
+const selectedEnvironment = resolveSelectedEnvironment();
+const environmentConfigDir = path.resolve(process.cwd(), 'config/environments');
+const legacyRootEnvPath = path.resolve(process.cwd(), '.env');
+const environmentOverlayPath = path.resolve(environmentConfigDir, `${selectedEnvironment}.env`);
+const localOverridePath = path.resolve(process.cwd(), '.env.local');
+
+const resolvedEnv: EnvMap = {
+  ...loadEnvFile(legacyRootEnvPath),
+  ...loadEnvFile(environmentOverlayPath),
+  ...loadEnvFile(localOverridePath),
+  ...process.env,
+  TEST_ENV: process.env.TEST_ENV || selectedEnvironment,
+};
+
 function optional(key: string, fallback: string): string {
-  return process.env[key] || fallback;
+  return resolvedEnv[key] || fallback;
+}
+
+function normalizeAuthBaseUrl(value: string): string {
+  return value.replace(/\/oauth\/token\/?$/i, '');
 }
 
 export const config: FrameworkConfig = {
@@ -89,7 +128,7 @@ export const config: FrameworkConfig = {
   messageWaitTimeout: Number(optional('MESSAGE_WAIT_TIMEOUT', '15000')),
 
   auth: {
-    baseUrl: optional('AUTH_BASE_URL', ''),
+    baseUrl: normalizeAuthBaseUrl(optional('AUTH_BASE_URL', optional('AUTH_TOKEN_URL', ''))),
     clientId: optional('AUTH_CLIENT_ID', ''),
     clientSecret: optional('AUTH_CLIENT_SECRET', ''),
     audience: optional('AUTH_AUDIENCE', ''),
@@ -104,7 +143,7 @@ export const config: FrameworkConfig = {
   },
 
   database: {
-    client: (optional('DB_CLIENT', 'mssql') as 'mssql' | 'pg' | 'mysql2'),
+    client: optional('DB_CLIENT', 'mssql') as 'mssql' | 'pg' | 'mysql2',
     host: optional('DB_HOST', 'localhost'),
     port: Number(optional('DB_PORT', '1433')),
     user: optional('DB_USER', ''),
@@ -112,17 +151,22 @@ export const config: FrameworkConfig = {
     name: optional('DB_NAME', 'GL_Database'),
     schema: optional('DB_SCHEMA', 'dbo'),
     queryTimeout: Number(optional('DB_QUERY_TIMEOUT', '10000')),
-    authType: (optional('DB_AUTH_TYPE', 'default') as 'default' | 'azure-active-directory-default'),
+    authType: optional('DB_AUTH_TYPE', 'default') as 'default' | 'azure-active-directory-default',
   },
 
   ai: {
     enabled: optional('AI_ENABLED', 'false') === 'true',
-    provider: (optional('AI_PROVIDER', 'anthropic') as 'anthropic' | 'openai' | 'azure-openai'),
+    provider: optional('AI_PROVIDER', 'anthropic') as 'anthropic' | 'openai' | 'azure-openai',
     anthropicApiKey: optional('ANTHROPIC_API_KEY', ''),
     openaiApiKey: optional('OPENAI_API_KEY', ''),
     openaiEndpoint: optional('OPENAI_ENDPOINT', ''),
     openaiApiVersion: optional('OPENAI_API_VERSION', '2024-12-01-preview'),
-    model: optional('AI_MODEL', optional('AI_PROVIDER', 'anthropic') === 'openai' || optional('AI_PROVIDER', 'anthropic') === 'azure-openai' ? 'gpt-4o-mini' : 'claude-opus-4-6'),
+    model: optional(
+      'AI_MODEL',
+      optional('AI_PROVIDER', 'anthropic') === 'openai' || optional('AI_PROVIDER', 'anthropic') === 'azure-openai'
+        ? 'gpt-4o-mini'
+        : 'claude-opus-4-6',
+    ),
     maxTokens: Number(optional('AI_MAX_TOKENS', '4096')),
   },
 

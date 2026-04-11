@@ -4,13 +4,12 @@
   "title": "GLPosting",
   "type": "object",
   "properties": {
-    "id":                { "type": "integer" },
-    "postingId":         { "type": "integer" },
-    "number":            { "type": ["integer", "null"] },
-    "name":              { "type": ["string", "null"] },
-    "description":       { "type": ["string", "null"] },
-    "reno_AccountPlan":  { "type": "integer" }
+    "id": { "type": "integer" },
+    "postingId": { "type": "integer" },
+    "number": { "type": ["integer", "null"] },
+    "name": { "type": ["string", "null"] },
+    "description": { "type": ["string", "null"] },
+    "reno_AccountPlan": { "type": "integer" }
   },
   "additionalProperties": false
 }
-
