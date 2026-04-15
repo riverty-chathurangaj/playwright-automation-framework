@@ -378,6 +378,29 @@ OK, Created, Accepted, NoContent, BadRequest, Unauthorized, Forbidden, NotFound,
 | activeRole | \`activeRole.value = 'a valid user'\` |
 | primitive values | \`store('keyOverride', Number(value))\` |`;
 
+const AI_AUTHORING_WORKFLOW = `# Testonaut AI Authoring Workflow
+
+Use the repo-owned CLI workflow for Jira/Xray-driven authoring:
+
+1. Plan
+   \`npm run ai:plan -- --source <jira-or-xray-id-or-url> [--source ...] [--out <slug>]\`
+2. Review
+   \`.ai/out/<slug>/source-context.json\`
+   \`.ai/out/<slug>/coverage-analysis.md\`
+   \`.ai/out/<slug>/test-plan.md\`
+   \`.ai/out/<slug>/bundle.json\`
+3. Approval
+   Wait for explicit user approval, then run \`npm run ai:approve -- --from <slug>\`
+4. Implementation
+   Run \`npm run ai:implement -- --from <slug>\`
+
+Guardrails:
+- Never implement from an unapproved bundle
+- Reuse existing common steps and domain scaffolding first
+- Use named requests and status labels only
+- Keep array assertions separate from schema assertions
+- If step-definition work is ambiguous, surface a blocker instead of guessing`;
+
 // ── Extension registration ───────────────────────────────────────────────────
 
 const session = await joinSession({
@@ -454,6 +477,14 @@ const session = await joinSession({
       parameters: { type: 'object', properties: {} },
       skipPermission: true,
       handler: async () => CRITICAL_RULES,
+    },
+    {
+      name: 'testonaut_ai_authoring_workflow',
+      description:
+        'Returns the repo-owned Jira/Xray AI authoring workflow: plan, review, approve, and implement. Use this instead of inventing a custom assistant-side flow.',
+      parameters: { type: 'object', properties: {} },
+      skipPermission: true,
+      handler: async () => AI_AUTHORING_WORKFLOW,
     },
   ],
 });

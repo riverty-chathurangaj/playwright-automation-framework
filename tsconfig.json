@@ -32,6 +32,7 @@
   },
   "include": [
     "src/**/*.ts",
+    "tests/**/*.ts",
     "features/**/*.ts",
     ".features-gen/**/*.ts",
     "playwright.config.ts",

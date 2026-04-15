@@ -622,3 +622,23 @@ All configuration is loaded via `src/core/config.ts`. Defaults exist for all val
 | Putting message interfaces in `src/models/responses/`   | Co-locate in factory file: `src/models/test-data/factories/<message>.factory.ts` |
 | Raw exchange string in feature/step file                | Register label in `src/messaging/exchanges.ts`                                   |
 | Runtime message validation using HTTP `SchemaValidator` | Use `MessageValidator` + schemas from `src/messaging/message-schemas/`           |
+
+---
+
+## AI Authoring Workflow
+
+Use the repo-owned bundle workflow for Jira/Xray-driven AI authoring:
+
+1. `npm run ai:plan -- --source <jira-or-xray-id-or-url> [--source ...] [--out <slug>]`
+2. Review `.ai/out/<slug>/source-context.json`, `.ai/out/<slug>/coverage-analysis.md`, `.ai/out/<slug>/test-plan.md`, and `.ai/out/<slug>/bundle.json`
+3. Wait for explicit user approval
+4. `npm run ai:approve -- --from <slug>`
+5. `npm run ai:implement -- --from <slug>`
+
+Guardrails:
+
+- Never implement from an unapproved bundle.
+- Reuse existing common steps and domain scaffolding first.
+- Use named requests and status labels only.
+- Keep array assertions separate from schema assertions.
+- If step-definition work is ambiguous, surface a blocker instead of fabricating unsupported patterns.

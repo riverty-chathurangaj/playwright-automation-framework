@@ -32,6 +32,17 @@ Husky is enabled through the `prepare` script and installs a `pre-commit` hook a
 - `npm run format:check` checks formatting without changing files
 - the `pre-commit` hook runs `lint-staged`, which formats staged supported files with Prettier and runs `eslint --fix` on staged JavaScript and TypeScript files
 
+## AI Authoring Workflow
+
+The repo now has a bundle-based AI authoring workflow for Jira/Xray-driven test planning and implementation.
+
+1. `npm run ai:plan -- --source <jira-or-xray-id-or-url> [--source ...] [--out <slug>]`
+2. Review `.ai/out/<slug>/source-context.json`, `.ai/out/<slug>/coverage-analysis.md`, and `.ai/out/<slug>/test-plan.md`
+3. `npm run ai:approve -- --from <slug>`
+4. `npm run ai:implement -- --from <slug>`
+
+The workflow is intentionally human-approved. `ai:implement` refuses to write repo files until the bundle is approved.
+
 ## Environment Model
 
 Runtime config is selected by `TEST_ENV`.
@@ -181,6 +192,8 @@ The framework still uses the same env var names; only the source model changed.
 | RabbitMQ  | `RABBITMQ_URL`, `RABBITMQ_EXCHANGE`, `RABBITMQ_DLQ`, `RABBITMQ_VHOST`, `RABBITMQ_HEARTBEAT`, `MESSAGE_WAIT_TIMEOUT`     |
 | Database  | `DB_CLIENT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_SCHEMA`, `DB_QUERY_TIMEOUT`, `DB_AUTH_TYPE`, `DB_USER`, `DB_PASSWORD` |
 | AI        | `AI_ENABLED`, `AI_PROVIDER`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENAI_ENDPOINT`, `OPENAI_API_VERSION`, `AI_MODEL` |
+| Jira      | `JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`                                                                         |
+| Xray      | `XRAY_CLIENT_ID`, `XRAY_CLIENT_SECRET`, `XRAY_BASE_URL`, `XRAY_PROJECT_KEY`, `XRAY_EXECUTION_KEY`                       |
 | Reporting | `REPORT_DIR`, `GIT_SHA`, `LOG_LEVEL`                                                                                    |
 
 For Azure SQL passwordless authentication, set `DB_AUTH_TYPE=azure-active-directory-default` and authenticate with Azure before running tests.

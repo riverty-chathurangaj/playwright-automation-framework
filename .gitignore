@@ -50,3 +50,6 @@ allure-results/
 # Coverage
 coverage/
 
+# AI authoring bundles
+.ai/out/
+

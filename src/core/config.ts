@@ -48,6 +48,12 @@ export interface XrayConfig {
   executionKey?: string;
 }
 
+export interface JiraConfig {
+  baseUrl: string;
+  email: string;
+  apiToken: string;
+}
+
 export interface FrameworkConfig {
   baseUrl: string;
   servicePath: string;
@@ -61,6 +67,7 @@ export interface FrameworkConfig {
   database: DatabaseConfig;
   ai: AIConfig;
   xray: XrayConfig;
+  jira: JiraConfig;
   logLevel: string;
   reportDir: string;
   gitSha: string;
@@ -176,6 +183,12 @@ export const config: FrameworkConfig = {
     baseUrl: optional('XRAY_BASE_URL', 'https://xray.cloud.getxray.app'),
     projectKey: optional('XRAY_PROJECT_KEY', 'GL'),
     executionKey: optional('XRAY_EXECUTION_KEY', ''),
+  },
+
+  jira: {
+    baseUrl: optional('JIRA_BASE_URL', ''),
+    email: optional('JIRA_EMAIL', ''),
+    apiToken: optional('JIRA_API_TOKEN', ''),
   },
 
   logLevel: optional('LOG_LEVEL', 'info'),

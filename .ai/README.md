@@ -12,9 +12,12 @@ This folder contains reference documentation and configuration for the AI featur
 ├── config.ts              ← provider reference (live config is in src/core/config.ts)
 ├── mcp/
 │   └── mcp.json           ← stub for future MCP server integration
+├── out/                   ← generated plan/approval/implementation bundles (gitignored)
 └── prompts/
     ├── failure-analyzer.md       ← ✅ LIVE — mirrors ai-enricher.ts → analyzeFailure()
     ├── scenario-generator.md     ← ✅ LIVE — mirrors ai-enricher.ts → generateScenariosFromTicket()
+    ├── authoring-plan.md         ← ✅ LIVE — mirrors workflow.ts → generatePlanWithAI()
+    ├── authoring-implementer.md  ← ✅ LIVE — mirrors workflow.ts → generateImplementationWithAI()
     ├── schema-analyzer.md        ← 🟡 SPEC — schema drift detection (not yet implemented)
     └── test-data-generator.md    ← 🟡 SPEC — financial test data generation (not yet implemented)
 ```
@@ -47,6 +50,35 @@ npm run ai:generate -- \
 ```
 
 See `prompts/scenario-generator.md` for the full rule set the AI follows.
+
+### 3. AI Authoring Workflow (CLI)
+Create a reviewable bundle from Jira/Xray inputs, approve it, then implement repo artifacts.
+
+```bash
+npm run ai:plan -- \
+  --source GL-456 \
+  --source https://yourcompany.atlassian.net/browse/GL-789 \
+  --out gl-balance-plan
+
+npm run ai:approve -- --from gl-balance-plan
+npm run ai:implement -- --from gl-balance-plan
+```
+
+Bundle output is written under `.ai/out/<slug>/`:
+
+- `source-context.json`
+- `coverage-analysis.md`
+- `test-plan.md`
+- `bundle.json`
+- `implementation-preview.json` after `ai:implement`
+
+The workflow is human-approved by design:
+
+- `ai:plan` writes a `proposed` bundle
+- `ai:approve` marks the bundle `approved`
+- `ai:implement` refuses to write repo files unless the bundle is approved
+
+Phase 1 accepts Jira issue IDs/URLs and Xray issue-backed IDs/URLs. Detailed Xray-native test-step ingestion is intentionally deferred; linked counterpart discovery currently relies on the Jira issue metadata available to the workflow.
 
 ---
 

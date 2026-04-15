@@ -110,6 +110,10 @@ export class AIEnricher {
     return text;
   }
 
+  async generateText(prompt: string): Promise<string> {
+    return this.runPrompt(prompt);
+  }
+
   async analyzeFailure(context: FailureContext): Promise<FailureAnalysis> {
     logger.debug('Running AI failure analysis', { scenario: context.scenarioName });
 
