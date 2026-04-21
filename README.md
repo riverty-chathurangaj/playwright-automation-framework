@@ -1,192 +1,164 @@
-# pw-testforge-gls
+# riverty-playwright-bdd
 
-BDD API automation framework for the General Ledger service.
+`riverty-playwright-bdd` is a BDD-only Playwright framework for both API and UI automation.
 
-The framework uses Playwright's `APIRequestContext` for HTTP testing, `playwright-bdd` for Gherkin-to-test generation, Ajv for JSON schema validation, RabbitMQ helpers for event flows, and Knex for database verification.
+The repo is organized by modality first:
+
+```text
+features/
+  api/<module>/**
+  ui/<module>/**
+
+src/
+  core/api/**       # API clients, messaging, database, API helpers
+  core/ui/**        # BasePage, UI auth state, UI runtime helpers
+  core/shared/**    # config, logging, shared reporting/AI helpers
+  fixtures/api/**
+  fixtures/ui/**
+  steps/api/**
+  steps/ui/**
+  pages/ui/**
+  models/api/**
+  schemas/api/**
+```
+
+The current GL suite is bundled as a reference implementation under:
+
+- `features/api/gl/**`
+- `features/ui/gl/**`
+- `src/steps/api/gl/**`
+- `src/steps/ui/gl/**`
+- `src/pages/ui/gl/**`
+- `src/models/api/gl/**`
+- `src/schemas/api/gl/**`
 
 ## Quick Start
 
-1. Install dependencies.
-2. Copy `.env.example` to `.env.local` and fill in your local secrets.
-3. Pick an environment with `TEST_ENV` and run a test command.
-
 ```bash
 npm install
-TEST_ENV=dev npm run test:smoke
+TEST_ENV=dev npm run test:api:smoke
+TEST_ENV=dev npm run test:ui:smoke
 ```
 
-PowerShell example:
+PowerShell:
 
 ```powershell
 $env:TEST_ENV = 'dev'
-npm run test:smoke
+npm run test:api:smoke
 ```
 
-If you change any `.feature` files, run `npm run bdd:gen` before using bare `npx playwright test`. All `npm run test:*` scripts already do this for you.
+Copy `.env.example` to `.env.local` for local secrets and overrides. Shared non-secret defaults live in `config/environments/<env>.env`.
+Database credentials can now be resolved in this order: mounted `/secrets/database` files, direct HashiCorp Vault lookup, then `DB_USER`/`DB_PASSWORD`.
 
-## Formatting and Hooks
+## Commands
 
-Husky is enabled through the `prepare` script and installs a `pre-commit` hook after `npm install`.
+| Command                                       | Purpose                                             |
+| --------------------------------------------- | --------------------------------------------------- |
+| `npm run bdd:gen:api`                         | Generate API specs from `features/api/**/*.feature` |
+| `npm run bdd:gen:ui`                          | Generate UI specs from `features/ui/**/*.feature`   |
+| `npm run bdd:gen`                             | Generate both API and UI specs                      |
+| `npm run test:api`                            | Run all API BDD scenarios                           |
+| `npm run test:api:smoke`                      | Run API smoke scenarios                             |
+| `npm run test:api:feature -- "@gl-clients"`   | Run API scenarios by tag/title grep                 |
+| `npm run test:api:runner`                     | Open Playwright UI mode for API specs               |
+| `npm run test:ui`                             | Run all UI BDD scenarios                            |
+| `npm run test:ui:smoke`                       | Run UI smoke scenarios                              |
+| `npm run test:ui:feature -- "@gl-navigation"` | Run UI scenarios by tag/title grep                  |
+| `npm run test:ui:runner`                      | Open Playwright UI mode for UI specs                |
+| `npm test`                                    | Run both modalities sequentially                    |
+| `npm run lint`                                | Run ESLint                                          |
+| `npm run type-check`                          | Run TypeScript with `--noEmit`                      |
+| `npm run format`                              | Format the repo with Prettier                       |
+| `npm run clean`                               | Remove generated specs, reports, and auth state     |
 
-- `npm run format` formats the repository with Prettier
-- `npm run format:check` checks formatting without changing files
-- the `pre-commit` hook runs `lint-staged`, which formats staged supported files with Prettier and runs `eslint --fix` on staged JavaScript and TypeScript files
+`npm run test:*` commands already run the matching `bdd:gen:*` step. A bare `npx playwright test` does not.
+
+## Playwright Configs
+
+- `playwright.api.config.ts`
+- `playwright.ui.config.ts`
+
+API and UI are intentionally isolated at the Playwright config, fixture, and feature levels.
 
 ## Environment Model
 
-Runtime config is selected by `TEST_ENV`.
+Runtime config loads in this order:
 
-- Shared non-secret defaults live in `config/environments/<env>.env`
-- Developer-specific secrets and overrides live in `.env.local`
-- CI secrets come from Azure DevOps variable groups
-- Legacy root `.env` is still supported as a temporary migration fallback
+1. code defaults
+2. legacy root `.env` fallback
+3. `config/environments/<TEST_ENV>.env`
+4. `.env.local`
+5. process environment variables
 
-Supported environments right now:
+Supported checked-in environments today:
 
 - `dev`
 - `test`
 - `pt`
 
-The loader applies values in this order:
+Database secret bootstrap for API runs is additive:
 
-1. Code defaults
-2. Legacy root `.env` fallback if present
-3. `config/environments/<TEST_ENV>.env`
-4. `.env.local`
-5. Process environment variables from CI
+- `DB_SECRET_SOURCE=auto` tries mounted secret files, then Vault, then env credentials
+- `DB_SECRET_SOURCE=files` requires `/secrets/database/MsSql__UserId` and `/secrets/database/MsSql__Password`
+- `DB_SECRET_SOURCE=vault` requires the Vault settings below
+- `DB_SECRET_SOURCE=env` keeps the existing `DB_USER` and `DB_PASSWORD` flow
 
-That means Azure DevOps variables always win, and local `.env.local` wins over the checked-in environment overlays.
+Canonical runtime variables:
 
-## Local Configuration
+| Area     | Variables                                                                                                                                                                             |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API      | `API_BASE_URL`, `API_SERVICE_PATH`, `INSTANCE_ID`, `API_VERSION`, `API_TIMEOUT`, `MESSAGE_WAIT_TIMEOUT`                                                                               |
+| UI       | `UI_BASE_URL`, `UI_AUTH_STORAGE_PATH`, `UI_DEFAULT_TIMEOUT`, `UI_USERNAME`, `UI_PASSWORD`                                                                                             |
+| Auth     | `AUTH_BASE_URL`, `AUTH_CLIENT_ID`, `AUTH_CLIENT_SECRET`, `AUTH_AUDIENCE`                                                                                                              |
+| RabbitMQ | `RABBITMQ_URL`, `RABBITMQ_EXCHANGE`, `RABBITMQ_DLQ`, `RABBITMQ_VHOST`, `RABBITMQ_HEARTBEAT`                                                                                           |
+| Database | `DB_CLIENT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_SCHEMA`, `DB_QUERY_TIMEOUT`, `DB_AUTH_TYPE`, `DB_SECRET_SOURCE`, `DB_USER`, `DB_PASSWORD`                                           |
+| Vault    | `VAULT_ADDR`, `VAULT_AUTH_PATH`, `VAULT_ROLE_ID`, `VAULT_SECRET_ID`, `VAULT_NAMESPACE`, `VAULT_DB_SECRET_PATH`, `VAULT_DB_USERNAME_FIELD`, `VAULT_DB_PASSWORD_FIELD`, `VAULT_TIMEOUT` |
+| Shared   | `TEST_ENV`, `REPORT_DIR`, `LOG_LEVEL`, `GIT_SHA`                                                                                                                                      |
 
-Start by copying the template:
+Azure DevOps is the primary CI path. Secrets should stay in variable groups; checked-in env overlays should stay non-secret.
 
-```bash
-cp .env.example .env.local
-```
+## Tag Contract
 
-Then set the secrets you need locally, such as:
+Every scenario should carry:
 
-- `AUTH_CLIENT_ID`
-- `AUTH_CLIENT_SECRET`
-- `DB_HOST`
-- `DB_USER`
-- `DB_PASSWORD`
-- `RABBITMQ_URL`
+- one modality tag: `@api` or `@ui`
+- one module/domain tag such as `@gl-clients`, `@gl-security`, or `@gl-navigation`
 
-You can also override any non-secret value locally in `.env.local`, but the default expectation is that shared non-secret values come from `config/environments/dev.env`, `config/environments/test.env`, or `config/environments/pt.env`.
+Additional additive tags are fine, for example:
 
-## Test Commands
+- `@smoke`
+- `@authenticated`
+- `@manual`
+- `@fixme`
 
-### Core commands
+## UI Conventions
 
-| Command                              | Purpose                                               |
-| ------------------------------------ | ----------------------------------------------------- |
-| `npm test`                           | Generate BDD specs and run all automated tests        |
-| `npm run test:smoke`                 | Run scenarios tagged `@smoke`                         |
-| `npm run test:feature -- "@clients"` | Run tests by grep pattern, tag, or title              |
-| `npm run test:ui`                    | Open the Playwright UI runner                         |
-| `npm run bdd:gen`                    | Regenerate `.features-gen` from `.feature` files only |
-| `npm run lint`                       | Run ESLint on the TypeScript source                   |
-| `npm run type-check`                 | Run TypeScript in `--noEmit` mode                     |
-| `npm run clean`                      | Remove generated output and reports                   |
+- Page objects use singleton instances with per-scenario `bind(page)`
+- Locator definitions are arrow functions
+- Simple interactions stay in step definitions
+- Page-object methods are reserved for meaningful multi-element actions
+- Shared browser primitives belong in `src/core/ui/base.page.ts`
+- Concrete app pages live outside core in `src/pages/ui/<module>/**`
 
-### Project commands
+## API Conventions
 
-Each feature belongs to a Playwright project keyed off a domain tag.
+- Reusable API steps live in `src/steps/api/common/**`
+- Module-specific API steps live in `src/steps/api/<module>/**`
+- Response interfaces live in `src/models/api/<module>/responses/**`
+- JSON schemas live in `src/schemas/api/<module>/json-schemas/**`
+- Request template registration is centralized through `registerTemplates()`
+- Response fixtures must mutate `currentResponse` via `Object.assign(...)`
 
-| Project            | Command                         |
-| ------------------ | ------------------------------- |
-| `clients`          | `npm run test:clients`          |
-| `accounts`         | `npm run test:accounts`         |
-| `balance`          | `npm run test:balance`          |
-| `transactions`     | `npm run test:transactions`     |
-| `instances`        | `npm run test:instances`        |
-| `accounting-month` | `npm run test:accounting-month` |
-| `postings`         | `npm run test:postings`         |
-| `messaging`        | `npm run test:messaging`        |
-| `security`         | `npm run test:security`         |
+## Reporting
 
-### Reporting commands
-
-| Command                   | Purpose                                                   |
-| ------------------------- | --------------------------------------------------------- |
-| `npm run report:generate` | Build an Allure HTML report from `reports/allure-results` |
-| `npm run report:open`     | Open the generated Allure report                          |
-| `npm run report:serve`    | Serve Allure directly from raw results                    |
-| `npm run report`          | Generate and open the Allure report                       |
-
-## Azure DevOps
-
-Azure DevOps is now the primary CI path for environment-aware execution.
-
-Use `azure-pipelines.yml` with one variable group per environment:
-
-- `gl-tests-dev`
-- `gl-tests-test`
-- `gl-tests-pt`
-
-Current pipeline behavior:
-
-- PR validation runs smoke tests against `dev`
-- Manual runs allow selecting `dev`, `test`, or `pt` and a Playwright grep pattern
-- Nightly regression runs the full suite against `pt`
-
-The existing GitHub Actions workflow remains in the repo as a temporary fallback during migration, but Azure DevOps is the primary documented runner.
-
-## Tag Model
-
-- Domain tags such as `@clients`, `@accounts`, and `@messaging` map directly to Playwright projects.
-- `@smoke` is the main additive execution tag currently wired into npm scripts.
-- `@manual` is excluded from automated project runs.
-- `@fixme` is converted by `playwright-bdd` into a skipped test.
-- Messaging features also use sub-domain tags such as `@book-client-deposit`.
-
-The older cross-cutting profiles `@regression`, `@negative`, and `@schema` are not currently populated in the checked-in feature set, so they are not exposed as npm run profiles.
-
-## How It Works
-
-```text
-features/<domain>/*.feature
-        -> npm run bdd:gen
-.features-gen/**/*.spec.ts
-        -> playwright test
-```
-
-- `src/fixtures/index.ts` is the shared fixture entry point for `Given`, `When`, and `Then`.
-- `src/steps/common/` contains reusable request, auth, schema, database, and messaging steps.
-- `src/steps/<domain>/` contains domain-specific request templates and assertions.
-- `src/schemas/json-schemas/` stores API response schemas.
-- `src/messaging/` contains RabbitMQ helpers, validators, and exchange mappings.
-- `src/database/` contains the Knex-based database client and query helpers.
-
-Do not edit files under `.features-gen`; they are generated output.
-
-## Reporting and Artifacts
-
-- Playwright JSON report: `reports/playwright-report.json`
-- Allure raw results: `reports/allure-results/`
-- Allure HTML report: `reports/allure-report/`
+- API JSON report: `reports/playwright-api-report.json`
+- UI JSON report: `reports/playwright-ui-report.json`
+- Allure results: `reports/allure-results/`
+- Allure HTML: `reports/allure-report/`
 - Generated specs: `.features-gen/`
-- Playwright traces: `test-results/`
 
-## Environment Variables
+## Current Status
 
-The framework still uses the same env var names; only the source model changed.
-
-| Area      | Variables                                                                                                               |
-| --------- | ----------------------------------------------------------------------------------------------------------------------- |
-| API       | `BASE_URL`, `SERVICE_PATH`, `INSTANCE_ID`, `API_VERSION`, `API_TIMEOUT`, `TEST_ENV`                                     |
-| Auth      | `AUTH_BASE_URL`, `AUTH_CLIENT_ID`, `AUTH_CLIENT_SECRET`, `AUTH_AUDIENCE`                                                |
-| RabbitMQ  | `RABBITMQ_URL`, `RABBITMQ_EXCHANGE`, `RABBITMQ_DLQ`, `RABBITMQ_VHOST`, `RABBITMQ_HEARTBEAT`, `MESSAGE_WAIT_TIMEOUT`     |
-| Database  | `DB_CLIENT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_SCHEMA`, `DB_QUERY_TIMEOUT`, `DB_AUTH_TYPE`, `DB_USER`, `DB_PASSWORD` |
-| AI        | `AI_ENABLED`, `AI_PROVIDER`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENAI_ENDPOINT`, `OPENAI_API_VERSION`, `AI_MODEL` |
-| Reporting | `REPORT_DIR`, `GIT_SHA`, `LOG_LEVEL`                                                                                    |
-
-For Azure SQL passwordless authentication, set `DB_AUTH_TYPE=azure-active-directory-default` and authenticate with Azure before running tests.
-
-## Current State
-
-- Day-to-day execution is Playwright plus Allure.
-- `npm run lint` and `npm run type-check` are both usable framework health checks.
-- `docker` is intentionally not wired yet; the config loader is generic so it can be added later with a new env overlay and variable group.
+- The repo is now modality-first rather than API-root with a sidecar UI layer.
+- The GL suite remains the bundled reference pack, not the framework identity.
+- `docker` is intentionally not wired yet; adding it later should be a new env overlay plus pipeline variable group.

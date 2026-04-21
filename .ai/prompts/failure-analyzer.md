@@ -2,7 +2,7 @@
 
 ## Purpose
 Analyze a failing GL API test and return a structured root cause assessment.
-This prompt is used by `src/support/ai-enricher.ts → analyzeFailure()`.
+This prompt is used by `src/core/shared/ai/ai-enricher.ts → analyzeFailure()`.
 
 ## Input Variables
 - `{{scenarioName}}` — Gherkin scenario title

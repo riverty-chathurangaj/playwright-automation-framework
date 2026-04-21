@@ -510,7 +510,7 @@
       </div>
       <div class="cover-meta-item">
         <div class="cover-meta-label">Framework</div>
-        <div class="cover-meta-value">pw-testforge-gls</div>
+        <div class="cover-meta-value">riverty-playwright-bdd</div>
       </div>
       <div class="cover-meta-item">
         <div class="cover-meta-label">Stack</div>
@@ -726,7 +726,7 @@
       <h2 id="s1">Executive Summary</h2>
     </div>
 
-    <p>This document presents the architecture for <strong>pw-testforge-gls</strong> — an intelligent, AI-augmented test automation framework designed to ensure the quality, reliability, and contract compliance of the GL (General Ledger) Service API.</p>
+    <p>This document presents the architecture for <strong>riverty-playwright-bdd</strong> — an intelligent, AI-augmented test automation framework designed to ensure the quality, reliability, and contract compliance of the GL (General Ledger) Service API.</p>
 
     <p>The GL Service API is a financial-domain .NET application that requires rigorous testing across functional, schema, contract, and security dimensions. The test framework is intentionally decoupled from the development project, operating as an independent black-box test suite that communicates exclusively through the API's HTTP interface.</p>
 
@@ -949,7 +949,7 @@
     <div class="diagram">
 <pre>
 ┌──────────────────────────────────────────────────────────────────────────────────────┐
-│                              pw-testforge-gls FRAMEWORK                                   │
+│                              riverty-playwright-bdd FRAMEWORK                                   │
 │                                                                                      │
 │  ┌──────────────────────────────────────────────────────────────────────────────┐     │
 │  │                         FEATURE LAYER (Gherkin)                              │     │
@@ -973,7 +973,7 @@
 │  │  ┌────────────────────────────────────────────┐ ┌────────────────────────┐  │     │
 │  │  │ Fixtures (replaces Cucumber World)         │ │  Domain steps:         │  │     │
 │  │  │ store() / retrieve() · typed fixtures      │ │  accounts, postings,   │  │     │
-│  │  │ src/fixtures/index.ts                      │ │  transactions, balance │  │     │
+│  │  │ src/fixtures/api/index.ts                      │ │  transactions, balance │  │     │
 │  │  └────────────────────────────────────────────┘ │  clients, instances,   │  │     │
 │  │                                                  │  accounting-month,     │  │     │
 │  │                                                  │  messaging             │  │     │
@@ -1019,7 +1019,7 @@
 
     <h3 id="s4-2">4.2 Project Structure</h3>
     <div class="code-label">PROJECT TREE</div>
-<pre><code>pw-testforge-gls/
+<pre><code>riverty-playwright-bdd/
 ├── src/
 │   ├── core/
 │   │   ├── api-client.ts               # Playwright APIRequestContext wrapper
@@ -1155,7 +1155,7 @@
 │   ├── api-reference.md                # Full GL API documentation
 │   └── notes.md                        # Development tracking
 │
-├── playwright.config.ts                # BDD wiring + project/tag profiles
+├── playwright.api.config.ts                # BDD wiring + project/tag profiles
 ├── knexfile.ts                         # Database connection configuration
 ├── tsconfig.json                       # TypeScript config with path aliases
 └── package.json                        # Dependencies and scripts</code></pre>
@@ -1366,13 +1366,13 @@ export const { Given, When, Then } = createBdd(test);</code></pre>
     </table>
 
     <h3 id="s5-2">5.2 Tag Strategy &amp; Run Profiles</h3>
-    <p>Tags map to Playwright projects in <code>playwright.config.ts</code>. Each project filters by <code>@tag</code> and has a corresponding <code>npm run test:&lt;tag&gt;</code> script.</p>
+    <p>Tags map to Playwright projects in <code>playwright.api.config.ts</code>. Each project filters by <code>@tag</code> and has a corresponding <code>npm run test:&lt;tag&gt;</code> script.</p>
     <table>
       <thead>
         <tr><th>Tag</th><th>npm Script</th><th>Purpose</th></tr>
       </thead>
       <tbody>
-        <tr><td><code>@smoke</code></td><td><code>npm run test:smoke</code></td><td>Fast sanity checks — critical paths only</td></tr>
+        <tr><td><code>@smoke</code></td><td><code>npm run test:api:smoke</code></td><td>Fast sanity checks — critical paths only</td></tr>
         <tr><td><code>@regression</code></td><td><code>npm run test:regression</code></td><td>Full regression suite</td></tr>
         <tr><td><code>@negative</code></td><td><code>npm run test:negative</code></td><td>Negative / invalid input scenarios</td></tr>
         <tr><td><code>@schema</code></td><td><code>npm run test:schema</code></td><td>JSON Schema / contract validation</td></tr>
@@ -1983,7 +1983,7 @@ Feature: Concurrent Transaction Handling
     <p>AI capabilities are integrated as an <strong>opt-in enhancement</strong> — the framework functions fully without AI. When enabled, AI enriches failure reports with root cause analysis.</p>
 
     <h3 id="s9-1">9.1 AI-Powered Failure Analysis</h3>
-    <p>When tests fail, the <code>ai-enricher.ts</code> module (in <code>src/support/</code>) analyses the failure context — scenario name, failed step, request/response payloads, and error messages — and produces a structured root-cause analysis. The analysis is rendered as a formatted HTML table directly on the <strong>Allure Overview tab</strong> of the failed test, and also preserved as a JSON attachment for programmatic access.</p>
+    <p>When tests fail, the <code>ai-enricher.ts</code> module (in <code>src/core/shared/ai/</code>) analyses the failure context — scenario name, failed step, request/response payloads, and error messages — and produces a structured root-cause analysis. The analysis is rendered as a formatted HTML table directly on the <strong>Allure Overview tab</strong> of the failed test, and also preserved as a JSON attachment for programmatic access.</p>
 
     <div class="code-label">TypeScript — AI Enricher (_afterTestHook in fixtures)</div>
 <pre><code>// Integrated via the _afterTestHook fixture (auto-runs after each test)
@@ -2054,7 +2054,7 @@ AI_MAX_TOKENS=4096</code></pre>
     </div>
 
     <h3 id="s9-3">9.3 AI Architecture</h3>
-    <p>AI is isolated in <code>src/support/ai-enricher.ts</code>. It is triggered by the <code>_afterTestHook</code> fixture (with <code>{ auto: true }</code>) only when <code>AI_ENABLED=true</code>. No AI is used in the critical test execution path — it runs post-failure only, after all test steps have completed.</p>
+    <p>AI is isolated in <code>src/core/shared/ai/ai-enricher.ts</code>. It is triggered by the <code>_afterTestHook</code> fixture (with <code>{ auto: true }</code>) only when <code>AI_ENABLED=true</code>. No AI is used in the critical test execution path — it runs post-failure only, after all test steps have completed.</p>
 
     <div class="flow-container">
       <div class="flow-box">Test Fails<br><small>any domain</small></div>
@@ -2351,13 +2351,13 @@ AI_MAX_TOKENS=4096</code></pre>
 
     <div class="callout callout-success">
       <div class="callout-title">Summary</div>
-      <p style="margin:0">pw-testforge-gls is a comprehensive <strong>BDD API test automation framework</strong> built on Playwright and playwright-bdd. It covers all GL API domains with JSON Schema validation, tests RabbitMQ message flows end-to-end (publish → consume → database verification), and connects to Azure SQL via Entra ID passwordless auth. AI-powered failure analysis is available as an opt-in enhancement. Xray Cloud integration provides complete traceability from requirements to test execution.</p>
+      <p style="margin:0">riverty-playwright-bdd is a comprehensive <strong>BDD API test automation framework</strong> built on Playwright and playwright-bdd. It covers all GL API domains with JSON Schema validation, tests RabbitMQ message flows end-to-end (publish → consume → database verification), and connects to Azure SQL via Entra ID passwordless auth. AI-powered failure analysis is available as an opt-in enhancement. Xray Cloud integration provides complete traceability from requirements to test execution.</p>
     </div>
   </div>
 </div>
 
 <div class="doc-footer">
-  <p><strong>pw-testforge-gls — Test Automation Framework Architecture</strong></p>
+  <p><strong>riverty-playwright-bdd — Test Automation Framework Architecture</strong></p>
   <p>Version 2.0 · April 2026 · Riverty Group GmbH · Quality Engineering</p>
   <p>This document is confidential and intended for internal use only.</p>
 </div>

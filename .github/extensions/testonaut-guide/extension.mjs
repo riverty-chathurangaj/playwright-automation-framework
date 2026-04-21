@@ -4,7 +4,7 @@
 
 import { joinSession } from '@github/copilot-sdk/extension';
 
-// ── Common step definitions (verbatim from src/steps/common/) ────────────────
+// ── Common step definitions (verbatim from src/steps/api/common/) ────────────────
 
 const COMMON_STEPS = {
   'auth.steps.ts': [
@@ -170,8 +170,8 @@ Rules:
 \`\`\`typescript
 import { When, Then } from '../../fixtures';
 import { expect } from 'chai';
-import { registerTemplates } from '@utils/request-templates';
-import { config } from '@core/config';
+import { registerTemplates } from '@api-utils/request-templates';
+import { config } from '@shared-core/config';
 import { ${pascal}Response } from '../../models/responses/${kebab}.response';
 import type { ApiClient } from '../../core/api-client';
 import type { SchemaValidator } from '../../schemas/schema-validator';
@@ -244,7 +244,7 @@ Feature: ${pascal}s
     And each item in the response array should match schema "${kebab}"
 \`\`\`
 
-## 5. Add project to playwright.config.ts
+## 5. Add project to playwright.api.config.ts
 
 \`\`\`typescript
 {
@@ -362,8 +362,8 @@ const CRITICAL_RULES = `# Testonaut — Critical Rules
 4. HTTP status codes in feature files use labels only: \`OK\`, \`BadRequest\`, \`NotFound\` — never raw numbers
 5. Run \`npm run bdd:gen\` after every change to a \`.feature\` file
 6. JSON schema nullable fields use \`["type", "null"]\` — not OpenAPI's \`nullable: true\`
-7. Domain step files register endpoints via \`registerTemplates()\` from \`@utils/request-templates\`
-8. Common steps in \`src/steps/common/\` must not be re-defined in domain files — check before adding
+7. Domain step files register endpoints via \`registerTemplates()\` from \`@api-utils/request-templates\`
+8. Common steps in \`src/steps/api/common/\` must not be re-defined in domain files — check before adding
 9. Schemas are always object-type at root (never array) — validate arrays with \`each item in the response array should match schema\`
 10. Verify response shape against a live API run — swagger may reference the wrong component schema
 
@@ -385,7 +385,7 @@ const session = await joinSession({
     {
       name: 'testonaut_common_steps',
       description:
-        'Returns ALL common step definitions from src/steps/common/. Use before writing any step definition to avoid re-defining existing steps. Optionally filter by file name.',
+        'Returns ALL common step definitions from src/steps/api/common/. Use before writing any step definition to avoid re-defining existing steps. Optionally filter by file name.',
       parameters: {
         type: 'object',
         properties: {
@@ -414,7 +414,7 @@ const session = await joinSession({
     {
       name: 'testonaut_scaffold_endpoint',
       description:
-        'Generates scaffolding templates for a new API endpoint: TypeScript interface, JSON Schema, domain step file, feature file, and playwright.config.ts project entry. Returns the templates as text — you then create the files.',
+        'Generates scaffolding templates for a new API endpoint: TypeScript interface, JSON Schema, domain step file, feature file, and playwright.api.config.ts project entry. Returns the templates as text — you then create the files.',
       parameters: {
         type: 'object',
         properties: {

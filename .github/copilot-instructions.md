@@ -1,6 +1,6 @@
-# pw-testforge-gls — Framework Guide & Implementation Patterns
+# riverty-playwright-bdd — Framework Guide & Implementation Patterns
 
-You are helping a developer work on a **pw-testforge-gls** BDD test automation framework project. When asked to implement new features, step definitions, schemas, or models, follow every pattern below exactly.
+You are helping a developer work on a **riverty-playwright-bdd** BDD test automation framework project. When asked to implement new features, step definitions, schemas, or models, follow every pattern below exactly.
 
 ---
 
@@ -10,8 +10,8 @@ You are helping a developer work on a **pw-testforge-gls** BDD test automation f
 | ----------------- | ------------------------------------------------------------------- |
 | HTTP requests     | Playwright `APIRequestContext` (NOT browser)                        |
 | BDD runner        | playwright-bdd 8.x (generates `.spec.ts` from `.feature` files)     |
-| BDD config        | `playwright.config.ts` via `defineBddConfig()`                      |
-| Fixtures / state  | `src/fixtures/index.ts` — replaces Cucumber `World`                 |
+| BDD config        | `playwright.api.config.ts` via `defineBddConfig()`                  |
+| Fixtures / state  | `src/fixtures/api/index.ts` — replaces Cucumber `World`             |
 | Assertions        | Chai 5.x (`expect(...).to.be.true`, `.to.equal`, `.to.be.at.least`) |
 | Schema validation | Ajv 8.x + `ajv-formats`, JSON Schema Draft-07                       |
 | Type safety       | TypeScript 5.x strict mode                                          |
@@ -65,7 +65,7 @@ features/
 
 1. `npm run bdd:gen` — reads `.feature` files → generates `.spec.ts` in `.features-gen/`
 2. `playwright test` runs the generated specs
-3. Step definitions in `src/steps/**/*.ts` are auto-discovered via `playwright.config.ts`
+3. Step definitions in `src/steps/**/*.ts` are auto-discovered via `playwright.api.config.ts`
 
 **Always run `npm run bdd:gen` after changing any `.feature` file.**
 
@@ -134,7 +134,7 @@ export interface DepartmentResponse {
 
 ## Pattern 3 — Step Organisation
 
-- **Common steps** go in `src/steps/common/` — if reusable across domains
+- **Common steps** go in `src/steps/api/common/` — if reusable across domains
 - **Domain steps** go in `src/steps/<domain>/` — `registerTemplates()`, send steps, assertions
 - Never duplicate a step definition across files
 
@@ -335,8 +335,8 @@ When('...', async function (this: any, arg) { this.currentResponse = ...; }); //
 ```typescript
 import { When, Then } from '../../fixtures';
 import { expect } from 'chai';
-import { registerTemplates, resolveEndpoint } from '@utils/request-templates';
-import { config } from '@core/config';
+import { registerTemplates, resolveEndpoint } from '@api-utils/request-templates';
+import { config } from '@shared-core/config';
 import { OrderResponse } from '../../models/responses/order.response';
 import type { ApiClient } from '../../core/api-client';
 import type { SchemaValidator } from '../../schemas/schema-validator';
@@ -443,14 +443,14 @@ Do NOT combine both into one step — separate concerns = clearer failure messag
 
 Tags follow a **dual-layer** system:
 
-- **Domain tags** (mutually exclusive): Each feature has exactly ONE — maps to a Playwright project in `playwright.config.ts`. Examples: `@orders`, `@products`, `@accounts`, `@messaging`.
+- **Domain tags** (mutually exclusive): Each feature has exactly ONE — maps to a Playwright project in `playwright.api.config.ts`. Examples: `@orders`, `@products`, `@accounts`, `@messaging`.
 - **Cross-cutting tags** (additive): `@smoke`, `@regression`, `@negative`, `@schema`, `@security` — filtered via `--grep` at CLI. A scenario can have multiple cross-cutting tags.
 - **Special tags**: `@fixme` → `test.fixme()` (skipped), `@manual` → excluded from all runs via `grepInvert`.
 
 ### When adding a new domain
 
 1. Add `@<domain>` tag to the feature file
-2. Add a project entry in `playwright.config.ts`:
+2. Add a project entry in `playwright.api.config.ts`:
    ```typescript
    { name: '<domain>', grep: /@<domain>\b/, grepInvert: /@manual/ }
    ```
@@ -498,7 +498,7 @@ type Fixtures = {
 - [ ] `src/schemas/json-schemas/<entity>.schema.json` — JSON Schema Draft-07
 - [ ] `features/<domain>/<domain>.feature` — Gherkin with `@<domain>` tag
 - [ ] `src/steps/<domain>/<domain>.steps.ts` — `registerTemplates()` + send + assertions
-- [ ] Add project to `playwright.config.ts` projects array for new domain
+- [ ] Add project to `playwright.api.config.ts` projects array for new domain
 
 ---
 
@@ -574,7 +574,7 @@ return { authentication: { type: 'azure-active-directory-default' } }; // ❌
 
 ## Environment Variables
 
-All configuration is loaded via `src/core/config.ts`. Defaults exist for all values — no env var is strictly required.
+All configuration is loaded via `src/core/shared/config.ts`. Defaults exist for all values — no env var is strictly required.
 
 | Category     | Variables                                                                                                               |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------- |
@@ -588,17 +588,17 @@ All configuration is loaded via `src/core/config.ts`. Defaults exist for all val
 
 ## TypeScript Path Aliases
 
-| Alias          | Resolves to       |
-| -------------- | ----------------- |
-| `@core/*`      | `src/core/*`      |
-| `@utils/*`     | `src/utils/*`     |
-| `@models/*`    | `src/models/*`    |
-| `@schemas/*`   | `src/schemas/*`   |
-| `@messaging/*` | `src/messaging/*` |
-| `@database/*`  | `src/database/*`  |
-| `@steps/*`     | `src/steps/*`     |
-| `@support/*`   | `src/support/*`   |
-| `@fixtures/*`  | `src/fixtures/*`  |
+| Alias              | Resolves to                |
+| ------------------ | -------------------------- |
+| `@shared-core/*`   | `src/core/shared/*`        |
+| `@api-utils/*`     | `src/core/api/utils/*`     |
+| `@api-models/*`    | `src/models/api/*`         |
+| `@api-schemas/*`   | `src/schemas/api/*`        |
+| `@api-messaging/*` | `src/core/api/messaging/*` |
+| `@api-database/*`  | `src/core/api/database/*`  |
+| `@steps/*`         | `src/steps/*`              |
+| `@shared-core/*`   | `src/core/shared/*`        |
+| `@fixtures/*`      | `src/fixtures/*`           |
 
 ---
 
@@ -611,7 +611,7 @@ All configuration is loaded via `src/core/config.ts`. Defaults exist for all val
 | `currentResponse = result` (local rebind)               | `Object.assign(currentResponse, result)`                                         |
 | `body as MyType[]`                                      | `body as unknown as MyType[]`                                                    |
 | Numeric codes in features (`200`, `404`)                | Labels: `OK`, `NotFound`                                                         |
-| Re-defining a common step in a domain file              | Check `src/steps/common/` first                                                  |
+| Re-defining a common step in a domain file              | Check `src/steps/api/common/` first                                              |
 | Using OpenAPI `nullable: true` in JSON schema           | Use `["type", "null"]` (Draft-07)                                                |
 | Trusting swagger without verifying against live API     | Always run the endpoint and check actual response                                |
 | Forgetting `npm run bdd:gen` after feature changes      | Run before any test run                                                          |

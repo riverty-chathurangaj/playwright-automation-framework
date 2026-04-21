@@ -1,9 +1,9 @@
 {
   "mcpServers": {
-    "pw-testforge-gls": {
-      "description": "pw-testforge-gls test automation framework — AI tooling context",
+    "riverty-playwright-bdd": {
+      "description": "riverty-playwright-bdd test automation framework — AI tooling context",
       "command": "npx",
-      "args": ["ts-node", "-r", "tsconfig-paths/register", "src/support/ai-enricher.ts"],
+      "args": ["ts-node", "-r", "tsconfig-paths/register", "src/core/shared/ai/ai-enricher.ts"],
       "env": {
         "AI_PROVIDER": "azure-openai",
         "OPENAI_ENDPOINT": "${OPENAI_ENDPOINT}",

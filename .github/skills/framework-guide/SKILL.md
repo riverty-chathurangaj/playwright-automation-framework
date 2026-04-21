@@ -1,13 +1,13 @@
 ---
 name: framework-guide
-description: pw-testforge-gls — BDD API Test Automation Framework Guide & Implementation Patterns. Use when implementing features, step definitions, schemas, or models in this BDD test automation project.
+description: riverty-playwright-bdd — BDD API Test Automation Framework Guide & Implementation Patterns. Use when implementing features, step definitions, schemas, or models in this BDD test automation project.
 user-invocable: true
 disable-model-invocation: false
 ---
 
-# pw-testforge-gls — Framework Guide
+# riverty-playwright-bdd — Framework Guide
 
-You are helping a developer work on the **pw-testforge-gls** BDD test automation framework.
+You are helping a developer work on the **riverty-playwright-bdd** BDD test automation framework.
 When asked to implement new features, step definitions, schemas, or models, follow every pattern in `patterns.md` exactly.
 
 ---
@@ -18,8 +18,8 @@ When asked to implement new features, step definitions, schemas, or models, foll
 | ----------------- | ------------------------------------------------------------------- |
 | HTTP requests     | Playwright `APIRequestContext` (NOT browser)                        |
 | BDD runner        | playwright-bdd 8.x (generates `.spec.ts` from `.feature` files)     |
-| BDD config        | `playwright.config.ts` via `defineBddConfig()`                      |
-| Fixtures / state  | `src/fixtures/index.ts` — replaces Cucumber `World`                 |
+| BDD config        | `playwright.api.config.ts` via `defineBddConfig()`                  |
+| Fixtures / state  | `src/fixtures/api/index.ts` — replaces Cucumber `World`             |
 | Assertions        | Chai 5.x (`expect(...).to.be.true`, `.to.equal`, `.to.be.at.least`) |
 | Schema validation | Ajv 8.x + `ajv-formats`, JSON Schema Draft-07                       |
 | Type safety       | TypeScript 5.x strict mode                                          |
@@ -230,7 +230,7 @@ Then the final account {string} balance should equal the initial balance plus th
 - [ ] `src/schemas/json-schemas/<entity>.schema.json` — JSON Schema Draft-07
 - [ ] `features/<domain>/<domain>.feature` — Gherkin with `@<domain>` tag
 - [ ] `src/steps/<domain>/<domain>.steps.ts` — `registerTemplates()` + send step + assertions
-- [ ] Add project to `playwright.config.ts` projects array for new domain
+- [ ] Add project to `playwright.api.config.ts` projects array for new domain
 
 ---
 
@@ -244,13 +244,13 @@ Each feature file is tagged for selective execution. Tags fall into two categori
 | ----------- | ----------------------- | ------------------------- |
 | `@<domain>` | `npm run test:<domain>` | Domain-specific endpoints |
 
-Each domain tag maps to a Playwright project in `playwright.config.ts` and an npm script in `package.json`.
+Each domain tag maps to a Playwright project in `playwright.api.config.ts` and an npm script in `package.json`.
 
 **Cross-cutting tags** — applied alongside domain tags for filtering:
 
 | Tag           | npm script                | Purpose                    |
 | ------------- | ------------------------- | -------------------------- |
-| `@smoke`      | `npm run test:smoke`      | Fast sanity checks         |
+| `@smoke`      | `npm run test:api:smoke`  | Fast sanity checks         |
 | `@regression` | `npm run test:regression` | Full coverage              |
 | `@negative`   | `npm run test:negative`   | Error paths                |
 | `@schema`     | `npm run test:schema`     | Contract/schema validation |
@@ -258,7 +258,7 @@ Each domain tag maps to a Playwright project in `playwright.config.ts` and an np
 | `@messaging`  | `npm run test:messaging`  | Async queue ops            |
 | `@manual`     | (excluded)                | Manual testing only        |
 
-Run a single feature by tag: `npm run test:feature -- "@orders"`
+Run a single feature by tag: `npm run test:api:feature -- "@orders"`
 
 ---
 
@@ -271,13 +271,13 @@ Run a single feature by tag: `npm run test:feature -- "@orders"`
 | `currentResponse = result` (local rebind)               | `Object.assign(currentResponse, result)`                                         |
 | `body as MyResponse[]` (direct cast)                    | `body as unknown as MyResponse[]`                                                |
 | Numeric codes in features (`200`, `404`)                | Labels: `OK`, `NotFound`                                                         |
-| Re-defining a common step in a domain file              | Check `src/steps/common/` first                                                  |
+| Re-defining a common step in a domain file              | Check `src/steps/api/common/` first                                              |
 | Using OpenAPI `nullable: true` in JSON schema           | Use `["type", "null"]` (Draft-07)                                                |
 | Trusting swagger without verifying against live API     | Always run the endpoint and check actual response                                |
 | Forgetting `npm run bdd:gen` after feature changes      | Run before any test run                                                          |
 | One generic "send" step for all request types           | Each request type gets its own named send step                                   |
 | Root-level array schema in `schemaValidator.validate()` | Object schema + `each item in the response array should match schema`            |
-| Inline `REQUEST_TEMPLATES` const in domain step file    | Use `registerTemplates()` from `@utils/request-templates`                        |
+| Inline `REQUEST_TEMPLATES` const in domain step file    | Use `registerTemplates()` from `@api-utils/request-templates`                    |
 | Nesting `authentication` in Knex mssql connection       | Use `type: 'azure-active-directory-default'` at root level                       |
 | Polling DB returning on `rows.length > 0`               | Poll until specific field match — old records may exist for same key             |
 | Putting message interfaces in `src/models/responses/`   | Co-locate in factory file: `src/models/test-data/factories/<message>.factory.ts` |

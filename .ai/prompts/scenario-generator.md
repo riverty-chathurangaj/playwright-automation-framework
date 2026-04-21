@@ -2,7 +2,7 @@
 
 ## Purpose
 Generate a complete `.feature` file from a Jira ticket for the GL API test framework.
-This prompt is used by `src/support/ai-enricher.ts → generateScenariosFromTicket()`.
+This prompt is used by `src/core/shared/ai/ai-enricher.ts → generateScenariosFromTicket()`.
 
 ## CLI usage
 ```bash

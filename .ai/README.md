@@ -1,6 +1,6 @@
 # .ai — Developer Tooling Layer
 
-This folder contains reference documentation and configuration for the AI features built into the pw-testforge-gls framework. **Nothing here runs during `npm test`.**
+This folder contains reference documentation and configuration for the AI features built into the riverty-playwright-bdd framework. **Nothing here runs during `npm test`.**
 
 ---
 
@@ -9,7 +9,7 @@ This folder contains reference documentation and configuration for the AI featur
 ```
 .ai/
 ├── README.md              ← this file
-├── config.ts              ← provider reference (live config is in src/core/config.ts)
+├── config.ts              ← provider reference (live config is in src/core/shared/config.ts)
 ├── mcp/
 │   └── mcp.json           ← stub for future MCP server integration
 └── prompts/

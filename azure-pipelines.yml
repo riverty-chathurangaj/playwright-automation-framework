@@ -1,4 +1,4 @@
-name: gl-tests-$(Date:yyyyMMdd)$(Rev:.r)
+name: riverty-playwright-bdd-$(Date:yyyyMMdd)$(Rev:.r)
 
 trigger: none
 
@@ -65,7 +65,7 @@ jobs:
       - script: npm ci
         displayName: Install dependencies
 
-      - script: npm run test:smoke
+      - script: npm run test:api:smoke
         displayName: Run smoke tests
         env:
           TEST_ENV: $(TEST_ENV)
@@ -73,6 +73,16 @@ jobs:
           GIT_SHA: $(Build.SourceVersion)
           AUTH_CLIENT_ID: $(AUTH_CLIENT_ID)
           AUTH_CLIENT_SECRET: $(AUTH_CLIENT_SECRET)
+          DB_SECRET_SOURCE: $(DB_SECRET_SOURCE)
+          VAULT_ADDR: $(VAULT_ADDR)
+          VAULT_AUTH_PATH: $(VAULT_AUTH_PATH)
+          VAULT_ROLE_ID: $(VAULT_ROLE_ID)
+          VAULT_SECRET_ID: $(VAULT_SECRET_ID)
+          VAULT_NAMESPACE: $(VAULT_NAMESPACE)
+          VAULT_DB_SECRET_PATH: $(VAULT_DB_SECRET_PATH)
+          VAULT_DB_USERNAME_FIELD: $(VAULT_DB_USERNAME_FIELD)
+          VAULT_DB_PASSWORD_FIELD: $(VAULT_DB_PASSWORD_FIELD)
+          VAULT_TIMEOUT: $(VAULT_TIMEOUT)
           DB_HOST: $(DB_HOST)
           DB_USER: $(DB_USER)
           DB_PASSWORD: $(DB_PASSWORD)
@@ -120,12 +130,22 @@ jobs:
           GIT_SHA: $(Build.SourceVersion)
           AUTH_CLIENT_ID: $(AUTH_CLIENT_ID)
           AUTH_CLIENT_SECRET: $(AUTH_CLIENT_SECRET)
+          DB_SECRET_SOURCE: $(DB_SECRET_SOURCE)
+          VAULT_ADDR: $(VAULT_ADDR)
+          VAULT_AUTH_PATH: $(VAULT_AUTH_PATH)
+          VAULT_ROLE_ID: $(VAULT_ROLE_ID)
+          VAULT_SECRET_ID: $(VAULT_SECRET_ID)
+          VAULT_NAMESPACE: $(VAULT_NAMESPACE)
+          VAULT_DB_SECRET_PATH: $(VAULT_DB_SECRET_PATH)
+          VAULT_DB_USERNAME_FIELD: $(VAULT_DB_USERNAME_FIELD)
+          VAULT_DB_PASSWORD_FIELD: $(VAULT_DB_PASSWORD_FIELD)
+          VAULT_TIMEOUT: $(VAULT_TIMEOUT)
           DB_HOST: $(DB_HOST)
           DB_USER: $(DB_USER)
           DB_PASSWORD: $(DB_PASSWORD)
           RABBITMQ_URL: $(RABBITMQ_URL)
 
-      - script: npx ts-node src/support/xray-reporter.ts publish
+      - script: npx ts-node src/core/shared/reporting/xray-reporter.ts publish
         displayName: Publish to Xray
         condition: always()
         env:
@@ -178,7 +198,8 @@ jobs:
 
       - script: |
           if [ -n "$PLAYWRIGHT_GREP" ]; then
-            npm run test:feature -- "$PLAYWRIGHT_GREP"
+            npm run test:api:feature -- "$PLAYWRIGHT_GREP"
+            npm run test:ui:feature -- "$PLAYWRIGHT_GREP"
           else
             npm test
           fi
@@ -189,13 +210,23 @@ jobs:
           GIT_SHA: $(Build.SourceVersion)
           AUTH_CLIENT_ID: $(AUTH_CLIENT_ID)
           AUTH_CLIENT_SECRET: $(AUTH_CLIENT_SECRET)
+          DB_SECRET_SOURCE: $(DB_SECRET_SOURCE)
+          VAULT_ADDR: $(VAULT_ADDR)
+          VAULT_AUTH_PATH: $(VAULT_AUTH_PATH)
+          VAULT_ROLE_ID: $(VAULT_ROLE_ID)
+          VAULT_SECRET_ID: $(VAULT_SECRET_ID)
+          VAULT_NAMESPACE: $(VAULT_NAMESPACE)
+          VAULT_DB_SECRET_PATH: $(VAULT_DB_SECRET_PATH)
+          VAULT_DB_USERNAME_FIELD: $(VAULT_DB_USERNAME_FIELD)
+          VAULT_DB_PASSWORD_FIELD: $(VAULT_DB_PASSWORD_FIELD)
+          VAULT_TIMEOUT: $(VAULT_TIMEOUT)
           DB_HOST: $(DB_HOST)
           DB_USER: $(DB_USER)
           DB_PASSWORD: $(DB_PASSWORD)
           RABBITMQ_URL: $(RABBITMQ_URL)
 
       - ${{ if eq(parameters.publishXray, true) }}:
-          - script: npx ts-node src/support/xray-reporter.ts publish
+          - script: npx ts-node src/core/shared/reporting/xray-reporter.ts publish
             displayName: Publish to Xray
             condition: always()
             env:

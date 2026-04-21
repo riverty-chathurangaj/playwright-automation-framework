@@ -1,4 +1,4 @@
-# pw-testforge-gls — Implementation Patterns
+# riverty-playwright-bdd — Implementation Patterns
 
 ## Pattern 1 — HTTP Status Codes (labels only, never numbers)
 
@@ -66,7 +66,7 @@ export interface DepartmentResponse {
 
 ## Pattern 3 — Step Organisation
 
-- **Common steps** go in `src/steps/common/` — if reusable across domains
+- **Common steps** go in `src/steps/api/common/` — if reusable across domains
 - **Domain steps** go in `src/steps/<domain>/` — `registerTemplates()`, send steps, assertions
 - Never duplicate a step definition across files
 

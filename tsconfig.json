@@ -19,22 +19,27 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "@fixtures/*": ["src/fixtures/*"],
-      "@core/*": ["src/core/*"],
-      "@messaging/*": ["src/messaging/*"],
-      "@database/*": ["src/database/*"],
-      "@schemas/*": ["src/schemas/*"],
-      "@models/*": ["src/models/*"],
-      "@steps/*": ["src/steps/*"],
-      "@support/*": ["src/support/*"],
-      "@utils/*": ["src/utils/*"]
+      "@api-core/*": ["src/core/api/*"],
+      "@ui-core/*": ["src/core/ui/*"],
+      "@shared-core/*": ["src/core/shared/*"],
+      "@api-database/*": ["src/core/api/database/*"],
+      "@api-messaging/*": ["src/core/api/messaging/*"],
+      "@api-utils/*": ["src/core/api/utils/*"],
+      "@api-fixtures": ["src/fixtures/api/index.ts"],
+      "@api-fixtures/*": ["src/fixtures/api/*"],
+      "@ui-fixtures": ["src/fixtures/ui/index.ts"],
+      "@ui-fixtures/*": ["src/fixtures/ui/*"],
+      "@api-models/*": ["src/models/api/*"],
+      "@api-schemas/*": ["src/schemas/api/*"],
+      "@ui-pages/*": ["src/pages/ui/*"]
     }
   },
   "include": [
     "src/**/*.ts",
     "features/**/*.ts",
     ".features-gen/**/*.ts",
-    "playwright.config.ts",
+    "playwright.api.config.ts",
+    "playwright.ui.config.ts",
     "knexfile.ts",
     ".ai/**/*.ts"
   ],

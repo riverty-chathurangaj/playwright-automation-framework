@@ -6,7 +6,7 @@ export default [
     ignores: ['dist/**', 'node_modules/**', 'reports/**', 'test-results/**', '.features-gen/**'],
   },
   {
-    files: ['src/**/*.ts'],
+    files: ['src/**/*.ts', '.ai/**/*.ts', 'playwright.*.config.ts', 'knexfile.ts'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {

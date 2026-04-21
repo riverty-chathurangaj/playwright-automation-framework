@@ -1,8 +1,8 @@
 /**
  * .ai/config.ts — Reference / documentation only.
  *
- * The live AI configuration is in src/core/config.ts (AIConfig interface)
- * and the AI client is instantiated in src/support/ai-enricher.ts.
+ * The live AI configuration is in src/core/shared/config.ts (AIConfig interface)
+ * and the AI client is instantiated in src/core/shared/ai/ai-enricher.ts.
  * This file documents the available providers and models for quick reference.
  */
 
@@ -36,7 +36,7 @@ export const AI_PROVIDERS = {
 // ── Defaults ──────────────────────────────────────────────────────────────────
 export const AI_DEFAULTS = {
   maxTokens: 4096,
-  systemContext: `GL (General Ledger) API test automation framework.
-Domain: double-entry bookkeeping, chart of accounts, fiscal periods,
-journal entries, trial balance, ISO 4217 currencies, financial precision.`,
+  systemContext: `Modality-first Playwright BDD automation framework for API and UI testing.
+Current bundled reference pack: General Ledger workflows including chart of accounts,
+fiscal periods, journal entries, trial balance, ISO 4217 currencies, and financial precision.`,
 } as const;
