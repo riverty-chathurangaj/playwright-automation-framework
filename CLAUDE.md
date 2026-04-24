@@ -1,14 +1,16 @@
-# riverty-playwright-bdd — Claude Context
+# riverty-playwright-bdd - Claude Context
 
-This repository is a modality-first, BDD-only Playwright framework for API and UI automation.
+This is a modality-first, BDD-only Playwright framework for API and UI automation. Read `docs/framework-architecture.md`, `docs/implementation-patterns.md`, and `docs/agent-playbook.md` before making framework changes.
 
-## Core Rules
+## Always Follow
 
-- API steps import `{ Given, When, Then }` from `@api-fixtures`
-- UI steps import `{ Given, When, Then }` from `@ui-fixtures`
-- Mutate API responses with `Object.assign(currentResponse, result)`
-- Use status labels in feature files, not numeric HTTP codes
-- Run the matching `bdd:gen:*` command after feature changes if you are not using the `npm run test:*` scripts
+- Author tests as `.feature` files plus step definitions. Do not make raw `tests/**/*.spec.ts` the primary pattern.
+- API steps import `{ Given, When, Then }` from `@api-fixtures`.
+- UI steps import `{ Given, When, Then }` from `@ui-fixtures`.
+- API responses are mutated with `Object.assign(currentResponse, result)`, never reassigned.
+- Feature files use HTTP status labels such as `OK` and `BadRequest`, not numeric status codes.
+- JSON schemas use Draft-07 nullable syntax: `"type": ["string", "null"]`.
+- Generated specs in `.features-gen/` are never edited directly.
 
 ## Key Paths
 
@@ -21,16 +23,18 @@ This repository is a modality-first, BDD-only Playwright framework for API and U
 | `src/fixtures/ui/index.ts`  | UI fixtures and bound BDD helpers  |
 | `src/steps/api/common/**`   | Reusable API step definitions      |
 | `src/steps/api/gl/**`       | GL API reference steps             |
-| `src/steps/ui/gl/**`        | GL UI reference steps              |
-| `src/pages/ui/gl/**`        | GL reference page objects          |
-| `src/models/api/gl/**`      | GL API response/test-data assets   |
-| `src/schemas/api/gl/**`     | GL API JSON schemas/contracts      |
+| `features/api/gl/**`        | GL API reference features          |
+| `features/ui/saucedemo/**`  | SauceDemo UI sample features       |
+| `src/pages/ui/saucedemo/**` | SauceDemo UI sample page objects   |
+| `src/models/api/**`         | API response and test-data models  |
+| `src/schemas/api/**`        | API JSON schemas and contracts     |
 
-## Tag Model
+## UI Rules
 
-- Modality tags: `@api`, `@ui`
-- Module tags: for example `@gl-clients`, `@gl-security`, `@gl-navigation`
-- Additive tags: `@smoke`, `@authenticated`, `@manual`, `@fixme`
+- Page objects are singleton exports that call `bind(page)` per scenario.
+- Locators are arrow functions.
+- Prefer semantic Playwright locators before test ids, CSS, or XPath.
+- Use Playwright web-first assertions and auto-waiting; avoid `waitForTimeout`.
 
 ## Useful Commands
 
@@ -40,7 +44,9 @@ npm run test:api:smoke
 npm run test:api:feature -- "@gl-clients"
 npm run test:ui
 npm run test:ui:smoke
-npm run test:ui:feature -- "@gl-navigation"
+npm run test:ui:feature -- "@saucedemo"
 npm run lint
 npm run type-check
 ```
+
+Use the project skills in `.claude/skills/**` for framework and Playwright browser guidance. Keep `.claude/settings.local.json` local-only.

@@ -28,6 +28,7 @@ Thumbs.db
 # IDE
 .vscode/settings.json
 .idea/
+.claude/settings.local.json
 *.suo
 *.ntvs*
 *.njsproj
@@ -38,6 +39,7 @@ Thumbs.db
 *.tsbuildinfo
 
 # Playwright
+.playwright/
 playwright-report/
 test-results/
 

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Framework Guide"
+  short_description: "BDD Playwright framework patterns"
+  default_prompt: "Use $framework-guide to implement a new API or UI BDD test in this framework."
+
+policy:
+  allow_implicit_invocation: true

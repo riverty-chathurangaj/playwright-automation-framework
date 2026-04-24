@@ -63,6 +63,7 @@ export interface XrayConfig {
 
 export interface UIConfig {
   baseUrl: string;
+  sauceDemoBaseUrl: string;
   authStoragePath: string;
   defaultTimeout: number;
   username: string;
@@ -222,6 +223,7 @@ export const config: FrameworkConfig = {
 
   ui: {
     baseUrl: optional('UI_BASE_URL', optional('API_BASE_URL', optional('BASE_URL', 'http://localhost:3000'))),
+    sauceDemoBaseUrl: optional('UI_SAUCEDEMO_BASE_URL', 'https://www.saucedemo.com'),
     authStoragePath: optional('UI_AUTH_STORAGE_PATH', '.auth/ui-storage-state.json'),
     defaultTimeout: Number(optional('UI_DEFAULT_TIMEOUT', '10000')),
     username: optional('UI_USERNAME', ''),

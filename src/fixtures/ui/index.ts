@@ -2,9 +2,9 @@ import { createBdd, test as base } from 'playwright-bdd';
 import type { BrowserContext, Page, TestInfo } from '@playwright/test';
 import { config } from '@shared-core/config';
 import { logger } from '@shared-core/logger';
-import { DashboardPage } from '@ui-pages/gl/dashboard.page';
-import { LoginPage } from '@ui-pages/gl/login.page';
-import { ensureUiAuthStorageState } from '@ui-core/auth-state';
+import { SauceDemoCartPage } from '@ui-pages/saucedemo/cart.page';
+import { SauceDemoInventoryPage } from '@ui-pages/saucedemo/inventory.page';
+import { SauceDemoLoginPage } from '@ui-pages/saucedemo/login.page';
 
 export type UIFixtures = {
   context: BrowserContext;
@@ -13,18 +13,11 @@ export type UIFixtures = {
   _afterUiTestHook: void;
 };
 
-function scenarioRequiresUiAuth(testInfo: TestInfo): boolean {
-  return (testInfo.tags ?? []).includes('@authenticated');
-}
-
 export const test = base.extend<UIFixtures>({
-  context: async ({ browser }, use: (context: BrowserContext) => Promise<void>, testInfo: TestInfo) => {
-    const storageState = scenarioRequiresUiAuth(testInfo) ? await ensureUiAuthStorageState(browser) : undefined;
-
+  context: async ({ browser }, use: (context: BrowserContext) => Promise<void>) => {
     const context = await browser.newContext({
       baseURL: config.ui.baseUrl,
       ignoreHTTPSErrors: true,
-      storageState,
     });
 
     await use(context);
@@ -38,13 +31,15 @@ export const test = base.extend<UIFixtures>({
 
   _bindPages: [
     async ({ page }, use: () => Promise<void>) => {
-      LoginPage.bind(page);
-      DashboardPage.bind(page);
+      SauceDemoLoginPage.bind(page);
+      SauceDemoInventoryPage.bind(page);
+      SauceDemoCartPage.bind(page);
 
       await use();
 
-      LoginPage.clearBinding();
-      DashboardPage.clearBinding();
+      SauceDemoLoginPage.clearBinding();
+      SauceDemoInventoryPage.clearBinding();
+      SauceDemoCartPage.clearBinding();
     },
     { auto: true },
   ],

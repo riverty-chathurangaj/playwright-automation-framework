@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { config } from '@shared-core/config';
 import { logger } from '@shared-core/logger';
-import { resetUiAuthStorageState } from './auth-state';
 
 export default async function globalSetup(): Promise<void> {
   logger.info('========================================');
@@ -13,8 +12,6 @@ export default async function globalSetup(): Promise<void> {
     env: config.env,
     authStoragePath: config.ui.authStoragePath,
   });
-
-  resetUiAuthStorageState();
 
   const resultsDir = path.resolve(process.cwd(), 'reports/allure-results');
   fs.mkdirSync(resultsDir, { recursive: true });

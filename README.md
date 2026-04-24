@@ -11,7 +11,7 @@ features/
 
 src/
   core/api/**       # API clients, messaging, database, API helpers
-  core/ui/**        # BasePage, UI auth state, UI runtime helpers
+  core/ui/**        # BasePage and UI runtime helpers
   core/shared/**    # config, logging, shared reporting/AI helpers
   fixtures/api/**
   fixtures/ui/**
@@ -25,12 +25,15 @@ src/
 The current GL suite is bundled as a reference implementation under:
 
 - `features/api/gl/**`
-- `features/ui/gl/**`
 - `src/steps/api/gl/**`
-- `src/steps/ui/gl/**`
-- `src/pages/ui/gl/**`
 - `src/models/api/gl/**`
 - `src/schemas/api/gl/**`
+
+There is also lightweight public-site sample UI coverage for Sauce Demo under:
+
+- `features/ui/saucedemo/**`
+- `src/pages/ui/saucedemo/**`
+- `src/steps/ui/saucedemo/**`
 
 ## Quick Start
 
@@ -52,24 +55,24 @@ Database credentials can now be resolved in this order: mounted `/secrets/databa
 
 ## Commands
 
-| Command                                       | Purpose                                             |
-| --------------------------------------------- | --------------------------------------------------- |
-| `npm run bdd:gen:api`                         | Generate API specs from `features/api/**/*.feature` |
-| `npm run bdd:gen:ui`                          | Generate UI specs from `features/ui/**/*.feature`   |
-| `npm run bdd:gen`                             | Generate both API and UI specs                      |
-| `npm run test:api`                            | Run all API BDD scenarios                           |
-| `npm run test:api:smoke`                      | Run API smoke scenarios                             |
-| `npm run test:api:feature -- "@gl-clients"`   | Run API scenarios by tag/title grep                 |
-| `npm run test:api:runner`                     | Open Playwright UI mode for API specs               |
-| `npm run test:ui`                             | Run all UI BDD scenarios                            |
-| `npm run test:ui:smoke`                       | Run UI smoke scenarios                              |
-| `npm run test:ui:feature -- "@gl-navigation"` | Run UI scenarios by tag/title grep                  |
-| `npm run test:ui:runner`                      | Open Playwright UI mode for UI specs                |
-| `npm test`                                    | Run both modalities sequentially                    |
-| `npm run lint`                                | Run ESLint                                          |
-| `npm run type-check`                          | Run TypeScript with `--noEmit`                      |
-| `npm run format`                              | Format the repo with Prettier                       |
-| `npm run clean`                               | Remove generated specs, reports, and auth state     |
+| Command                                     | Purpose                                                               |
+| ------------------------------------------- | --------------------------------------------------------------------- |
+| `npm run bdd:gen:api`                       | Generate API specs from `features/api/**/*.feature`                   |
+| `npm run bdd:gen:ui`                        | Generate UI specs from `features/ui/**/*.feature`                     |
+| `npm run bdd:gen`                           | Generate both API and UI specs                                        |
+| `npm run test:api`                          | Run all API BDD scenarios                                             |
+| `npm run test:api:smoke`                    | Run API smoke scenarios                                               |
+| `npm run test:api:feature -- "@gl-clients"` | Run API scenarios by tag/title grep                                   |
+| `npm run test:api:runner`                   | Open Playwright UI mode for API specs                                 |
+| `npm run test:ui`                           | Run all UI BDD scenarios                                              |
+| `npm run test:ui:smoke`                     | Run UI smoke scenarios                                                |
+| `npm run test:ui:feature -- "@saucedemo"`   | Run UI scenarios by tag/title grep                                    |
+| `npm run test:ui:runner`                    | Open Playwright UI mode for UI specs                                  |
+| `npm test`                                  | Run both modalities sequentially                                      |
+| `npm run lint`                              | Run ESLint                                                            |
+| `npm run type-check`                        | Run TypeScript with `--noEmit`                                        |
+| `npm run format`                            | Format the repo with Prettier                                         |
+| `npm run clean`                             | Remove generated specs, reports, auth state, and Playwright artifacts |
 
 `npm run test:*` commands already run the matching `bdd:gen:*` step. A bare `npx playwright test` does not.
 
@@ -79,6 +82,27 @@ Database credentials can now be resolved in this order: mounted `/secrets/databa
 - `playwright.ui.config.ts`
 
 API and UI are intentionally isolated at the Playwright config, fixture, and feature levels.
+
+## Agent Onboarding
+
+This template intentionally includes agent-facing guidance so teams can get the same automation patterns out of the box. Canonical framework knowledge lives in:
+
+- `docs/framework-architecture.md`
+- `docs/implementation-patterns.md`
+- `docs/agent-playbook.md`
+
+Agent-specific adapters are intentionally short and point back to those canonical docs:
+
+- `AGENTS.md` for generic repo agents
+- `CLAUDE.md` for Claude project memory
+- `.github/copilot-instructions.md` and `.github/instructions/**` for GitHub Copilot
+- `.agents/skills/framework-guide/**` for Codex framework guidance
+- `.claude/commands/framework-guide.md` for Claude command entrypoints
+- `.claude/skills/framework-guide/**` and `.claude/skills/playwright-cli/**` for Claude skill packs
+
+External Playwright best-practice material is used only as inspiration. Framework-specific BDD, fixture, page-object, schema, and config patterns in `docs/implementation-patterns.md` take precedence.
+
+Keep local credentials and generated artifacts out of these folders. Machine-specific Claude settings belong in `.claude/settings.local.json`, which is intentionally ignored.
 
 ## Environment Model
 
@@ -108,7 +132,7 @@ Canonical runtime variables:
 | Area     | Variables                                                                                                                                                                             |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | API      | `API_BASE_URL`, `API_SERVICE_PATH`, `INSTANCE_ID`, `API_VERSION`, `API_TIMEOUT`, `MESSAGE_WAIT_TIMEOUT`                                                                               |
-| UI       | `UI_BASE_URL`, `UI_AUTH_STORAGE_PATH`, `UI_DEFAULT_TIMEOUT`, `UI_USERNAME`, `UI_PASSWORD`                                                                                             |
+| UI       | `UI_BASE_URL`, `UI_SAUCEDEMO_BASE_URL`, `UI_AUTH_STORAGE_PATH`, `UI_DEFAULT_TIMEOUT`, `UI_USERNAME`, `UI_PASSWORD`                                                                    |
 | Auth     | `AUTH_BASE_URL`, `AUTH_CLIENT_ID`, `AUTH_CLIENT_SECRET`, `AUTH_AUDIENCE`                                                                                                              |
 | RabbitMQ | `RABBITMQ_URL`, `RABBITMQ_EXCHANGE`, `RABBITMQ_DLQ`, `RABBITMQ_VHOST`, `RABBITMQ_HEARTBEAT`                                                                                           |
 | Database | `DB_CLIENT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_SCHEMA`, `DB_QUERY_TIMEOUT`, `DB_AUTH_TYPE`, `DB_SECRET_SOURCE`, `DB_USER`, `DB_PASSWORD`                                           |
@@ -122,7 +146,7 @@ Azure DevOps is the primary CI path. Secrets should stay in variable groups; che
 Every scenario should carry:
 
 - one modality tag: `@api` or `@ui`
-- one module/domain tag such as `@gl-clients`, `@gl-security`, or `@gl-navigation`
+- one module/domain tag such as `@gl-clients`, `@gl-security`, or `@saucedemo`
 
 Additional additive tags are fine, for example:
 
@@ -156,9 +180,10 @@ Additional additive tags are fine, for example:
 - Allure results: `reports/allure-results/`
 - Allure HTML: `reports/allure-report/`
 - Generated specs: `.features-gen/`
+- Playwright traces/screenshots/videos: `test-results/`
 
 ## Current Status
 
 - The repo is now modality-first rather than API-root with a sidecar UI layer.
-- The GL suite remains the bundled reference pack, not the framework identity.
+- The GL suite remains the bundled API reference pack, not the framework identity.
 - `docker` is intentionally not wired yet; adding it later should be a new env overlay plus pipeline variable group.
